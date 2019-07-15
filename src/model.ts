@@ -1,4 +1,4 @@
-export type IP = string;
+type IP = string;
 type Int32 = number;
 type UInt16 = number;
 type UInt32 = number;
