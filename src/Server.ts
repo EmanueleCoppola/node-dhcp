@@ -3,13 +3,14 @@ import * as Protocol from './protocol';
 import * as dgram from 'dgram';
 import * as OptionsModel from './options';
 import { DHCP53Code, BootCode, DHCPMessage, HardwareType, ServerConfig, IP, DHCPOption, ClientConfig, DHCPConfig } from './model';
-import * as Tools from './tools';
+import { parseIp, formatIp } from './tools';
 import { Lease } from "./Lease";
-import { promises } from "fs";
+import { random } from "./prime";
 
 const INADDR_ANY = '0.0.0.0';
 const SERVER_PORT = 67;
 const CLIENT_PORT = 68;
+
 
 const ansCommon = {
     htype: HardwareType.Ethernet,
@@ -28,7 +29,7 @@ export class Server extends EventEmitter {
     // All mac -> IP mappings, we currently have assigned or blacklisted
     _state: any;
 
-    constructor(config: ServerConfig, listenOnly?: any) {
+    constructor(config: ServerConfig, listenOnly?: boolean) {
         super()
         const self = this;
         const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true });
@@ -52,7 +53,8 @@ export class Server extends EventEmitter {
             self.emit('message', req);
             if (!listenOnly) {
                 // Handle request
-                switch (req.options[DHCPOption.dhcpMessageType]) {
+                const mode = req.options[DHCPOption.dhcpMessageType]
+                switch (mode) {
                     case DHCP53Code.DHCPDISCOVER: // 1.
                         self.handleDiscover(req);
                         break;
@@ -78,7 +80,7 @@ export class Server extends EventEmitter {
         this._state = {};
     }
 
-    config(key: string, req: DHCPMessage): string | number | boolean | number[] | string[] | Function {
+    config(key: string, req: DHCPMessage): any {
         let val: Function | string | number | boolean | string[] | number[];
         const optId: number = OptionsModel.getDHCPId(key);
         // If config setting is set by user
@@ -104,9 +106,9 @@ export class Server extends EventEmitter {
                 }
             }
             val = val.call(this, reqOpt);
-        } else {
-            val = val;
         }
+
+
 
         // If the option has an "enum" attribute:
         if (key !== 'range' && key !== 'static' && key !== 'randomIP' && OptionsModel.optsMeta[optId].enum) {
@@ -125,7 +127,7 @@ export class Server extends EventEmitter {
                 val = Number(val2);
             }
         }
-        return <string | number | string[]>val;
+        return val;
     };
     _getOptions(req: DHCPMessage, pre: DHCPConfig, requireds: number[], requested?: any): DHCPConfig {
         for (let required of requireds) {
@@ -175,7 +177,7 @@ export class Server extends EventEmitter {
         return pre;
     };
 
-    _selectAddress(clientMAC: string, req?: DHCPMessage) {
+    _selectAddress(clientMAC: string, req: DHCPMessage): string {
         /*
          * IP Selection algorithm:
          *
@@ -201,7 +203,7 @@ export class Server extends EventEmitter {
         }
 
         // Is there a static binding?
-        const _static = this.config('static', req);
+        const _static = <{ [key: string]: string } | Function>this.config('static', req);
 
         if (typeof _static === "function") {
             const staticResult = _static(clientMAC, req);
@@ -213,17 +215,19 @@ export class Server extends EventEmitter {
 
         const randIP = this.config('randomIP', req);
         const [firstIPstr, lastIPStr] = <string[]>this.config('range', req);
-        const firstIP = Tools.parseIp(firstIPstr);
-        const lastIP = Tools.parseIp(lastIPStr);
+        const firstIP = parseIp(firstIPstr);
+        const lastIP = parseIp(lastIPStr);
 
         // Add all known addresses and save the oldest lease
-        const ips = [this.config('server', req)]; // Exclude our own server IP from pool
+        const ipSet: Set<number> = new Set();
+        // Exclude our own server IP from pool
+        ipSet.add(parseIp(this.config('server', req)));
         let oldestMac = null;
         let oldestTime = Infinity;
         let leases = 0;
         for (let mac in this._state) {
             if (this._state[mac].address)
-                ips.push(this._state[mac].address);
+                ipSet.add(parseIp(this._state[mac].address));
             if (this._state[mac].leaseTime < oldestTime) {
                 oldestTime = this._state[mac].leaseTime;
                 oldestMac = mac;
@@ -239,22 +243,24 @@ export class Server extends EventEmitter {
             return ip;
         }
 
-        // Select a random IP, maybe not the best algorithm for quick selection if lots of ip's are given: TODO
+        // Select a random IP, using prime number iterator
         if (randIP) {
-            while (1) {
-                const ip = Tools.formatIp(firstIP + Math.random() * (lastIP - firstIP) | 0);
-                if (ips.indexOf(ip) === -1) {
-                    return ip;
-                }
+            let total = lastIP - firstIP;
+            let p = random(100, 10000);
+            let offset = 0;
+            while (p--) {
+                offset = (offset + p) % total;
+                const ip = firstIP + offset;
+                if (!ipSet.has(ip))
+                    return formatIp(ip);
             }
+            console.error('no More IP available');
         }
 
         // Choose first free IP in subnet
         for (let i = firstIP; i <= lastIP; i++) {
-            const ip = Tools.formatIp(i);
-            if (ips.indexOf(ip) === -1) {
-                return ip;
-            }
+            if (!ipSet.has(i))
+                return formatIp(i);
         }
     };
 
@@ -271,35 +277,39 @@ export class Server extends EventEmitter {
     sendOffer(req: DHCPMessage): Promise<number> {
         //console.log('Send Offer');
         // Formulate the response object
+        const siaddr = <string>this.config('server', req); // next server in bootstrap. That's us
+        const yiaddr = this._selectAddress(req.chaddr, req); // My offer
+        const options = this._getOptions(req, {
+            [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPOFFER
+        },
+            [DHCPOption.netmask, DHCPOption.router, DHCPOption.leaseTime, DHCPOption.server, DHCPOption.dns],
+            req.options[DHCPOption.dhcpParameterRequestList]);
         const ans: DHCPMessage = {
             op: BootCode.BOOTREPLY,
             ...ansCommon,
             xid: req.xid, // 'xid' from client DHCPDISCOVER message
             flags: req.flags,
             ciaddr: INADDR_ANY,
-            yiaddr: this._selectAddress(req.chaddr), // My offer
-            siaddr: <string>this.config('server', req), // next server in bootstrap. That's us
+            yiaddr,
+            siaddr,
             giaddr: req.giaddr,
             chaddr: req.chaddr, // Client mac address
-            options: this._getOptions(req, {
-                [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPOFFER
-            },
-                [DHCPOption.netmask, DHCPOption.router, DHCPOption.leaseTime, DHCPOption.server, DHCPOption.dns],
-                req.options[DHCPOption.dhcpParameterRequestList])
+            options
         };
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
-        return this._send(<string>this.config('broadcast', req), ans);
+        const broadcast = <string>this.config('broadcast', req);
+        return this._send(broadcast, ans);
     };
 
     handleRequest(req: DHCPMessage): Promise<number> {
         //console.log('Handle Request', req);
-        const lease = this._state[req.chaddr] = this._state[req.chaddr] || new Lease;
-        lease.address = this._selectAddress(req.chaddr);
+        const lease = this._state[req.chaddr] = this._state[req.chaddr] || new Lease();
+        lease.address = this._selectAddress(req.chaddr, req);
         lease.leasePeriod = this.config('leaseTime', req);
         lease.server = this.config('server', req);
         lease.state = 'BOUND';
-        lease.bindTime = new Date;
+        lease.bindTime = new Date();
         return this.sendAck(req);
     };
 
@@ -312,7 +322,7 @@ export class Server extends EventEmitter {
             xid: req.xid, // 'xid' from client DHCPREQUEST message
             flags: req.flags, // 'flags' from client DHCPREQUEST message
             ciaddr: req.ciaddr,
-            yiaddr: this._selectAddress(req.chaddr), // my offer
+            yiaddr: this._selectAddress(req.chaddr, req), // my offer
             siaddr: <string>this.config('server', req), // server ip, that's us
             giaddr: req.giaddr, // 'giaddr' from client DHCPREQUEST message
             chaddr: req.chaddr, // 'chaddr' from client DHCPREQUEST message

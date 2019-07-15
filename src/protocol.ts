@@ -38,24 +38,24 @@ export const parse = function (buf: Buffer): DHCPMessage {
 }
 
 export const format = function (data: DHCPMessage): SeqBuffer {
-  const sb = new SeqBuffer();
-  sb.addUInt8(data.op);
-  sb.addUInt8(data.htype);
-  sb.addUInt8(data.hlen);
-  sb.addUInt8(data.hops);
-  sb.addUInt32(data.xid);
-  sb.addUInt16(data.secs);
-  sb.addUInt16(data.flags);
-  sb.addIP(data.ciaddr);
-  sb.addIP(data.yiaddr);
-  sb.addIP(data.siaddr);
-  sb.addIP(data.giaddr);
-  sb.addMac(data.chaddr);
-  sb.addUTF8Pad(data.sname, 64);
-  sb.addUTF8Pad(data.file, 128);
-  sb.addUInt32(0x63825363);
-  sb.addOptions(data.options);
-  sb.addUInt8(255); // Mark end
+  return new SeqBuffer()
+  .addUInt8(data.op)
+  .addUInt8(data.htype)
+  .addUInt8(data.hlen)
+  .addUInt8(data.hops)
+  .addUInt32(data.xid)
+  .addUInt16(data.secs)
+  .addUInt16(data.flags)
+  .addIP(data.ciaddr)
+  .addIP(data.yiaddr)
+  .addIP(data.siaddr)
+  .addIP(data.giaddr)
+  .addMac(data.chaddr)
+  .addUTF8Pad(data.sname, 64)
+  .addUTF8Pad(data.file, 128)
+  .addUInt32(0x63825363)
+  .addOptions(data.options)
+  .addUInt8(255); // Mark end
   // TODO: Must options packet be >= 68 byte and 4 byte alligned?
-  return sb;
+  // return sb;
 }

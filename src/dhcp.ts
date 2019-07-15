@@ -13,8 +13,8 @@ import { Client } from './Client';
 
 
 exports.DHCP = exports.default = module.exports = {
-  createServer: function (opt: ServerConfig): Server {
-    return new Server(opt);
+  createServer: function (opt: ServerConfig, listenOnly?: boolean): Server {
+    return new Server(opt, listenOnly);
   },
   createClient: function (opt: ClientConfig): Client {
     return new Client(opt);
@@ -22,6 +22,9 @@ exports.DHCP = exports.default = module.exports = {
   createBroadcastHandler: function (): Server {
     return new Server(null, true);
   },
+  /**
+   * register extra option
+   */
   addOption: OptionsModel.addOption,
   //DHCPDISCOVER: DHCP53Code.DHCPDISCOVER,
   //DHCPOFFER: DHCP53Code.DHCPOFFER,
