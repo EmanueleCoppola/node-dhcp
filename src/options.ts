@@ -14,7 +14,7 @@ import * as Tools from './tools';
 // RFC 1533: https://tools.ietf.org/html/rfc1533
 // RFC 2132: https://www.ietf.org/rfc/rfc2132.txt
 // RFC 3011: https://tools.ietf.org/html/rfc3011
-interface OptionMeta {
+export interface OptionMeta {
   name: string,
   type: 'IP' | 'Int32' | 'UInt32' | 'UInt16' | 'UInt8' | 'IPs' | 'IP' | 'ASCII' | 'Bool' | 'UInt16s' | 'UInt8s' | 'any',
   attr?: string,
@@ -479,6 +479,16 @@ export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
    82: { // RFC 3046, relayAgentInformation
    
    },*/
+  112: {
+    name: 'Netinfo Address',
+    type: 'ASCII',
+    config: 'netinfoServerAddress'
+  },
+  113: {
+    name: 'Netinfo Tag',
+    type: 'ASCII',
+    config: 'netinfoServerTag'
+  },
   116: {// RFC 2563: https://tools.ietf.org/html/rfc2563
     name: 'Auto-Configure',
     type: 'UInt8',
@@ -503,6 +513,11 @@ export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
     name: 'Classless Route Option Format',
     type: 'IPs',
     config: 'classlessRoute'
+  },
+  125: {
+    name: 'Vendor Identified Vendor-Specific Information',
+    type: 'ASCII',
+    config: 'vivso'
   },
   145: {// RFC 6704: https://tools.ietf.org/html/rfc6704
     name: 'Forcerenew Nonce',

@@ -5,8 +5,8 @@
  * Copyright (c) 2017, Robert Eisele (robert@xarg.org)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  **/
-import {optsMeta} from './options';
-const Options = optsMeta;
+import { optsMeta, OptionMeta } from './options';
+//const Options: { [key: number]: OptionMeta } = optsMeta;
 
 function trimZero(str: string): string {
   const pos = str.indexOf('\x00');
@@ -17,6 +17,7 @@ export default class SeqBuffer {
   public _data: Buffer;
   public _r: number;
   public _w: number;
+
   constructor(buf?: Buffer, len?: number) {
     this._data = buf || Buffer.alloc(len || 1500); // alloc() fills the buffer with '0'
     this._r = 0;
@@ -31,14 +32,14 @@ export default class SeqBuffer {
     return this._data.readUInt8(this._r++);
   };
   //
-  addInt8(val): void {
+  addInt8(val: number): void {
     this._w = this._data.writeInt8(val, this._w);
   };
   getInt8(): number {
     return this._data.readInt8(this._r++);
   };
 
-  addUInt16(val): void {
+  addUInt16(val: number): void {
     this._w = this._data.writeUInt16BE(val, this._w);
   };
 
@@ -46,31 +47,31 @@ export default class SeqBuffer {
     return this._data.readUInt16BE((this._r += 2) - 2);
   };
   //
-  addInt16(val): void {
+  addInt16(val: number): void {
     this._w = this._data.writeInt16BE(val, this._w);
   };
   getInt16(): number {
     return this._data.readInt16BE((this._r += 2) - 2);
   };
   //
-  addUInt32(val): void {
+  addUInt32(val: number): void {
     this._w = this._data.writeUInt32BE(val, this._w);
   };
   getUInt32(): number {
     return this._data.readUInt32BE((this._r += 4) - 4);
   };
   //
-  addInt32(val): void {
+  addInt32(val: number): void {
     this._w = this._data.writeInt32BE(val, this._w);
   };
   getInt32(): number {
     return this._data.readInt32BE((this._r += 4) - 4);
   };
   //
-  addUTF8(val): void {
+  addUTF8(val: string): void {
     this._w += this._data.write(val, this._w, 'utf8');
   };
-  addUTF8Pad(val, fixLen): void {
+  addUTF8Pad(val:string, fixLen: number): void {
     let len = Buffer.from(val, 'utf8').length;
     for (let n = 0; len > fixLen; n++) {
       val = val.slice(0, fixLen - n); // Truncate as long as character length is > fixLen
@@ -85,10 +86,10 @@ export default class SeqBuffer {
     return trimZero(this._data.toString('utf8', this._r, this._r += len));
   };
   //
-  addASCII(val): void {
+  addASCII(val: string): void {
     this._w += this._data.write(val, this._w, 'ascii');
   };
-  addASCIIPad(val, fixLen): void {
+  addASCIIPad(val:string, fixLen: number): void {
     this._data.fill(0, this._w, this._w + fixLen);
     this._data.write(val.slice(0, fixLen), this._w, 'ascii');
     this._w += fixLen;
@@ -97,17 +98,14 @@ export default class SeqBuffer {
     return trimZero(this._data.toString('ascii', this._r, this._r += len));
   };
   //
-  addIP(ip): void {
+  addIP(ip: string): void {
     const self = this;
     const octs = ip.split('.');
-
     if (octs.length !== 4) {
       throw new Error('Invalid IP address ' + ip);
     }
-
-    for (let val of octs) {
-
-      val = parseInt(val, 10);
+    for (let txt of octs) {
+      let val = parseInt(txt, 10);
       if (0 <= val && val < 256) {
         self.addUInt8(val);
       } else {
@@ -122,7 +120,7 @@ export default class SeqBuffer {
       '.' + this.getUInt8();
   };
   //
-  addIPs(ips): void {
+  addIPs(ips: string | string[]): void {
     if (ips instanceof Array) {
       for (let ip of ips) {
         this.addIP(ip);
@@ -161,7 +159,7 @@ export default class SeqBuffer {
     this.addUInt32(0);
     this.addUInt16(0);
   };
-  getMAC(htype, hlen) : string{
+  getMAC(htype: number, hlen: number): string {
     const mac = this._data.toString('hex', this._r, this._r += hlen);
     if (htype !== 1 || hlen !== 6) {
       throw new Error('Invalid hardware address (len=' + hlen + ', type=' + htype + ')');
@@ -182,7 +180,7 @@ export default class SeqBuffer {
       if (!opts.hasOwnProperty(k))
         continue;
       let i = Number(k);
-      const opt = Options[i];
+      const opt = optsMeta[i];
       let len = 0;
       let val = opts[i];
       if (val === null) {
@@ -190,11 +188,11 @@ export default class SeqBuffer {
       }
       switch (opt.type) {
         case 'UInt8':
-        case 'Int8':
+          //case 'Int8':
           len = 1;
           break;
         case 'UInt16':
-        case 'Int16':
+          //case 'Int16':
           len = 2;
           break;
         case 'UInt32':
@@ -215,15 +213,15 @@ export default class SeqBuffer {
             len = 255;
           }
           break;
-        case 'UTF8':
-          len = Buffer.from(val, 'utf8').length;
-          if (len === 0)
-            continue; // Min length has to be 1
-          for (let n = 0; len > 255; n++) {
-            val = val.slice(0, 255 - n); // Truncate as long as character length is > 255
-            len = Buffer.from(val, 'utf8').length;
-          }
-          break;
+        //case 'UTF8':
+        //  len = Buffer.from(val, 'utf8').length;
+        //  if (len === 0)
+        //    continue; // Min length has to be 1
+        //  for (let n = 0; len > 255; n++) {
+        //    val = val.slice(0, 255 - n); // Truncate as long as character length is > 255
+        //    len = Buffer.from(val, 'utf8').length;
+        //  }
+        //  break;
         case 'Bool':
           if (!(val === true || val === 1 || val === '1' || val === 'true' || val === 'TRUE' || val === 'True'))
             continue;
@@ -238,13 +236,10 @@ export default class SeqBuffer {
         default:
           throw new Error('No such type ' + opt.type);
       }
-
       // Write code
       this.addUInt8(i);
-
       // Write length
       this.addUInt8(len);
-
       // Write actual data
       this['add' + opt.type](val);
     }
@@ -261,8 +256,10 @@ export default class SeqBuffer {
         this._r++; // NOP
       } else {
         let len = this.getUInt8();
-        if (opt in Options) {
-          options[opt] = this['get' + Options[opt].type](len);
+        let fullType: OptionMeta = optsMeta[opt];
+        if (fullType) {
+          let { type } = optsMeta[opt];
+          options[opt] = this[`get${type}`](len);
         } else {
           this._r += len;
           console.error('Option ' + opt + ' not known');
@@ -272,8 +269,7 @@ export default class SeqBuffer {
     return options;
   };
   //
-  addUInt8s(arr): void {
-
+  addUInt8s(arr: number[]): void {
     if (arr instanceof Array) {
       for (let i = 0; i < arr.length; i++) {
         this.addUInt8(arr[i]);
@@ -289,7 +285,7 @@ export default class SeqBuffer {
     }
     return ret;
   };
-  addUInt16s(arr): void {
+  addUInt16s(arr: number[]): void {
     if (arr instanceof Array) {
       for (let i = 0; i < arr.length; i++) {
         this.addUInt16(arr[i]);

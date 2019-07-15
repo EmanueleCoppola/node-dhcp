@@ -78,24 +78,25 @@ export class Client extends EventEmitter {
     this._state = new Lease();
   }
 
-  
+
   config(key: string): string | number | boolean | number[] | string[] | Function {
     if (key === 'mac') {
       if (this._conf.mac === undefined) {
+        let macs = [];
         const inets = networkInterfaces();
-        for (let inet in inets) {
-          const addresses = inets[inet];
-          for (let address in addresses) {
-            if (addresses[address].family === 'IPv4' && !addresses[address].internal) {
-              if (this._conf.mac === undefined) {
-                this._conf.mac = addresses[address].mac;
-              } else {
-                throw new Error('Too many network interfaces, set mac address manually:\n\tclient = dhcp.createClient({mac: "12:23:34:45:56:67"});');
-              }
-            }
-          }
-        }
+        Object.values(inets).forEach(inet => {
+          inet.filter(add => add.family === 'IPv4' && !add.internal)
+            .forEach(add => macs.push(add.mac))
+        });
+
+        if (macs.length > 1)
+          throw new Error(`${macs.length} network interfaces detected, set mac address manually from\n - ${macs.join('\n - ')}\n\tclient = dhcp.createClient({mac: "12:23:34:45:56:67"});`);
+        if (macs.length == 1)
+          this._conf.mac = macs[0];
+        else
+          throw new Error(`No network interfaces detected, set mac address manually:\n\tclient = dhcp.createClient({mac: "12:23:34:45:56:67"});`);
       }
+
       return this._conf.mac;
     } else if (key === 'features') {
       // Default list we request
@@ -118,8 +119,8 @@ export class Client extends EventEmitter {
           defaultFeatures.push(id);
           fSet.add(id);
         }
-        return defaultFeatures;
       }
+      return defaultFeatures;
     } else {
       throw new Error('Unknown config key ' + key);
     }
@@ -127,7 +128,8 @@ export class Client extends EventEmitter {
 
   sendDiscover(): Promise<number> {
     //console.log('Send Discover');
-    const mac = this.config('mac');
+    const mac = <string>this.config('mac');
+    const features = <number[]>this.config('features');
     // Formulate the response object
     const ans: DHCPMessage = {
       ...ansCommon,
@@ -139,7 +141,7 @@ export class Client extends EventEmitter {
         [DHCPOption.maxMessageSize]: 1500, // Max message size
         [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPDISCOVER,
         [DHCPOption.dhcpClientIdentifier]: <string>mac, // MAY
-        [DHCPOption.dhcpParameterRequestList]: <number[]>this.config('features') // MAY
+        [DHCPOption.dhcpParameterRequestList]: features // MAY
         // TODO: requested IP optional
       }
     };
@@ -195,7 +197,7 @@ export class Client extends EventEmitter {
     // INADDR_ANY : 68 -> INADDR_BROADCAST : 67
     return this._send(INADDR_BROADCAST, ans);
   };
-  handleAck(req: DHCPMessage) : void {
+  handleAck(req: DHCPMessage): void {
     if (req.options[DHCPOption.dhcpMessageType] === DHCP53Code.DHCPACK) {
       // We now know the IP for sure
       //console.log('Handle ACK', req);
