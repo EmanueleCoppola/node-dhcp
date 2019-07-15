@@ -45,6 +45,7 @@
     "test": "mocha tests/*.js"
   },
   "devDependencies": {
+    "@types/node": "^12.6.2",
     "mocha": "*",
     "should": "*"
   },

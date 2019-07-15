@@ -9,17 +9,26 @@
  * enum: Represents a map of possible enum for this option
  */
 
-const Tools = require('./tools.js');
+import * as Tools from './tools';
 
 // RFC 1533: https://tools.ietf.org/html/rfc1533
 // RFC 2132: https://www.ietf.org/rfc/rfc2132.txt
 // RFC 3011: https://tools.ietf.org/html/rfc3011
-const opts = {
+interface OptionMeta {
+  name: string,
+  type: 'IP' | 'Int32' | 'UInt32' | 'UInt16' | 'UInt8' | 'IPs' | 'IP' | 'ASCII' | 'Bool' | 'UInt16s' | 'UInt8s' | 'any',
+  attr?: string,
+  enum?: { [key: number]: string }
+  config?: string,
+  default?: Function | string | boolean | number | string[];
+}
+
+export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
   1: {// RFC 2132
     name: 'Subnet Mask',
     type: 'IP',
     config: 'netmask',
-    default: function() {
+    default: function () {
 
       // Default is the minimal CIDR for the given range
 
@@ -39,7 +48,7 @@ const opts = {
     name: 'Router',
     type: 'IPs',
     config: 'router',
-    default: function() {
+    default: function () {
 
       // Let's assume the router is the first host of the range if we don't know better
       // Maybe we should calculate the actual host of the subnet instead of assuming the user made it right
@@ -182,7 +191,7 @@ const opts = {
     name: 'Broadcast Address',
     type: 'IP',
     config: 'broadcast',
-    default: function() {
+    default: function () {
 
       const range = this.config('range');
       const ip = range[0]; // range begin is obviously a valid ip
@@ -328,6 +337,7 @@ const opts = {
   52: {
     name: 'Option Overload',
     type: 'UInt8',
+    config: 'dhcpOptionOverload',
     enum: {
       1: 'file',
       2: 'sname',
@@ -337,6 +347,7 @@ const opts = {
   53: {
     name: 'DHCP Message Type',
     type: 'UInt8',
+    config: 'dhcpMessageType',
     enum: {
       1: 'DHCPDISCOVER',
       2: 'DHCPOFFER',
@@ -355,11 +366,13 @@ const opts = {
   },
   55: {// Sent by client to show all things the client wants
     name: 'Parameter Request List',
+    config: 'dhcpParameterRequestList',
     type: 'UInt8s',
     attr: 'requestParameter'
   },
   56: {// Error message sent in DHCPNAK on failure
     name: 'Message',
+    config: 'dhcpMessage',
     type: 'ASCII'
   },
   57: {
@@ -383,11 +396,13 @@ const opts = {
   60: {// RFC 2132: Sent by client to identify type of a client
     name: 'Vendor Class-Identifier',
     type: 'ASCII',
+    config: 'vendorClassIdentifier',
     attr: 'vendorClassId' // 'MSFT' (win98, Me, 2000), 'MSFT 98' (win 98, me), 'MSFT 5.0' (win 2000 and up), 'alcatel.noe.0' (alcatel IP touch phone), ...
   },
   61: {// Sent by client to specify their unique identifier, to be used to disambiguate the lease on the server
     name: 'Client-Identifier',
     type: 'ASCII',
+    config: 'dhcpClientIdentifier',
     attr: 'clientId'
   },
   64: {
@@ -458,6 +473,7 @@ const opts = {
   80: {// RFC 4039: http://www.networksorcery.com/enp/rfc/rfc4039.txt
     name: 'Rapid Commit',
     type: 'Bool',
+    //config: 'rapidCommit', // may need removal
     attr: 'rapidCommit'
   }, /*
    82: { // RFC 3046, relayAgentInformation
@@ -470,6 +486,7 @@ const opts = {
       0: 'DoNotAutoConfigure',
       1: 'AutoConfigure'
     },
+    //config: 'autoConfig', // may need removal
     attr: 'autoConfigure'
   },
   118: {// RFC 301
@@ -490,6 +507,7 @@ const opts = {
   145: {// RFC 6704: https://tools.ietf.org/html/rfc6704
     name: 'Forcerenew Nonce',
     type: 'UInt8s',
+    config: 'renewNonce',
     attr: 'renewNonce'
   },
   208: {// https://tools.ietf.org/html/rfc5071
@@ -520,7 +538,8 @@ const opts = {
   },
   1001: {// TODO: Fix my number!
     name: 'Static',
-    config: 'static'
+    config: 'static',
+    type: 'any',
   },
   1002: {// TODO: Fix my number!
     name: 'Random IP',
@@ -531,26 +550,28 @@ const opts = {
 };
 
 // Create inverse config/attr lookup map
-const conf = {};
-const attr = {};
-function addOption(code, opt) {
+const confMapping: { [key: string]: number } = {}; // conf option -> id
+export const attrMapping: { [key: string]: number } = {}; // attr name -> id
 
-  opts[code] = opt;
-
+export function addOption(code: string, opt: OptionMeta): void {
+  optsMeta[code] = opt;
   if (opt.config) {
-    conf[opt.config] = parseInt(code, 10);
+    confMapping[opt.config] = parseInt(code, 10);
   } else if (opt.attr) {
-    conf[opt.attr] = parseInt(code, 10);
+    confMapping[opt.attr] = parseInt(code, 10);
   }
 }
 
-for (let i in opts) {
-  addOption(i, opts[i]);
+
+export function getDHCPId(key: string | number): number {
+  if (typeof (key) === "number")
+    return key;
+  let AsId = Number(key);
+  if (isNaN(AsId))
+    return confMapping[key];
+  return AsId;
 }
 
-module.exports = {
-  opts: opts, // id -> config
-  conf: conf, // conf option -> id
-  attr: attr, // attr name -> id
-  addOption: addOption
-};
+for (let i in optsMeta) {
+  addOption(i, optsMeta[i]);
+}
