@@ -6,11 +6,12 @@
  * Copyright (c) 2019, Chemouni Uriel (uchemouni@gmail.com)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
+/* tslint:disable object-literal-sort-keys */
 
-import { DHCPMessage } from './model';
+import { IDHCPMessage } from './model';
 import SeqBuffer from './seqbuffer';
 
-export const parse = function(buf: Buffer): DHCPMessage {
+export const parse = (buf: Buffer): IDHCPMessage => {
   if (buf.length < 230) { // 230 byte minimum length of DHCP packet
     throw new Error('Received data is too short');
   }
@@ -38,7 +39,7 @@ export const parse = function(buf: Buffer): DHCPMessage {
   };
 };
 
-export const format = function(data: DHCPMessage): SeqBuffer {
+export const format = (data: IDHCPMessage): SeqBuffer => {
   return new SeqBuffer()
   .addUInt8(data.op)
   .addUInt8(data.htype)

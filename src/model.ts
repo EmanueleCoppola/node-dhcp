@@ -4,12 +4,12 @@ type UInt16 = number;
 type UInt32 = number;
 type UInt8 = number;
 
-export interface ClientConfig {
+export interface IClientConfig {
   mac?: string;
   features?: string[];
 }
 
-export interface ServerConfig {
+export interface IServerConfig {
   range: IP[];
   forceOptions: string[]; // Options that need to be sent, even if they were not requested
   randomIP: boolean; // Get random new IP from pool instead of keeping one ip
@@ -31,7 +31,7 @@ export interface ServerConfig {
   bootFile: (req: any, res: any) => string;
 }
 
-export interface DHCPMessage {
+export interface IDHCPMessage {
   op: BootCode;
   htype: UInt8; // number;(htype = sb.getUInt8()), // hardware addr type: 1 for 10mb ethernet
   hlen: UInt8; // hardware addr length: 6 for 10mb ethernet
@@ -47,7 +47,7 @@ export interface DHCPMessage {
   sname: string; // server host name
   file: string; // boot file name
   magicCookie?: UInt32; // contains 99, 130, 83, 99
-  options: DHCPConfig;
+  options: IDHCPConfig;
 }
 
 // RFC1700, hardware
@@ -190,7 +190,7 @@ export enum DHCPEnabled {
   Enabled = 1,
 }
 
-export interface DHCPConfig {
+export interface IDHCPConfig {
   1?: IP;
   2?: Int32;
   3?: IP;

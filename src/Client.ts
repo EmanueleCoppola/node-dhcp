@@ -2,7 +2,7 @@ import * as dgram from 'dgram';
 import { EventEmitter } from 'events';
 import { networkInterfaces } from 'os';
 import { Lease } from './Lease';
-import { BootCode, ClientConfig, DHCP53Code, DHCPConfig, DHCPMessage, DHCPOption, HardwareType } from './model';
+import { BootCode, DHCP53Code, DHCPOption, HardwareType, IClientConfig, IDHCPConfig, IDHCPMessage } from './model';
 import * as OptionsModel from './options';
 import * as Protocol from './protocol';
 import * as Tools from './tools';
@@ -30,16 +30,16 @@ export class Client extends EventEmitter {
   // Socket handle
   private socket: dgram.Socket;
   // Config (cache) object
-  private config: ClientConfig;
+  private config: IClientConfig;
   // Current client state
   private lastLease: Lease;
 
-  constructor(config: ClientConfig) {
+  constructor(config: IClientConfig) {
     super();
     const self = this;
     const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true });
     sock.on('message', (buf: Buffer): any => {
-      let req: DHCPMessage;
+      let req: IDHCPMessage;
       try {
         req = Protocol.parse(buf);
       } catch (e) {
@@ -81,7 +81,9 @@ export class Client extends EventEmitter {
       });
 
       if (macs.length > 1)
-        throw new Error(`${macs.length} network interfaces detected, set mac address manually from\n - ${macs.join('\n - ')}\n\tclient = dhcp.createClient({mac: "12:23:34:45:56:67"});`);
+        throw new Error(`${macs.length} network interfaces detected, set mac address manually from
+ - ${macs.join('\n - ')}
+ \tclient = dhcp.createClient({mac: "12:23:34:45:56:67"});`);
       if (macs.length === 1)
         this.config.mac = macs[0];
       else
@@ -120,7 +122,7 @@ export class Client extends EventEmitter {
     const mac = this.getConfigMac() as string;
     const features = this.getConfigFeatures();
     // Formulate the response object
-    const ans: DHCPMessage = {
+    const ans: IDHCPMessage = {
       ...ansCommon,
       chaddr: mac,
       ciaddr: INADDR_ANY, // 0 for DHCPDISCOVER, other implementations send currently assigned IP - but we follow RFC
@@ -142,7 +144,7 @@ export class Client extends EventEmitter {
     return this.send(INADDR_BROADCAST, ans);
   }
 
-  public handleOffer(req: DHCPMessage) {
+  public handleOffer(req: IDHCPMessage) {
     // console.log('Handle Offer', req);
 
     // Select an offer out of all offers
@@ -158,11 +160,11 @@ export class Client extends EventEmitter {
     }
   }
 
-  public sendRequest(req: DHCPMessage): Promise<number> {
+  public sendRequest(req: IDHCPMessage): Promise<number> {
     // console.log('Send Request');
     // Formulate the response object
     const mac = this.getConfigMac();
-    const ans: DHCPMessage = {
+    const ans: IDHCPMessage = {
       ...ansCommon,
       chaddr: mac,
       ciaddr: INADDR_ANY, // 0 for DHCPREQUEST
@@ -189,7 +191,7 @@ export class Client extends EventEmitter {
     return this.send(INADDR_BROADCAST, ans);
   }
 
-  public handleAck(req: DHCPMessage): void {
+  public handleAck(req: IDHCPMessage): void {
     if (req.options[DHCPOption.dhcpMessageType] === DHCP53Code.DHCPACK) {
       // We now know the IP for sure
       // console.log('Handle ACK', req);
@@ -218,7 +220,7 @@ export class Client extends EventEmitter {
       // TODO: set renew & rebind timer
 
       const options = req.options;
-      this.lastLease.options = {} as DHCPConfig;
+      this.lastLease.options = {} as IDHCPConfig;
 
       // Map all options from request
       for (const id in options) {
@@ -264,10 +266,10 @@ export class Client extends EventEmitter {
     }
   }
 
-  public sendRelease(req: DHCPMessage): Promise<number> {
+  public sendRelease(req: IDHCPMessage): Promise<number> {
     // console.log('Send Release');
     // Formulate the response object
-    const ans: DHCPMessage = {
+    const ans: IDHCPMessage = {
       ...ansCommon,
       chaddr: this.getConfigMac(),
       ciaddr: this.lastLease.server, // this.getConfig('server'),
@@ -303,7 +305,7 @@ export class Client extends EventEmitter {
         [DHCPOption.server]: this.lastLease.server, // MUST server identifier
       },
       xid: this.lastLease.xid++, // Selected by client on DHCPRELEASE
-    } as DHCPMessage;
+    } as IDHCPMessage;
     this.lastLease.state = 'RENEWING';
     this.lastLease.tries = 0;
     // Send the actual data
@@ -314,7 +316,7 @@ export class Client extends EventEmitter {
     // console.log('Send Rebind');
     // TODO: check ans against rfc
     // Formulate the response object
-    const ans: DHCPMessage = {
+    const ans: IDHCPMessage = {
       ...ansCommon,
       chaddr: this.getConfigMac(),
       ciaddr: this.lastLease.server, // <string>this.getConfig('server'),
@@ -349,7 +351,7 @@ export class Client extends EventEmitter {
     return new Promise((resolve) => that.socket.close(resolve));
   }
 
-  private send(host: string, data: DHCPMessage): Promise<number> {
+  private send(host: string, data: IDHCPMessage): Promise<number> {
     const { socket } = this;
     return new Promise((resolve, reject) => {
       const sb = Protocol.format(data);

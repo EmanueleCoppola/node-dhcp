@@ -7,17 +7,16 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
 
-import * as OptionsModel from './options';
-import { ServerConfig, ClientConfig } from './model';
-import { Server } from './Server';
 import { Client } from './Client';
-
+import { IClientConfig, IServerConfig } from './model';
+import * as OptionsModel from './options';
+import { Server } from './Server';
 
 exports.DHCP = exports.default = module.exports = {
   addOption: OptionsModel.addOption,
   createBroadcastHandler: (): Server => new Server(null, true),
-  createClient: (opt: ClientConfig): Client => new Client(opt),
-  createServer: (opt: ServerConfig, listenOnly?: boolean): Server => new Server(opt, listenOnly),
+  createClient: (opt: IClientConfig): Client => new Client(opt),
+  createServer: (opt: IServerConfig, listenOnly?: boolean): Server => new Server(opt, listenOnly),
   /**
    * register extra option
    */

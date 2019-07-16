@@ -1,7 +1,7 @@
 import * as dgram from 'dgram';
 import { EventEmitter } from 'events';
 import { Lease } from './Lease';
-import { BootCode, DHCP53Code, DHCPConfig, DHCPMessage, DHCPOption, HardwareType, ServerConfig } from './model';
+import { BootCode, DHCP53Code, DHCPOption, HardwareType, IDHCPConfig, IDHCPMessage, IServerConfig } from './model';
 import * as OptionsModel from './options';
 import { random } from './prime';
 import * as Protocol from './protocol';
@@ -26,16 +26,16 @@ export class Server extends EventEmitter {
     // Socket handle
     private socket: dgram.Socket;
     // Config (cache) object
-    private config: ServerConfig;
+    private config: IServerConfig;
     // All mac -> IP mappings, we currently have assigned or blacklisted
     private leaseState: { [key: string]: Lease };
 
-    constructor(config: ServerConfig, listenOnly?: boolean) {
+    constructor(config: IServerConfig, listenOnly?: boolean) {
         super();
         const self = this;
         const socket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
         socket.on('message', (buf: Buffer) => {
-            let request: DHCPMessage;
+            let request: IDHCPMessage;
             try {
                 request = Protocol.parse(buf);
             } catch (e) {
@@ -70,15 +70,15 @@ export class Server extends EventEmitter {
         this.leaseState = {};
     }
 
-    public getConfigServer(request: DHCPMessage): string {
+    public getConfigServer(request: IDHCPMessage): string {
         return this.getConfig('server', request) as string;
     }
 
-    public getConfigBroadcast(request: DHCPMessage): string {
+    public getConfigBroadcast(request: IDHCPMessage): string {
         return this.getConfig('broadcast', request) as string;
     }
 
-    public getConfig(key: string, request: DHCPMessage): any {
+    public getConfig(key: string, request: IDHCPMessage): any {
         const optId: number = OptionsModel.getDHCPId(key);
         // If config setting is set by user
         let val = this.config[key];
@@ -125,7 +125,7 @@ export class Server extends EventEmitter {
         return val;
     }
 
-    public getOptions(request: DHCPMessage, pre: DHCPConfig, requireds: number[], requested?: any): DHCPConfig {
+    public getOptions(request: IDHCPMessage, pre: IDHCPConfig, requireds: number[], requested?: any): IDHCPConfig {
         for (const required of requireds) {
             // Check if option id actually exists
             if (OptionsModel.optsMeta[required] !== undefined) {
@@ -172,7 +172,7 @@ export class Server extends EventEmitter {
         return pre;
     }
 
-    public selectAddress(clientMAC: string, request: DHCPMessage): string {
+    public selectAddress(clientMAC: string, request: IDHCPMessage): string {
         /*
          * IP Selection algorithm:
          *
@@ -258,7 +258,7 @@ export class Server extends EventEmitter {
         }
     }
 
-    public handleDiscover(request: DHCPMessage): Promise<number> {
+    public handleDiscover(request: IDHCPMessage): Promise<number> {
         // console.log('Handle Discover', req);
         const lease = this.leaseState[request.chaddr] = this.leaseState[request.chaddr] || new Lease();
         lease.address = this.selectAddress(request.chaddr, request);
@@ -268,7 +268,7 @@ export class Server extends EventEmitter {
         return this.sendOffer(request);
     }
 
-    public sendOffer(request: DHCPMessage): Promise<number> {
+    public sendOffer(request: IDHCPMessage): Promise<number> {
         // console.log('Send Offer');
         // Formulate the response object
         const siaddr = this.getConfigServer(request); // next server in bootstrap. That's us
@@ -278,7 +278,7 @@ export class Server extends EventEmitter {
         },
             [DHCPOption.netmask, DHCPOption.router, DHCPOption.leaseTime, DHCPOption.server, DHCPOption.dns],
             request.options[DHCPOption.dhcpParameterRequestList]);
-        const ans: DHCPMessage = {
+        const ans: IDHCPMessage = {
             op: BootCode.BOOTREPLY,
             ...ansCommon,
             chaddr: request.chaddr, // Client mac address
@@ -296,7 +296,7 @@ export class Server extends EventEmitter {
         return this._send(broadcast, ans);
     }
 
-    public handleRequest(request: DHCPMessage): Promise<number> {
+    public handleRequest(request: IDHCPMessage): Promise<number> {
         // console.log('Handle Request', req);
         const lease = this.leaseState[request.chaddr] = this.leaseState[request.chaddr] || new Lease();
         lease.address = this.selectAddress(request.chaddr, request);
@@ -307,7 +307,7 @@ export class Server extends EventEmitter {
         return this.sendAck(request);
     }
 
-    public sendAck(request: DHCPMessage): Promise<number> {
+    public sendAck(request: IDHCPMessage): Promise<number> {
         // console.log('Send ACK');
         // Formulate the response object
         const options = this.getOptions(request, {
@@ -315,7 +315,7 @@ export class Server extends EventEmitter {
         },
             [DHCPOption.netmask, DHCPOption.router, DHCPOption.leaseTime, DHCPOption.server, DHCPOption.dns],
             request.options[DHCPOption.dhcpParameterRequestList]);
-        const ans: DHCPMessage = {
+        const ans: IDHCPMessage = {
             op: BootCode.BOOTREPLY,
             ...ansCommon,
             chaddr: request.chaddr, // 'chaddr' from client DHCPREQUEST message
@@ -333,14 +333,14 @@ export class Server extends EventEmitter {
         return this._send(this.getConfigBroadcast(request), ans);
     }
 
-    public sendNak(request: DHCPMessage): Promise<number> {
+    public sendNak(request: IDHCPMessage): Promise<number> {
         // console.log('Send NAK');
         // Formulate the response object
         const options = this.getOptions(request, {
             [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPNAK,
         },
             [DHCPOption.server]);
-        const ans: DHCPMessage = {
+        const ans: IDHCPMessage = {
             ...ansCommon,
             chaddr: request.chaddr, // 'chaddr' from client DHCPREQUEST message
             ciaddr: INADDR_ANY,
@@ -379,7 +379,7 @@ export class Server extends EventEmitter {
         // Send ack
     }
 
-    private _send(host: string, data: DHCPMessage): Promise<number> {
+    private _send(host: string, data: IDHCPMessage): Promise<number> {
         const { socket } = this;
         return new Promise((resolve, reject) => {
             const sb = Protocol.format(data);

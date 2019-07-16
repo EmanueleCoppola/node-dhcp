@@ -7,7 +7,6 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
 import { OptionMeta, optsMeta } from './options';
-// const Options: { [key: number]: OptionMeta } = optsMeta;
 
 function trimZero(str: string): string {
   const pos = str.indexOf('\x00');
