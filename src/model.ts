@@ -33,12 +33,12 @@ export interface ServerConfig {
 
 export interface DHCPMessage {
   op: BootCode;
-  htype: UInt8;// number;(htype = sb.getUInt8()), // hardware addr type: 1 for 10mb ethernet
+  htype: UInt8; // number;(htype = sb.getUInt8()), // hardware addr type: 1 for 10mb ethernet
   hlen: UInt8; // hardware addr length: 6 for 10mb ethernet
   hops: UInt8; // relay hop count
   xid: UInt32; // session id, initialized by client
   secs: UInt16; // seconds since client began address acquistion
-  flags: UInt16;// 
+  flags: UInt16;
   ciaddr: IP; // client IP when BOUND, RENEW, REBINDING state
   yiaddr: IP; // 'your' client IP
   siaddr: IP; // next server to use in boostrap, returned in OFFER & ACK
@@ -155,8 +155,8 @@ export enum DHCPOption {
   maxMessageSize = 57,
   renewalTime = 58,
   rebindingTime = 59,
-  vendorClassIdentifier = 60,// RFC 2132: Sent by client to identify type of a client
-  dhcpClientIdentifier = 61,// Sent by client to specify their unique identifier, to be used to disambiguate the lease on the server
+  vendorClassIdentifier = 60, // RFC 2132: Sent by client to identify type of a client
+  dhcpClientIdentifier = 61, // Sent by client to specify their unique identifier, to be used to disambiguate the lease on the server
   nisPlusDomain = 64,
   nisPlusServer = 65,
   tftpServer = 66,
@@ -171,7 +171,7 @@ export enum DHCPOption {
   streetTalkServer = 75,
   streetTalkDAServer = 76,
   rapidCommit = 80, // RFC 4039: http://www.networksorcery.com/enp/rfc/rfc4039.txt
-  autoConfig = 116,// RFC 2563: https://tools.ietf.org/html/rfc2563
+  autoConfig = 116, // RFC 2563: https://tools.ietf.org/html/rfc2563
   subnetSelection = 118,
   domainSearchList = 119,
   classlessRoute = 121,
@@ -210,7 +210,7 @@ export interface DHCPConfig {
   17?: string;
   18?: string;
   19?: DHCPEnabled;
-  20?: Boolean;
+  20?: boolean;
   21?: IP[];
   22?: UInt16;
   23?: UInt8;
@@ -224,12 +224,12 @@ export interface DHCPConfig {
   31?: DHCPEnabled;
   32?: IP;
   33?: IP[];
-  34?: Boolean;
+  34?: boolean;
   35?: UInt32;
-  36?: Boolean;
+  36?: boolean;
   37?: UInt8;
-  38?: UInt32
-  39?: Boolean;
+  38?: UInt32;
+  39?: boolean;
   40?: string;
   41?: IP[];
   42?: IP[];
@@ -244,8 +244,8 @@ export interface DHCPConfig {
   51?: UInt32;
   52?: DHCP52Code;
   53?: DHCP53Code;
-  54?: IP
-  55?: UInt8[],
+  54?: IP;
+  55?: UInt8[];
   56?: string;
   57?: UInt16;
   58?: UInt32;
@@ -253,7 +253,7 @@ export interface DHCPConfig {
   60?: string;
   61?: string;
   64?: string;
-  65?: IP[],
+  65?: IP[];
   66?: string;
   67?: string;
   68?: string;
@@ -266,20 +266,20 @@ export interface DHCPConfig {
   75?: IP[];
   76?: IP[];
   80?: boolean;
-  //82?: { // RFC 3046, relayAgentInformation
+  // 82?: { // RFC 3046, relayAgentInformation
   116?: DHCP116Code;
   118?: IP;
   119?: string;
-  121?: IP[]
+  121?: IP[];
   145?: UInt8[];
   208?: UInt32;
   209?: string;
-  210?: string
+  210?: string;
   211?: UInt32;
   252?: string;
-  //1001: {// TODO: Fix my number!
+  // 1001: {// TODO: Fix my number!
   //  name: 'Static',
   //  config: 'static'
-  //},
+  // },
   1002?: boolean;
-};
+}

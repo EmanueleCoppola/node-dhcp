@@ -1,11 +1,11 @@
-import { EventEmitter } from "events";
-import * as Protocol from './protocol';
 import * as dgram from 'dgram';
+import { EventEmitter } from 'events';
+import { Lease } from './Lease';
+import { BootCode, DHCP53Code, DHCPConfig, DHCPMessage, DHCPOption, HardwareType, ServerConfig } from './model';
 import * as OptionsModel from './options';
-import { DHCP53Code, BootCode, DHCPMessage, HardwareType, ServerConfig, DHCPOption, DHCPConfig } from './model';
-import { parseIp, formatIp } from './tools';
-import { Lease } from "./Lease";
-import { random } from "./prime";
+import { random } from './prime';
+import * as Protocol from './protocol';
+import { formatIp, parseIp } from './tools';
 
 const INADDR_ANY = '0.0.0.0';
 const SERVER_PORT = 67;
@@ -20,7 +20,7 @@ const ansCommon = {
     secs: 0, // 0 or seconds since DHCP process started
     sname: '', // unused
     file: '', // unused
-}
+};
 
 export class Server extends EventEmitter {
     // Socket handle
@@ -31,7 +31,7 @@ export class Server extends EventEmitter {
     private leaseState: { [key: string]: Lease };
 
     constructor(config: ServerConfig, listenOnly?: boolean) {
-        super()
+        super();
         const self = this;
         const socket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
         socket.on('message', (buf: Buffer) => {
@@ -50,7 +50,7 @@ export class Server extends EventEmitter {
             self.emit('message', request);
             if (!listenOnly) {
                 // Handle request
-                const mode = request.options[DHCPOption.dhcpMessageType]
+                const mode = request.options[DHCPOption.dhcpMessageType];
                 switch (mode) {
                     case DHCP53Code.DHCPDISCOVER: // 1.
                         self.handleDiscover(request);
@@ -59,7 +59,7 @@ export class Server extends EventEmitter {
                         self.handleRequest(request);
                         break;
                     default:
-                        console.error("Not implemented method", request.options[53]);
+                        console.error('Not implemented method', request.options[53]);
                 }
             }
         });
@@ -112,7 +112,7 @@ export class Server extends EventEmitter {
         if (OptionsModel.optsMeta[optId].enum) {
             const values = OptionsModel.optsMeta[optId].enum;
             // Check if value is an actual enum string
-            for (let i in values)
+            for (const i in values)
                 if (values[i] === val)
                     return Number(i);
             // Okay, check  if it is the numeral value of the enum
@@ -200,7 +200,7 @@ export class Server extends EventEmitter {
         // Is there a static binding?
         const _static = this.getConfig('static', request) as { [key: string]: string } | Function;
 
-        if (typeof _static === "function") {
+        if (typeof _static === 'function') {
             const staticResult = _static(clientMAC, request);
             if (staticResult)
                 return staticResult;
@@ -333,7 +333,7 @@ export class Server extends EventEmitter {
     }
 
     public sendNak(request: DHCPMessage): Promise<number> {
-        //console.log('Send NAK');
+        // console.log('Send NAK');
         // Formulate the response object
         const ans: DHCPMessage = {
             ...ansCommon,
@@ -354,14 +354,6 @@ export class Server extends EventEmitter {
         return this._send(this.getConfigBroadcast(request), ans);
     }
 
-    private handleRelease() {
-        /** TODO */
-    }
-
-    private handleRenew() {
-        // Send ack
-    }
-
     public listen(port: number, host: string): Promise<void> {
         const { socket } = this;
         return new Promise((resolve) => {
@@ -375,6 +367,14 @@ export class Server extends EventEmitter {
     public close(): Promise<any> {
         const that = this;
         return new Promise((resolve) => that.socket.close(resolve));
+    }
+
+    private handleRelease() {
+        /** TODO */
+    }
+
+    private handleRenew() {
+        // Send ack
     }
 
     private _send(host: string, data: DHCPMessage): Promise<number> {
