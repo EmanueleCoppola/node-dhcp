@@ -14,6 +14,7 @@ import { Server } from './Server';
 import { ServerConfig } from './ServerConfig';
 
 export {DHCPOptions} from './DHCPOptions';
+export {OptionId} from './model';
 
 export const createBroadcastHandler = (): Server => new Server(null, true);
 export const createClient = (opt: any): Client => new Client(new ClientConfig(opt));
