@@ -1,4 +1,4 @@
-import { IDHCPConfig } from './model';
+import { DHCPOptions } from './model';
 
 export type LeaseState = 'RENEWING' | 'RELEASED' | 'REBINDING' | 'SELECTING' | 'REQUESTING' | 'BOUND' | 'REBOOTING' | 'INIT' | 'OFFERED';
 
@@ -16,7 +16,7 @@ export class Lease {
   public state?: LeaseState;
   public server: string; // The server we got our config from
   public address: IP; // actual IP address we got
-  public options: IDHCPConfig; // object of all other options we got
+  public options: DHCPOptions; // object of all other options we got
   public tries: number = 0; // number of tries in order to complete a state
   public xid: number = 1; // unique id, incremented with every request
   public router: string;

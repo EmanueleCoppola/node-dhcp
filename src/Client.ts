@@ -1,8 +1,9 @@
 import * as dgram from 'dgram';
 import { EventEmitter } from 'events';
 import { networkInterfaces } from 'os';
+import { ClientConfig } from './ClientConfig';
 import { Lease } from './Lease';
-import { BootCode, DHCP53Code, DHCPOption, HardwareType, IClientConfig, IDHCPConfig, IDHCPMessage } from './model';
+import { BootCode, DHCP53Code, DHCPOptions, HardwareType, IDHCPMessage, OptionId } from './model';
 import * as OptionsModel from './options';
 import * as Protocol from './protocol';
 import * as Tools from './tools';
@@ -30,11 +31,11 @@ export class Client extends EventEmitter {
   // Socket handle
   private socket: dgram.Socket;
   // Config (cache) object
-  private config: IClientConfig;
+  private config: ClientConfig;
   // Current client state
   private lastLease: Lease;
 
-  constructor(config: IClientConfig) {
+  constructor(config: ClientConfig) {
     super();
     const self = this;
     const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true });
@@ -49,12 +50,12 @@ export class Client extends EventEmitter {
       if (req.op !== BootCode.BOOTREPLY) {
         return self.emit('error', new Error('Malformed packet'), req);
       }
-      if (!req.options[DHCPOption.dhcpMessageType]) {
+      if (!req.options[OptionId.dhcpMessageType]) {
         return self.emit('error', new Error('Got message, without valid message type'), req);
       }
       self.emit('message', req);
       // Handle request
-      switch (req.options[DHCPOption.dhcpMessageType]) {
+      switch (req.options[OptionId.dhcpMessageType]) {
         case DHCP53Code.DHCPOFFER:
           self.handleOffer(req);
           break;
@@ -67,73 +68,27 @@ export class Client extends EventEmitter {
     sock.on('listening', () => self.emit('listening', sock));
     sock.on('close', () => self.emit('close'));
     this.socket = sock;
-    this.config = config || {};
+    this.config = config || new ClientConfig();
     this.lastLease = new Lease();
-  }
-
-  public getConfigMac(): string {
-    if (this.config.mac === undefined) {
-      const macs = [];
-      const inets = networkInterfaces();
-      Object.values(inets).forEach((inet) => {
-        inet.filter((add) => add.family === 'IPv4' && !add.internal)
-          .forEach((add) => macs.push(add.mac));
-      });
-
-      if (macs.length > 1)
-        throw new Error(`${macs.length} network interfaces detected, set mac address manually from
- - ${macs.join('\n - ')}
- \tclient = dhcp.createClient({mac: "12:23:34:45:56:67"});`);
-      if (macs.length === 1)
-        this.config.mac = macs[0];
-      else
-        throw new Error('No network interfaces detected, set mac address manually:\n\tclient = dhcp.createClient({mac: "12:23:34:45:56:67"});');
-    }
-    return this.config.mac;
-  }
-
-  public getConfigFeatures(): number[] {
-    // Default list we request
-    const defaultFeatures = [
-      DHCPOption.netmask,
-      DHCPOption.router,
-      DHCPOption.leaseTime,
-      DHCPOption.server,
-      DHCPOption.dns,
-    ];
-    const fSet = new Set(defaultFeatures);
-    const configFeatures = this.config.features;
-    if (configFeatures) {
-      for (const f of configFeatures) {
-        const id: number = OptionsModel.getDHCPId(f);
-        if (!id)
-          throw new Error('Unknown option ' + f);
-        if (fSet.has(id))
-          continue;
-        defaultFeatures.push(id);
-        fSet.add(id);
-      }
-    }
-    return defaultFeatures;
   }
 
   public sendDiscover(): Promise<number> {
     // console.log('Send Discover');
-    const mac = this.getConfigMac() as string;
-    const features = this.getConfigFeatures();
+    const mac = this.config.getMac() as string;
+    const features = this.config.getFeatures();
     // Formulate the response object
     const ans: IDHCPMessage = {
       ...ansCommon,
       chaddr: mac,
       ciaddr: INADDR_ANY, // 0 for DHCPDISCOVER, other implementations send currently assigned IP - but we follow RFC
       flags: 0, // 0 or 0x80 (if client requires broadcast reply)
-      options: {
-        [DHCPOption.maxMessageSize]: 1500, // Max message size
-        [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPDISCOVER,
-        [DHCPOption.dhcpClientIdentifier]: mac, // MAY
-        [DHCPOption.dhcpParameterRequestList]: features, // MAY
+      options: new DHCPOptions({
+        [OptionId.maxMessageSize]: 1500, // Max message size
+        [OptionId.dhcpMessageType]: DHCP53Code.DHCPDISCOVER,
+        [OptionId.dhcpClientIdentifier]: mac, // MAY
+        [OptionId.dhcpParameterRequestList]: features, // MAY
         // TODO: requested IP optional
-      },
+      }),
       xid: this.lastLease.xid++, // Selected by client on DHCPDISCOVER
     };
     this.lastLease.state = 'SELECTING';
@@ -150,7 +105,7 @@ export class Client extends EventEmitter {
     // Select an offer out of all offers
     // We simply take the first one and change the state then
 
-    if (req.options[DHCPOption.server]) {
+    if (req.options[OptionId.server]) {
       // Check if we already sent a request to the first appearing server
       if (this.lastLease.state !== 'REQUESTING') {
         this.sendRequest(req);
@@ -163,24 +118,24 @@ export class Client extends EventEmitter {
   public sendRequest(req: IDHCPMessage): Promise<number> {
     // console.log('Send Request');
     // Formulate the response object
-    const mac = this.getConfigMac();
+    const mac = this.config.getMac();
     const ans: IDHCPMessage = {
       ...ansCommon,
       chaddr: mac,
       ciaddr: INADDR_ANY, // 0 for DHCPREQUEST
       flags: 0, // 0 or 0x80 (if client requires broadcast reply)
-      options: {
-        [DHCPOption.maxMessageSize]: 1500, // Max message size
-        [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPREQUEST,
-        [DHCPOption.dhcpClientIdentifier]: mac, // MAY
-        [DHCPOption.dhcpParameterRequestList]: this.getConfigFeatures(), // MAY
-        [DHCPOption.requestedIpAddress]: this.lastLease.address, // requested IP, TODO: MUST (selecting or INIT REBOOT) MUST NOT (BOUND, RENEW)
+      options: new DHCPOptions({
+        [OptionId.maxMessageSize]: 1500, // Max message size
+        [OptionId.dhcpMessageType]: DHCP53Code.DHCPREQUEST,
+        [OptionId.dhcpClientIdentifier]: mac, // MAY
+        [OptionId.dhcpParameterRequestList]: this.config.getFeatures(), // MAY
+        [OptionId.requestedIpAddress]: this.lastLease.address, // requested IP, TODO: MUST (selecting or INIT REBOOT) MUST NOT (BOUND, RENEW)
         // TODO: server identifier: MUST (after selecting) MUST NOT (INIT REBOOT, BOUND, RENEWING, REBINDING)
-      },
+      }),
       xid: req.xid, // 'xid' from server DHCPOFFER message
     };
 
-    this.lastLease.server = req.options[DHCPOption.server];
+    this.lastLease.server = req.options.get(OptionId.server) as string;
     this.lastLease.address = req.yiaddr;
     this.lastLease.state = 'REQUESTING';
     this.lastLease.tries = 0;
@@ -192,41 +147,42 @@ export class Client extends EventEmitter {
   }
 
   public handleAck(req: IDHCPMessage): void {
-    if (req.options[DHCPOption.dhcpMessageType] === DHCP53Code.DHCPACK) {
+    if (req.options[OptionId.dhcpMessageType] === DHCP53Code.DHCPACK) {
       // We now know the IP for sure
       // console.log('Handle ACK', req);
       this.lastLease.bindTime = new Date();
       this.lastLease.state = 'BOUND';
       this.lastLease.address = req.yiaddr;
-      this.lastLease.options = {};
+      this.lastLease.options = new DHCPOptions();
 
       // Lease time is available
-      if (req.options[DHCPOption.leaseTime]) {
-        this.lastLease.leasePeriod = req.options[DHCPOption.leaseTime];
-        this.lastLease.renewPeriod = req.options[DHCPOption.leaseTime] / 2;
-        this.lastLease.rebindPeriod = req.options[DHCPOption.leaseTime];
+      if (req.options[OptionId.leaseTime]) {
+        const leaseTime = req.options.get(OptionId.leaseTime) as number;
+        this.lastLease.leasePeriod = leaseTime;
+        this.lastLease.renewPeriod = leaseTime / 2;
+        this.lastLease.rebindPeriod = leaseTime;
       }
 
       // Renewal time is available
-      if (req.options[DHCPOption.renewalTime]) {
-        this.lastLease.renewPeriod = req.options[DHCPOption.renewalTime];
+      if (req.options[OptionId.renewalTime]) {
+        this.lastLease.renewPeriod = req.options.get(OptionId.renewalTime) as number;
       }
 
       // Rebinding time is available
-      if (req.options[DHCPOption.rebindingTime]) {
-        this.lastLease.rebindPeriod = req.options[DHCPOption.rebindingTime];
+      if (req.options[OptionId.rebindingTime]) {
+        this.lastLease.rebindPeriod = req.options.get(OptionId.rebindingTime) as number;
       }
 
       // TODO: set renew & rebind timer
 
       const options = req.options;
-      this.lastLease.options = {} as IDHCPConfig;
+      this.lastLease.options = new DHCPOptions();
 
       // Map all options from request
       for (const id in options) {
         const id2 = Number(id);
 
-        if (id2 === DHCPOption.dhcpMessageType || id2 === DHCPOption.leaseTime || id2 === DHCPOption.renewalTime || id2 === DHCPOption.rebindingTime)
+        if (id2 === OptionId.dhcpMessageType || id2 === OptionId.leaseTime || id2 === OptionId.renewalTime || id2 === OptionId.rebindingTime)
           continue;
 
         const conf = OptionsModel.optsMeta[id];
@@ -240,22 +196,22 @@ export class Client extends EventEmitter {
       }
 
       // If netmask is not given, set it to a class related mask
-      if (!this.lastLease.options[DHCPOption.netmask]) {
-        this.lastLease.options[DHCPOption.netmask] = Tools.formatIp(
+      if (!this.lastLease.options[OptionId.netmask]) {
+        this.lastLease.options[OptionId.netmask] = Tools.formatIp(
           Tools.netmaskFromIP(this.lastLease.address));
       }
 
-      const cidr = Tools.CIDRFromNetmask(this.lastLease.options[DHCPOption.netmask]);
+      const cidr = Tools.CIDRFromNetmask(this.lastLease.options.get(OptionId.netmask) as string);
 
       // If router is not given, guess one
-      if (!this.lastLease.options[DHCPOption.router]) {
-        this.lastLease.options[DHCPOption.router] = Tools.formatIp(
+      if (!this.lastLease.options[OptionId.router]) {
+        this.lastLease.options[OptionId.router] = Tools.formatIp(
           Tools.gatewayFromIpCIDR(this.lastLease.address, cidr));
       }
 
       // If broadcast is missing
-      if (!this.lastLease.options[DHCPOption.broadcast]) {
-        this.lastLease.options[DHCPOption.broadcast] = Tools.formatIp(
+      if (!this.lastLease.options[OptionId.broadcast]) {
+        this.lastLease.options[OptionId.broadcast] = Tools.formatIp(
           Tools.broadcastFromIpCIDR(this.lastLease.address, cidr));
       }
 
@@ -271,14 +227,14 @@ export class Client extends EventEmitter {
     // Formulate the response object
     const ans: IDHCPMessage = {
       ...ansCommon,
-      chaddr: this.getConfigMac(),
+      chaddr: this.config.getMac(),
       ciaddr: this.lastLease.server, // this.getConfig('server'),
       flags: 0,
-      options: {
-        [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPRELEASE,
+      options: new DHCPOptions({
+        [OptionId.dhcpMessageType]: DHCP53Code.DHCPRELEASE,
         // TODO: MAY clientID
-        [DHCPOption.server]: this.lastLease.server, // MUST server identifier
-      },
+        [OptionId.server]: this.lastLease.server, // MUST server identifier
+      }),
       xid: this.lastLease.xid++, // Selected by client on DHCPRELEASE
     };
     this.lastLease.bindTime = null;
@@ -295,14 +251,14 @@ export class Client extends EventEmitter {
     // Formulate the response object
     const ans = {
       ...ansCommon,
-      chaddr: this.getConfigMac(),
+      chaddr: this.config.getMac(),
       ciaddr: this.lastLease.server, // this.getConfig('server'),
       flags: 0,
       options: {
-        [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPREQUEST,
-        [DHCPOption.requestedIpAddress]: this.lastLease.address,
+        [OptionId.dhcpMessageType]: DHCP53Code.DHCPREQUEST,
+        [OptionId.requestedIpAddress]: this.lastLease.address,
         // TODO: MAY clientID
-        [DHCPOption.server]: this.lastLease.server, // MUST server identifier
+        [OptionId.server]: this.lastLease.server, // MUST server identifier
       },
       xid: this.lastLease.xid++, // Selected by client on DHCPRELEASE
     } as IDHCPMessage;
@@ -318,15 +274,15 @@ export class Client extends EventEmitter {
     // Formulate the response object
     const ans: IDHCPMessage = {
       ...ansCommon,
-      chaddr: this.getConfigMac(),
+      chaddr: this.config.getMac(),
       ciaddr: this.lastLease.server, // <string>this.getConfig('server'),
       flags: 0,
-      options: {
-        [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPREQUEST,
-        [DHCPOption.requestedIpAddress]: this.lastLease.address,
+      options: new DHCPOptions({
+        [OptionId.dhcpMessageType]: DHCP53Code.DHCPREQUEST,
+        [OptionId.requestedIpAddress]: this.lastLease.address,
         // TODO: MAY clientID
-        [DHCPOption.server]: this.lastLease.server, // MUST server identifier
-      },
+        [OptionId.server]: this.lastLease.server, // MUST server identifier
+      }),
       xid: this.lastLease.xid++, // Selected by client on DHCPRELEASE
     };
     this.lastLease.state = 'REBINDING';

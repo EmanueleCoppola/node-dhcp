@@ -1,10 +1,11 @@
 import * as dgram from 'dgram';
 import { EventEmitter } from 'events';
 import { Lease } from './Lease';
-import { BootCode, DHCP53Code, DHCPOption, HardwareType, IDHCPConfig, IDHCPMessage, IServerConfig } from './model';
+import { BootCode, DHCP53Code, DHCPOptions, HardwareType, IDHCPMessage, OptionId } from './model';
 import * as OptionsModel from './options';
 import { random } from './prime';
 import * as Protocol from './protocol';
+import { ServerConfig } from './ServerConfig';
 import { formatIp, parseIp } from './tools';
 
 const INADDR_ANY = '0.0.0.0';
@@ -26,11 +27,11 @@ export class Server extends EventEmitter {
     // Socket handle
     private socket: dgram.Socket;
     // Config (cache) object
-    private config: IServerConfig;
+    private config: ServerConfig;
     // All mac -> IP mappings, we currently have assigned or blacklisted
     private leaseState: { [key: string]: Lease };
 
-    constructor(config: IServerConfig, listenOnly?: boolean) {
+    constructor(config: ServerConfig, listenOnly?: boolean) {
         super();
         const self = this;
         const socket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
@@ -44,13 +45,13 @@ export class Server extends EventEmitter {
             if (request.op !== BootCode.BOOTREQUEST) {
                 return self.emit('error', new Error('Malformed packet'), request);
             }
-            if (!request.options[DHCPOption.dhcpMessageType]) {
+            if (!request.options[OptionId.dhcpMessageType]) {
                 return self.emit('error', new Error('Got message, without valid message type'), request);
             }
             self.emit('message', request);
             if (!listenOnly) {
                 // Handle request
-                const mode = request.options[DHCPOption.dhcpMessageType];
+                const mode = request.options[OptionId.dhcpMessageType];
                 switch (mode) {
                     case DHCP53Code.DHCPDISCOVER: // 1.
                         self.handleDiscover(request);
@@ -58,8 +59,9 @@ export class Server extends EventEmitter {
                     case DHCP53Code.DHCPREQUEST: // 3.
                         self.handleRequest(request);
                         break;
+                    case DHCP53Code.DHCPINFORM:
                     default:
-                        console.error('Not implemented method', request.options[53]);
+                        console.error('Not implemented DHCP 53 Type', request.options[53]);
                 }
             }
         });
@@ -80,12 +82,14 @@ export class Server extends EventEmitter {
 
     public getConfig(key: string, request: IDHCPMessage): any {
         const optId: number = OptionsModel.getDHCPId(key);
+        const meta = OptionsModel.optsMeta[optId];
+
         // If config setting is set by user
         let val = this.config[key];
         if (val === undefined) {
-            if (!OptionsModel.optsMeta[optId])
+            if (!meta)
                 throw new Error('Invalid option ' + key);
-            val = OptionsModel.optsMeta[optId].default;
+            val = meta.default;
             if (val === undefined)
                 return 0;
         }
@@ -93,23 +97,25 @@ export class Server extends EventEmitter {
         // If a function was provided
         // TODO change Function format
         if (val instanceof Function) {
-            const reqOpt = {};
-            for (const i in request.options) {
-                const opt = OptionsModel.optsMeta[i];
-                if (opt.enum) {
-                    reqOpt[opt.attr || i] = opt.enum[request.options[i]];
-                } else {
-                    reqOpt[opt.attr || i] = request.options[i];
-                }
-            }
-            val = val.call(this, reqOpt);
+            // const reqOpt: IDHCPConfig = {};
+            // for (const i in request.options) {
+            //    const opt = OptionsModel.optsMeta[i];
+            //    if (opt.enum) {
+            //        reqOpt[opt.attr || i] = opt.enum[request.options[i]];
+            //    } else {
+            //        reqOpt[opt.attr || i] = request.options[i];
+            //    }
+            // }
+            val = val.call(this, request.options);
         }
 
-        if (key !== 'range' && key !== 'static' && key !== 'randomIP')
+        if (key === 'range' || key === 'static' || key === 'randomIP')
             return val;
-
+        if (!meta) {
+            console.log('no meta for ' + key);
+        }
         // If the option has an "enum" attribute:
-        if (OptionsModel.optsMeta[optId].enum) {
+        if (meta && meta.enum) {
             const values = OptionsModel.optsMeta[optId].enum;
             // Check if value is an actual enum string
             for (const i in values)
@@ -125,7 +131,7 @@ export class Server extends EventEmitter {
         return val;
     }
 
-    public getOptions(request: IDHCPMessage, pre: IDHCPConfig, requireds: number[], requested?: any): IDHCPConfig {
+    public getOptions(request: IDHCPMessage, pre: DHCPOptions, requireds: number[], requested?: any): DHCPOptions {
         for (const required of requireds) {
             // Check if option id actually exists
             if (OptionsModel.optsMeta[required] !== undefined) {
@@ -158,7 +164,7 @@ export class Server extends EventEmitter {
         }
 
         // Finally Add all missing and forced options
-        const forceOptions = this.config.forceOptions;
+        const forceOptions = this.config.get('forceOptions');
         if (forceOptions instanceof Array) {
             for (const option of forceOptions) {
                 // Add numeric options right away and look up alias names
@@ -273,11 +279,11 @@ export class Server extends EventEmitter {
         // Formulate the response object
         const siaddr = this.getConfigServer(request); // next server in bootstrap. That's us
         const yiaddr = this.selectAddress(request.chaddr, request); // My offer
-        const options = this.getOptions(request, {
-            [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPOFFER,
-        },
-            [DHCPOption.netmask, DHCPOption.router, DHCPOption.leaseTime, DHCPOption.server, DHCPOption.dns],
-            request.options[DHCPOption.dhcpParameterRequestList]);
+        const options = this.getOptions(request, new DHCPOptions({
+            [OptionId.dhcpMessageType]: DHCP53Code.DHCPOFFER,
+        }),
+            [OptionId.netmask, OptionId.router, OptionId.leaseTime, OptionId.server, OptionId.dns],
+            request.options[OptionId.dhcpParameterRequestList]);
         const ans: IDHCPMessage = {
             op: BootCode.BOOTREPLY,
             ...ansCommon,
@@ -310,11 +316,11 @@ export class Server extends EventEmitter {
     public sendAck(request: IDHCPMessage): Promise<number> {
         // console.log('Send ACK');
         // Formulate the response object
-        const options = this.getOptions(request, {
-            [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPACK,
-        },
-            [DHCPOption.netmask, DHCPOption.router, DHCPOption.leaseTime, DHCPOption.server, DHCPOption.dns],
-            request.options[DHCPOption.dhcpParameterRequestList]);
+        const options = this.getOptions(request, new DHCPOptions({
+            [OptionId.dhcpMessageType]: DHCP53Code.DHCPACK,
+        }),
+            [OptionId.netmask, OptionId.router, OptionId.leaseTime, OptionId.server, OptionId.dns],
+            request.options[OptionId.dhcpParameterRequestList]);
         const ans: IDHCPMessage = {
             op: BootCode.BOOTREPLY,
             ...ansCommon,
@@ -336,10 +342,10 @@ export class Server extends EventEmitter {
     public sendNak(request: IDHCPMessage): Promise<number> {
         // console.log('Send NAK');
         // Formulate the response object
-        const options = this.getOptions(request, {
-            [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPNAK,
-        },
-            [DHCPOption.server]);
+        const options = this.getOptions(request, new DHCPOptions({
+            [OptionId.dhcpMessageType]: DHCP53Code.DHCPNAK,
+        }),
+            [OptionId.server]);
         const ans: IDHCPMessage = {
             ...ansCommon,
             chaddr: request.chaddr, // 'chaddr' from client DHCPREQUEST message

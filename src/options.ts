@@ -14,7 +14,7 @@ import * as Tools from './tools';
 // RFC 1533: https://tools.ietf.org/html/rfc1533
 // RFC 2132: https://www.ietf.org/rfc/rfc2132.txt
 // RFC 3011: https://tools.ietf.org/html/rfc3011
-export interface OptionMeta {
+export interface IOptionMeta {
   name: string;
   type: 'IP' | 'Int32' | 'UInt32' | 'UInt16' | 'UInt8' | 'IPs' | 'IP' | 'ASCII' | 'Bool' | 'UInt16s' | 'UInt8s' | 'any';
   attr?: string;
@@ -23,7 +23,7 @@ export interface OptionMeta {
   default?: any; // Function | string | boolean | number | string[];
 }
 
-export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
+export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
   1: {// RFC 2132
     config: 'netmask',
     default: function () {
@@ -466,7 +466,13 @@ export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
     name: 'Rapid Commit',
     type: 'Bool',
     // config: 'rapidCommit', // may need removal
-  }, /*
+  },
+  // 81: {
+  //  attr: 'fqdn',
+  //  name: 'fqdn option space',
+  //  type: 'ASCII',
+  // },
+  /*
    82: { // RFC 3046, relayAgentInformation
 
    },*/
@@ -560,7 +566,7 @@ export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
 const confMapping: { [key: string]: number } = {}; // conf option -> id
 export const attrMapping: { [key: string]: number } = {}; // attr name -> id
 
-export function addOption(code: string, opt: OptionMeta): void {
+export function addOption(code: string, opt: IOptionMeta): void {
   optsMeta[code] = opt;
   if (opt.config) {
     confMapping[opt.config] = parseInt(code, 10);

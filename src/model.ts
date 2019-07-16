@@ -1,53 +1,31 @@
-type IP = string;
-type Int32 = number;
-type UInt16 = number;
-type UInt32 = number;
-type UInt8 = number;
+import { getDHCPId, optsMeta } from './options';
 
-export interface IClientConfig {
-  mac?: string;
-  features?: string[];
-}
-
-export interface IServerConfig {
-  range: IP[];
-  forceOptions: string[]; // Options that need to be sent, even if they were not requested
-  randomIP: boolean; // Get random new IP from pool instead of keeping one ip
-  static: { [key: string]: IP };
-  // Option settings
-  netmask: string;
-  router: IP[];
-  timeServer: any;
-  nameServer: string;
-  dns: IP[];
-  hostname: string;
-  domainName: string;
-  broadcast: IP;
-  server: IP; // This is us
-  maxMessageSize: number;
-  leaseTime: number;
-  renewalTime: number;
-  rebindingTime: number;
-  bootFile: (req: any, res: any) => string;
-}
+export type IP = string | ((option: DHCPOptions) => string);
+export type IPs = string[] | ((option: DHCPOptions) => string[]);
+export type Int32 = number | ((option: DHCPOptions) => number);
+export type UInt16 = number | ((option: DHCPOptions) => number);
+export type UInt32 = number | ((option: DHCPOptions) => number);
+export type UInt8 = number | ((option: DHCPOptions) => number);
+export type ASCII = string | ((option: DHCPOptions) => string);
+export type ASCIIs = string[] | ((option: DHCPOptions) => string[]);
 
 export interface IDHCPMessage {
   op: BootCode;
-  htype: UInt8; // number;(htype = sb.getUInt8()), // hardware addr type: 1 for 10mb ethernet
-  hlen: UInt8; // hardware addr length: 6 for 10mb ethernet
-  hops: UInt8; // relay hop count
-  xid: UInt32; // session id, initialized by client
-  secs: UInt16; // seconds since client began address acquistion
-  flags: UInt16;
-  ciaddr: IP; // client IP when BOUND, RENEW, REBINDING state
-  yiaddr: IP; // 'your' client IP
-  siaddr: IP; // next server to use in boostrap, returned in OFFER & ACK
-  giaddr: IP; // gateway/relay agent IP
+  htype: number; // UInt8 hardware addr type: 1 for 10mb ethernet
+  hlen: number; // UInt8hardware addr length: 6 for 10mb ethernet
+  hops: number; // UInt8relay hop count
+  xid: number; // UInt32 session id, initialized by client
+  secs: number; // UInt16 seconds since client began address acquistion
+  flags: number; // UInt16
+  ciaddr: string; // IP client IP when BOUND, RENEW, REBINDING state
+  yiaddr: string; // IP 'your' client IP
+  siaddr: string; // IP next server to use in boostrap, returned in OFFER & ACK
+  giaddr: string; // IP gateway/relay agent IP
   chaddr: string; // client hardware address
   sname: string; // server host name
   file: string; // boot file name
-  magicCookie?: UInt32; // contains 99, 130, 83, 99
-  options: IDHCPConfig;
+  magicCookie?: number; // UInt32 contains 99, 130, 83, 99
+  options: DHCPOptions;
 }
 
 // RFC1700, hardware
@@ -76,7 +54,7 @@ export enum DHCP53Code {
   DHCPACK = 5,
   DHCPNAK = 6,
   DHCPRELEASE = 7,
-  DHCPINFORM = 8,
+  DHCPINFORM = 8, //  RFC 2131
 }
 
 export enum DHCP46Code {
@@ -97,7 +75,7 @@ export enum DHCP116Code {
   AutoConfigure = 1,
 }
 
-export enum DHCPOption {
+export enum OptionId {
   netmask = 1,
   timeOffset = 2,
   router = 3,
@@ -181,8 +159,6 @@ export enum DHCPOption {
   pxePathPrefix = 210,
   pxeRebootTime = 211,
   wpad = 252,
-  // static = 1001,
-  // randomIP = 1002,
 }
 
 export enum DHCPEnabled {
@@ -190,96 +166,116 @@ export enum DHCPEnabled {
   Enabled = 1,
 }
 
-export interface IDHCPConfig {
-  1?: IP;
-  2?: Int32;
-  3?: IP;
-  4?: IP[];
-  5?: IP[];
-  6?: IP[];
-  7?: IP[];
-  8?: IP[];
-  9?: IP[];
-  10?: IP[];
-  11?: IP[];
-  12?: string;
-  13?: UInt16;
-  14?: string;
-  15?: string;
-  16?: IP;
-  17?: string;
-  18?: string;
-  19?: DHCPEnabled;
-  20?: boolean;
-  21?: IP[];
-  22?: UInt16;
-  23?: UInt8;
-  24?: UInt32;
-  25?: UInt16[];
-  26?: UInt16;
-  27?: DHCPEnabled;
-  28?: IP;
-  29?: DHCPEnabled;
-  30?: DHCPEnabled;
-  31?: DHCPEnabled;
-  32?: IP;
-  33?: IP[];
-  34?: boolean;
-  35?: UInt32;
-  36?: boolean;
-  37?: UInt8;
-  38?: UInt32;
-  39?: boolean;
-  40?: string;
-  41?: IP[];
-  42?: IP[];
-  43?: UInt8[];
-  44?: IP[];
-  45?: IP;
-  46?: DHCP46Code;
-  47?: string;
-  48?: IP[];
-  49?: IP[];
-  50?: IP;
-  51?: UInt32;
-  52?: DHCP52Code;
-  53?: DHCP53Code;
-  54?: IP;
-  55?: UInt8[];
-  56?: string;
-  57?: UInt16;
-  58?: UInt32;
-  59?: UInt32;
-  60?: string;
-  61?: string;
-  64?: string;
-  65?: IP[];
-  66?: string;
-  67?: string;
-  68?: string;
-  69?: IP[];
-  70?: IP[];
-  71?: IP[];
-  72?: IP[];
-  73?: IP[];
-  74?: IP[];
-  75?: IP[];
-  76?: IP[];
-  80?: boolean;
+export class DHCPOptions {
+  public 1?: IP;
+  public 2?: Int32;
+  public 3?: IP;
+  public 4?: IP[];
+  public 5?: IP[];
+  public 6?: IP[];
+  public 7?: IP[];
+  public 8?: IP[];
+  public 9?: IP[];
+  public 10?: IP[];
+  public 11?: IP[];
+  public 12?: ASCII;
+  public 13?: UInt16;
+  public 14?: ASCII;
+  public 15?: ASCII;
+  public 16?: IP;
+  public 17?: ASCII;
+  public 18?: ASCII;
+  public 19?: DHCPEnabled;
+  public 20?: boolean;
+  public 21?: IP[];
+  public 22?: UInt16;
+  public 23?: UInt8;
+  public 24?: UInt32;
+  public 25?: UInt16[];
+  public 26?: UInt16;
+  public 27?: DHCPEnabled;
+  public 28?: IP;
+  public 29?: DHCPEnabled;
+  public 30?: DHCPEnabled;
+  public 31?: DHCPEnabled;
+  public 32?: IP;
+  public 33?: IP[];
+  public 34?: boolean;
+  public 35?: UInt32;
+  public 36?: boolean;
+  public 37?: UInt8;
+  public 38?: UInt32;
+  public 39?: boolean;
+  public 40?: ASCII;
+  public 41?: IP[];
+  public 42?: IP[];
+  public 43?: UInt8[];
+  public 44?: IP[];
+  public 45?: IP;
+  public 46?: DHCP46Code;
+  public 47?: ASCII;
+  public 48?: IP[];
+  public 49?: IP[];
+  public 50?: IP;
+  public 51?: UInt32;
+  public 52?: DHCP52Code;
+  public 53?: DHCP53Code;
+  public 54?: IP;
+  public 55?: UInt8[];
+  public 56?: ASCII;
+  public 57?: UInt16;
+  public 58?: UInt32;
+  public 59?: UInt32;
+  public 60?: ASCII;
+  public 61?: ASCII;
+  public 64?: ASCII;
+  public 65?: IP[];
+  public 66?: ASCII;
+  public 67?: ASCII;
+  public 68?: ASCII;
+  public 69?: IP[];
+  public 70?: IP[];
+  public 71?: IP[];
+  public 72?: IP[];
+  public 73?: IP[];
+  public 74?: IP[];
+  public 75?: IP[];
+  public 76?: IP[];
+  public 80?: boolean;
   // 82?: { // RFC 3046, relayAgentInformation
-  116?: DHCP116Code;
-  118?: IP;
-  119?: string;
-  121?: IP[];
-  145?: UInt8[];
-  208?: UInt32;
-  209?: string;
-  210?: string;
-  211?: UInt32;
-  252?: string;
-  // 1001: {// TODO: Fix my number!
-  //  name: 'Static',
-  //  config: 'static'
-  // },
-  1002?: boolean;
+  public 116?: DHCP116Code;
+  public 118?: IP;
+  public 119?: ASCII;
+  public 121?: IP[];
+  public 145?: UInt8[];
+  public 208?: UInt32;
+  public 209?: ASCII;
+  public 210?: ASCII;
+  public 211?: UInt32;
+  public 252?: ASCII;
+
+  constructor(data?: any) {
+    if (data)
+      for (const key in data) {
+        const n = getDHCPId(key);
+        if (n)
+          this[n] = data[key];
+      }
+  }
+
+  public get(key: OptionId | string): any {
+    const n = getDHCPId(key);
+    let val = this[n];
+    if (val === undefined) {
+      const meta = optsMeta[n];
+      if (meta.default)
+        val = meta.default;
+      else
+        return null;
+    }
+    if (typeof val === 'function') {
+      return val(this);
+    }
+    return val;
+  }
 }

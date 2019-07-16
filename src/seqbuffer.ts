@@ -6,7 +6,8 @@
  * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
-import { OptionMeta, optsMeta } from './options';
+import { DHCPOptions } from './model';
+import { IOptionMeta, optsMeta } from './options';
 
 function trimZero(str: string): string {
   const pos = str.indexOf('\x00');
@@ -190,7 +191,7 @@ export default class SeqBuffer {
   }
 
   public addBool(): void {
-    /* void */
+    /* no Data to Write  data length is 0 */
   }
 
   public getBool(): boolean {
@@ -269,7 +270,7 @@ export default class SeqBuffer {
   }
 
   public getOptions() {
-    const options = {};
+    const options = new DHCPOptions();
     const buf = this.buffer;
     while (this.r < buf.length) {
       const opt = this.getUInt8();
@@ -279,7 +280,7 @@ export default class SeqBuffer {
         this.r++; // NOP
       } else {
         const len = this.getUInt8();
-        const fullType: OptionMeta = optsMeta[opt];
+        const fullType: IOptionMeta = optsMeta[opt];
         if (fullType) {
           const { type } = optsMeta[opt];
           options[opt] = this[`get${type}`](len);
@@ -294,9 +295,8 @@ export default class SeqBuffer {
 
   public addUInt8s(arr: number[]): SeqBuffer {
     if (arr instanceof Array) {
-      for (let i = 0; i < arr.length; i++) {
-        this.addUInt8(arr[i]);
-      }
+      for (const i of arr)
+        this.addUInt8(i);
     } else {
       this.addUInt8(arr);
     }
@@ -313,9 +313,8 @@ export default class SeqBuffer {
 
   public addUInt16s(arr: number[]): SeqBuffer {
     if (arr instanceof Array) {
-      for (let i = 0; i < arr.length; i++) {
-        this.addUInt16(arr[i]);
-      }
+      for (const i of arr)
+        this.addUInt16(i);
     } else {
       this.addUInt16(arr);
     }
