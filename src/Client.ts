@@ -356,7 +356,7 @@ export class Client extends EventEmitter {
     const { socket } = this;
     return new Promise((resolve, reject) => {
       const sb = Protocol.format(data);
-      socket.send(sb._data, 0, sb._w, SERVER_PORT, host, function (err, bytes) {
+      socket.send(sb.buffer, 0, sb.w, SERVER_PORT, host, function (err, bytes) {
         if (err) {
           reject(err);
         } else {

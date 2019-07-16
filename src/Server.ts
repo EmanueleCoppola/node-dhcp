@@ -381,7 +381,7 @@ export class Server extends EventEmitter {
         const {socket} = this;
         return new Promise((resolve, reject) => {
             const sb = Protocol.format(data);
-            socket.send(sb._data, 0, sb._w, CLIENT_PORT, host, (err, bytes) => {
+            socket.send(sb.buffer, 0, sb.w, CLIENT_PORT, host, (err, bytes) => {
                 if (err) {
                     reject(err);
                 } else {
