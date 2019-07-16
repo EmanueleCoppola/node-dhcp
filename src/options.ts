@@ -15,12 +15,12 @@ import * as Tools from './tools';
 // RFC 2132: https://www.ietf.org/rfc/rfc2132.txt
 // RFC 3011: https://tools.ietf.org/html/rfc3011
 export interface OptionMeta {
-  name: string,
-  type: 'IP' | 'Int32' | 'UInt32' | 'UInt16' | 'UInt8' | 'IPs' | 'IP' | 'ASCII' | 'Bool' | 'UInt16s' | 'UInt8s' | 'any',
-  attr?: string,
-  enum?: { [key: number]: string }
-  config?: string,
-  default?: Function | string | boolean | number | string[];
+  name: string;
+  type: 'IP' | 'Int32' | 'UInt32' | 'UInt16' | 'UInt8' | 'IPs' | 'IP' | 'ASCII' | 'Bool' | 'UInt16s' | 'UInt8s' | 'any';
+  attr?: string;
+  enum?: { [key: number]: string };
+  config?: string;
+  default?: any; // Function | string | boolean | number | string[];
 }
 
 export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
@@ -29,13 +29,9 @@ export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
     type: 'IP',
     config: 'netmask',
     default: function () {
-
       // Default is the minimal CIDR for the given range
-
       const range = this.config('range');
-
       const net = Tools.netmaskFromRange(range[0], range[1]);
-
       return Tools.formatIp(net);
     }
   },
@@ -49,12 +45,9 @@ export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
     type: 'IPs',
     config: 'router',
     default: function () {
-
       // Let's assume the router is the first host of the range if we don't know better
       // Maybe we should calculate the actual host of the subnet instead of assuming the user made it right
-
       const range = this.config('range');
-
       return range[0];
     }
   },
@@ -192,11 +185,9 @@ export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
     type: 'IP',
     config: 'broadcast',
     default: function () {
-
       const range = this.config('range');
       const ip = range[0]; // range begin is obviously a valid ip
       const cidr = Tools.CIDRFromNetmask(this.config('netmask'));
-
       return Tools.formatIp(Tools.broadcastFromIpCIDR(ip, cidr));
     }
   },
@@ -577,16 +568,15 @@ export function addOption(code: string, opt: OptionMeta): void {
   }
 }
 
-
 export function getDHCPId(key: string | number): number {
   if (typeof (key) === "number")
     return key;
-  let AsId = Number(key);
+  const AsId = Number(key);
   if (isNaN(AsId))
     return confMapping[key];
   return AsId;
 }
 
-for (let i in optsMeta) {
+for (const i in optsMeta) {
   addOption(i, optsMeta[i]);
 }

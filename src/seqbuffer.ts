@@ -14,101 +14,105 @@ function trimZero(str: string): string {
 }
 
 export default class SeqBuffer {
-  public _data: Buffer;
-  public _r: number;
-  public _w: number;
+  public buffer: Buffer;
+  public r: number;
+  public w: number;
 
   constructor(buf?: Buffer, len?: number) {
-    this._data = buf || Buffer.alloc(len || 1500); // alloc() fills the buffer with '0'
-    this._r = 0;
-    this._w = 0;
+    this.buffer = buf || Buffer.alloc(len || 1500); // alloc() fills the buffer with '0'
+    this.r = 0;
+    this.w = 0;
   }
 
-  addUInt8(val: number): SeqBuffer {
-    this._w = this._data.writeUInt8(val, this._w/*, true*/);
+  public addUInt8(val: number): SeqBuffer {
+    this.w = this.buffer.writeUInt8(val, this.w/*, true*/);
     return this;
   };
 
-  getUInt8(): number {
-    return this._data.readUInt8(this._r++);
+  public getUInt8(): number {
+    return this.buffer.readUInt8(this.r++);
   };
   //
-  addInt8(val: number): SeqBuffer {
-    this._w = this._data.writeInt8(val, this._w);
+  public addInt8(val: number): SeqBuffer {
+    this.w = this.buffer.writeInt8(val, this.w);
     return this;
   };
-  getInt8(): number {
-    return this._data.readInt8(this._r++);
+  public getInt8(): number {
+    return this.buffer.readInt8(this.r++);
   };
 
-  addUInt16(val: number): SeqBuffer {
-    this._w = this._data.writeUInt16BE(val, this._w);
+  public addUInt16(val: number): SeqBuffer {
+    this.w = this.buffer.writeUInt16BE(val, this.w);
     return this;
   };
 
-  getUInt16(): number {
-    return this._data.readUInt16BE((this._r += 2) - 2);
+  public getUInt16(): number {
+    return this.buffer.readUInt16BE((this.r += 2) - 2);
   };
   //
-  addInt16(val: number): SeqBuffer {
-    this._w = this._data.writeInt16BE(val, this._w);
+  public addInt16(val: number): SeqBuffer {
+    this.w = this.buffer.writeInt16BE(val, this.w);
     return this;
   };
-  getInt16(): number {
-    return this._data.readInt16BE((this._r += 2) - 2);
+  public getInt16(): number {
+    return this.buffer.readInt16BE((this.r += 2) - 2);
   };
   //
-  addUInt32(val: number): SeqBuffer {
-    this._w = this._data.writeUInt32BE(val, this._w);
+  public addUInt32(val: number): SeqBuffer {
+    this.w = this.buffer.writeUInt32BE(val, this.w);
     return this;
   };
-  getUInt32(): number {
-    return this._data.readUInt32BE((this._r += 4) - 4);
+  public getUInt32(): number {
+    return this.buffer.readUInt32BE((this.r += 4) - 4);
   };
   //
-  addInt32(val: number): SeqBuffer {
-    this._w = this._data.writeInt32BE(val, this._w);
+  public addInt32(val: number): SeqBuffer {
+    this.w = this.buffer.writeInt32BE(val, this.w);
     return this;
   };
-  getInt32(): number {
-    return this._data.readInt32BE((this._r += 4) - 4);
+  public getInt32(): number {
+    return this.buffer.readInt32BE((this.r += 4) - 4);
   };
   //
-  addUTF8(val: string): SeqBuffer {
-    this._w += this._data.write(val, this._w, 'utf8');
+  public addUTF8(val: string): SeqBuffer {
+    this.w += this.buffer.write(val, this.w, 'utf8');
     return this;
   };
-  addUTF8Pad(val:string, fixLen: number): SeqBuffer {
+
+  public addUTF8Pad(val:string, fixLen: number): SeqBuffer {
     let len = Buffer.from(val, 'utf8').length;
     for (let n = 0; len > fixLen; n++) {
       val = val.slice(0, fixLen - n); // Truncate as long as character length is > fixLen
       len = Buffer.from(val, 'utf8').length;
     }
 
-    this._data.fill(0, this._w, this._w + fixLen);
-    this._data.write(val, this._w, 'utf8');
-    this._w += fixLen;
+    this.buffer.fill(0, this.w, this.w + fixLen);
+    this.buffer.write(val, this.w, 'utf8');
+    this.w += fixLen;
     return this;
   };
-  getUTF8(len: number): string {
-    return trimZero(this._data.toString('utf8', this._r, this._r += len));
+
+  public getUTF8(len: number): string {
+    return trimZero(this.buffer.toString('utf8', this.r, this.r += len));
   };
   //
-  addASCII(val: string): SeqBuffer {
-    this._w += this._data.write(val, this._w, 'ascii');
+  public addASCII(val: string): SeqBuffer {
+    this.w += this.buffer.write(val, this.w, 'ascii');
     return this;
   };
-  addASCIIPad(val:string, fixLen: number): SeqBuffer {
-    this._data.fill(0, this._w, this._w + fixLen);
-    this._data.write(val.slice(0, fixLen), this._w, 'ascii');
-    this._w += fixLen;
+
+  public addASCIIPad(val:string, fixLen: number): SeqBuffer {
+    this.buffer.fill(0, this.w, this.w + fixLen);
+    this.buffer.write(val.slice(0, fixLen), this.w, 'ascii');
+    this.w += fixLen;
     return this;
   };
-  getASCII(len: number): string {
-    return trimZero(this._data.toString('ascii', this._r, this._r += len));
+
+  public getASCII(len: number): string {
+    return trimZero(this.buffer.toString('ascii', this.r, this.r += len));
   };
   //
-  addIP(ip: string): SeqBuffer {
+  public addIP(ip: string): SeqBuffer {
     const self = this;
     const octs = ip.split('.');
     if (octs.length !== 4) {
@@ -124,14 +128,15 @@ export default class SeqBuffer {
     }
     return this;
   };
-  getIP(): string {
+
+  public getIP(): string {
     return this.getUInt8() +
       '.' + this.getUInt8() +
       '.' + this.getUInt8() +
       '.' + this.getUInt8();
   };
   //
-  addIPs(ips: string | string[]): SeqBuffer {
+  public addIPs(ips: string | string[]): SeqBuffer {
     if (ips instanceof Array) {
       for (let ip of ips) {
         this.addIP(ip);
@@ -141,7 +146,8 @@ export default class SeqBuffer {
     }
     return this;
   };
-  getIPs(len: number): string[] {
+
+  public getIPs(len: number): string[] {
     const ret: string[] = [];
     for (let i = 0; i < len; i += 4) {
       ret.push(this.getIP());
@@ -149,7 +155,7 @@ export default class SeqBuffer {
     return ret;
   };
   //
-  addMac(mac: string) : SeqBuffer {
+  public addMac(mac: string) : SeqBuffer {
     const octs: string[] = mac.split(/[-:]/);
     if (octs.length !== 6) {
       throw new Error('Invalid Mac address ' + mac);
@@ -170,23 +176,23 @@ export default class SeqBuffer {
     this.addUInt16(0);
     return this;
   };
-  getMAC(htype: number, hlen: number): string {
-    const mac = this._data.toString('hex', this._r, this._r += hlen);
+  public getMAC(htype: number, hlen: number): string {
+    const mac = this.buffer.toString('hex', this.r, this.r += hlen);
     if (htype !== 1 || hlen !== 6) {
       throw new Error('Invalid hardware address (len=' + hlen + ', type=' + htype + ')');
     }
-    this._r += 10; // + 10 since field is 16 byte and only 6 are used for htype=1
+    this.r += 10; // + 10 since field is 16 byte and only 6 are used for htype=1
     return mac.toUpperCase().match(/../g).join('-');
   };
   //
-  addBool(): void {
+  public addBool(): void {
     /* void */
   };
-  getBool(): boolean {
+  public getBool(): boolean {
     return true;
   };
   //
-  addOptions(opts: { [key: number]: any }) : SeqBuffer{
+  public addOptions(opts: { [key: number]: any }) : SeqBuffer{
     for (let k in opts) {
       if (!opts.hasOwnProperty(k))
         continue;
@@ -199,11 +205,11 @@ export default class SeqBuffer {
       }
       switch (opt.type) {
         case 'UInt8':
-          //case 'Int8':
+          // case 'Int8':
           len = 1;
           break;
         case 'UInt16':
-          //case 'Int16':
+          // case 'Int16':
           len = 2;
           break;
         case 'UInt32':
@@ -224,7 +230,7 @@ export default class SeqBuffer {
             len = 255;
           }
           break;
-        //case 'UTF8':
+        // case 'UTF8':
         //  len = Buffer.from(val, 'utf8').length;
         //  if (len === 0)
         //    continue; // Min length has to be 1
@@ -257,15 +263,15 @@ export default class SeqBuffer {
     return this;
   };
 
-  getOptions() {
+  public getOptions() {
     const options = {};
-    const buf = this._data;
-    while (this._r < buf.length) {
-      let opt = this.getUInt8();
+    const buf = this.buffer;
+    while (this.r < buf.length) {
+      const opt = this.getUInt8();
       if (opt === 0xff) { // End type
         break;
       } else if (opt === 0x00) { // Pad type
-        this._r++; // NOP
+        this.r++; // NOP
       } else {
         let len = this.getUInt8();
         let fullType: OptionMeta = optsMeta[opt];
@@ -273,7 +279,7 @@ export default class SeqBuffer {
           let { type } = optsMeta[opt];
           options[opt] = this[`get${type}`](len);
         } else {
-          this._r += len;
+          this.r += len;
           console.error('Option ' + opt + ' not known');
         }
       }
@@ -281,7 +287,7 @@ export default class SeqBuffer {
     return options;
   };
   //
-  addUInt8s(arr: number[]): SeqBuffer {
+  public addUInt8s(arr: number[]): SeqBuffer {
     if (arr instanceof Array) {
       for (let i = 0; i < arr.length; i++) {
         this.addUInt8(arr[i]);
@@ -291,14 +297,14 @@ export default class SeqBuffer {
     }
     return this;
   };
-  getUInt8s(len: number): number[] {
+  public getUInt8s(len: number): number[] {
     const ret: number[] = [];
     for (let i = 0; i < len; i++) {
       ret.push(this.getUInt8());
     }
     return ret;
   };
-  addUInt16s(arr: number[]): SeqBuffer {
+  public addUInt16s(arr: number[]): SeqBuffer {
     if (arr instanceof Array) {
       for (let i = 0; i < arr.length; i++) {
         this.addUInt16(arr[i]);
@@ -308,7 +314,7 @@ export default class SeqBuffer {
     }
     return this;
   };
-  getUInt16s(len: number): number[] {
+  public getUInt16s(len: number): number[] {
     const ret: number[] = [];
     for (let i = 0; i < len; i += 2) {
       ret.push(this.getUInt16());
@@ -316,9 +322,9 @@ export default class SeqBuffer {
     return ret;
   };
   //
-  getHex(len: number): string {
-    return this._data.toString('hex', this._r, this._r += len);
+  public getHex(len: number): string {
+    return this.buffer.toString('hex', this.r, this.r += len);
   }
-};
+}
 
 // module.exports = SeqBuffer;

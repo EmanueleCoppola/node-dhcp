@@ -1,3 +1,4 @@
+/* tslint:disable no-bitwise */
 
 function rand(lower: number, upper: number) {
     return lower + Math.floor(Math.random() * (upper - lower + 1))
@@ -7,7 +8,7 @@ const ceil = Math.ceil;
 const sqrt = Math.sqrt;
 export const isPrime = function (p: number): number {
     // check if number is composite
-    var qx = ceil(sqrt(p))
+    const qx = ceil(sqrt(p))
         , i = 3;
     // skip trivial numbers (1 is a false positive)
     if (!p) return 0;
@@ -21,14 +22,12 @@ export const isPrime = function (p: number): number {
 };
 
 export const nextPrime = function (n: number, strict?: boolean): number {
-    var k = strict ? n + 1 : n
-        ;
+    let k = strict ? n + 1 : n;
     if (k + 1 & 1)++k; // parity drop
     return ~isPrime(k) ? nextPrime(k + 2) : k;
 };
 export const prevPrime = function (n: number, strict?: boolean): number {
-    var k = strict ? n - 1 : n
-        ;
+    let k = strict ? n - 1 : n;
     if (k === 2) return 2;
     if (k - 1 & 1)--k; // parity drop
     return ~isPrime(k) ? prevPrime(k - 2) : k;
