@@ -3,13 +3,14 @@
  * http://www.xarg.org/2017/06/a-pure-javascript-dhcp-implementation/
  *
  * Copyright (c) 2017, Robert Eisele (robert@xarg.org)
+ * Copyright (c) 2019, Chemouni Uriel (uchemouni@gmail.com)
  * Dual licensed under the MIT or GPL Version 2 licenses.
- **/
+ */
 
-import SeqBuffer from './seqbuffer';
 import { DHCPMessage } from './model';
+import SeqBuffer from './seqbuffer';
 
-export const parse = function (buf: Buffer): DHCPMessage {
+export const parse = function(buf: Buffer): DHCPMessage {
   if (buf.length < 230) { // 230 byte minimum length of DHCP packet
     throw new Error('Received data is too short');
   }
@@ -24,7 +25,7 @@ export const parse = function (buf: Buffer): DHCPMessage {
     hops: sb.getUInt8(), // relay hop count
     xid: sb.getUInt32(), // session id, initialized by client
     secs: sb.getUInt16(), // seconds since client began address acquistion
-    flags: sb.getUInt16(), // 
+    flags: sb.getUInt16(), //
     ciaddr: sb.getIP(), // client IP when BOUND, RENEW, REBINDING state
     yiaddr: sb.getIP(), // 'your' client IP
     siaddr: sb.getIP(), // next server to use in boostrap, returned in OFFER & ACK
@@ -33,11 +34,11 @@ export const parse = function (buf: Buffer): DHCPMessage {
     sname: sb.getUTF8(64), // server host name
     file: sb.getUTF8(128), // boot file name
     magicCookie: sb.getUInt32(), // contains 99, 130, 83, 99
-    options: sb.getOptions()
+    options: sb.getOptions(),
   };
-}
+};
 
-export const format = function (data: DHCPMessage): SeqBuffer {
+export const format = function(data: DHCPMessage): SeqBuffer {
   return new SeqBuffer()
   .addUInt8(data.op)
   .addUInt8(data.htype)
@@ -57,5 +58,4 @@ export const format = function (data: DHCPMessage): SeqBuffer {
   .addOptions(data.options)
   .addUInt8(255); // Mark end
   // TODO: Must options packet be >= 68 byte and 4 byte alligned?
-  // return sb;
-}
+};

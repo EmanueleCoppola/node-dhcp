@@ -10,24 +10,24 @@ export interface ClientConfig {
 }
 
 export interface ServerConfig {
-  range: IP[],
-  forceOptions: string[], // Options that need to be sent, even if they were not requested
-  randomIP: boolean, // Get random new IP from pool instead of keeping one ip
+  range: IP[];
+  forceOptions: string[]; // Options that need to be sent, even if they were not requested
+  randomIP: boolean; // Get random new IP from pool instead of keeping one ip
   static: { [key: string]: IP };
   // Option settings
-  netmask: string,
-  router: IP[],
-  timeServer: any,
-  nameServer: string,
-  dns: IP[],
-  hostname: string,
-  domainName: string,
-  broadcast: IP,
-  server: IP, // This is us
-  maxMessageSize: number,
-  leaseTime: number,
-  renewalTime: number,
-  rebindingTime: number,
+  netmask: string;
+  router: IP[];
+  timeServer: any;
+  nameServer: string;
+  dns: IP[];
+  hostname: string;
+  domainName: string;
+  broadcast: IP;
+  server: IP; // This is us
+  maxMessageSize: number;
+  leaseTime: number;
+  renewalTime: number;
+  rebindingTime: number;
   bootFile: (req: any, res: any) => string;
 }
 
@@ -39,16 +39,15 @@ export interface DHCPMessage {
   xid: UInt32; // session id, initialized by client
   secs: UInt16; // seconds since client began address acquistion
   flags: UInt16;// 
-  ciaddr: IP, // client IP when BOUND, RENEW, REBINDING state
-  yiaddr: IP, // 'your' client IP
-  siaddr: IP, // next server to use in boostrap, returned in OFFER & ACK
-  giaddr: IP, // gateway/relay agent IP
-
-  chaddr: string, // client hardware address
-  sname: string, // server host name
-  file: string, // boot file name
-  magicCookie?: UInt32, // contains 99, 130, 83, 99
-  options: DHCPConfig,
+  ciaddr: IP; // client IP when BOUND, RENEW, REBINDING state
+  yiaddr: IP; // 'your' client IP
+  siaddr: IP; // next server to use in boostrap, returned in OFFER & ACK
+  giaddr: IP; // gateway/relay agent IP
+  chaddr: string; // client hardware address
+  sname: string; // server host name
+  file: string; // boot file name
+  magicCookie?: UInt32; // contains 99, 130, 83, 99
+  options: DHCPConfig;
 }
 
 // RFC1700, hardware

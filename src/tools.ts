@@ -1,9 +1,9 @@
 /* tslint:disable no-bitwise */
 
 export const parseIp = (str: string | number): number => {
-  if (typeof str === "number")
+  if (typeof str === 'number')
     return str;
-  const octs = str.split(".");
+  const octs = str.split('.');
   if (octs.length !== 4) {
     throw new Error(`Invalid IP address ${str}`);
   }
@@ -18,10 +18,10 @@ export const parseIp = (str: string | number): number => {
 };
 
 export const formatIp = (num: number): string => {
-  let ip = "";
+  let ip = '';
   for (let i = 24; i >= 0; i -= 8) {
     if (ip)
-      ip += ".";
+      ip += '.';
     ip += ((num >>> i) & 0xFF).toString(10);
   }
   return ip;
