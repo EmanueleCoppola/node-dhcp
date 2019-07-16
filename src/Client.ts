@@ -1,9 +1,9 @@
 import * as dgram from 'dgram';
 import { EventEmitter } from 'events';
-import { networkInterfaces } from 'os';
 import { ClientConfig } from './ClientConfig';
 import { Lease } from './Lease';
-import { BootCode, DHCP53Code, DHCPOptions, HardwareType, IDHCPMessage, OptionId } from './model';
+import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId } from './model';
+import { DHCPOptions } from './DHCPOptions';
 import * as OptionsModel from './options';
 import * as Protocol from './protocol';
 import * as Tools from './tools';
@@ -74,7 +74,7 @@ export class Client extends EventEmitter {
 
   public sendDiscover(): Promise<number> {
     // console.log('Send Discover');
-    const mac = this.config.getMac() as string;
+    const mac = this.config.getMac();
     const features = this.config.getFeatures();
     // Formulate the response object
     const ans: IDHCPMessage = {
@@ -135,7 +135,7 @@ export class Client extends EventEmitter {
       xid: req.xid, // 'xid' from server DHCPOFFER message
     };
 
-    this.lastLease.server = req.options.get(OptionId.server) as string;
+    this.lastLease.server = req.options.get(OptionId.server, req.options) as string;
     this.lastLease.address = req.yiaddr;
     this.lastLease.state = 'REQUESTING';
     this.lastLease.tries = 0;
@@ -157,7 +157,7 @@ export class Client extends EventEmitter {
 
       // Lease time is available
       if (req.options[OptionId.leaseTime]) {
-        const leaseTime = req.options.get(OptionId.leaseTime) as number;
+        const leaseTime = req.options.get(OptionId.leaseTime, req.options) as number;
         this.lastLease.leasePeriod = leaseTime;
         this.lastLease.renewPeriod = leaseTime / 2;
         this.lastLease.rebindPeriod = leaseTime;
@@ -165,12 +165,12 @@ export class Client extends EventEmitter {
 
       // Renewal time is available
       if (req.options[OptionId.renewalTime]) {
-        this.lastLease.renewPeriod = req.options.get(OptionId.renewalTime) as number;
+        this.lastLease.renewPeriod = req.options.get(OptionId.renewalTime, req.options) as number;
       }
 
       // Rebinding time is available
       if (req.options[OptionId.rebindingTime]) {
-        this.lastLease.rebindPeriod = req.options.get(OptionId.rebindingTime) as number;
+        this.lastLease.rebindPeriod = req.options.get(OptionId.rebindingTime, req.options) as number;
       }
 
       // TODO: set renew & rebind timer
@@ -201,7 +201,7 @@ export class Client extends EventEmitter {
           Tools.netmaskFromIP(this.lastLease.address));
       }
 
-      const cidr = Tools.CIDRFromNetmask(this.lastLease.options.get(OptionId.netmask) as string);
+      const cidr = Tools.CIDRFromNetmask(this.lastLease.options.get(OptionId.netmask, req.options) as string);
 
       // If router is not given, guess one
       if (!this.lastLease.options[OptionId.router]) {

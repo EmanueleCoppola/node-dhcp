@@ -6,7 +6,7 @@
  * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
-import { DHCPOptions } from './model';
+import { DHCPOptions } from './DHCPOptions';
 import { IOptionMeta, optsMeta } from './options';
 
 function trimZero(str: string): string {

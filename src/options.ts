@@ -1,4 +1,4 @@
-
+/* tslint:disable object-literal-shorthand */
 /**
  * Format:
  * name: A string description of the option
@@ -10,6 +10,7 @@
  */
 
 import * as Tools from './tools';
+import { DHCPOptions } from './DHCPOptions';
 
 // RFC 1533: https://tools.ietf.org/html/rfc1533
 // RFC 2132: https://www.ietf.org/rfc/rfc2132.txt
@@ -26,9 +27,9 @@ export interface IOptionMeta {
 export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
   1: {// RFC 2132
     config: 'netmask',
-    default: function () {
+    default: function(requested: DHCPOptions) {
       // Default is the minimal CIDR for the given range
-      const range = this.config('range');
+      const range = (this as DHCPOptions).get('range', requested);
       const net = Tools.netmaskFromRange(range[0], range[1]);
       return Tools.formatIp(net);
     },
@@ -42,10 +43,10 @@ export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
   },
   3: {// RFC 2132
     config: 'router',
-    default: function () {
+    default: function(requested: DHCPOptions) {
       // Let's assume the router is the first host of the range if we don't know better
       // Maybe we should calculate the actual host of the subnet instead of assuming the user made it right
-      const range = this.config('range');
+      const range = (this as DHCPOptions).get('range', requested);
       return range[0];
     },
     name: 'Router',
@@ -182,10 +183,11 @@ export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
   },
   28: {
     config: 'broadcast',
-    default: function () {
-      const range = this.config('range');
+    default: function(requested: DHCPOptions) {
+      const range = (this as DHCPOptions).get('range', requested);
+      const netmask = (this as DHCPOptions).get('netmask', requested);
       const ip = range[0]; // range begin is obviously a valid ip
-      const cidr = Tools.CIDRFromNetmask(this.config('netmask'));
+      const cidr = Tools.CIDRFromNetmask(netmask);
       return Tools.formatIp(Tools.broadcastFromIpCIDR(ip, cidr));
     },
     name: 'Broadcast Address',
@@ -549,17 +551,17 @@ export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
     name: 'Web Proxy Auto-Discovery',
     type: 'ASCII',
   },
-  1001: {// TODO: Fix my number!
-    config: 'static',
-    name: 'Static',
-    type: 'any',
-  },
-  1002: {// TODO: Fix my number!
-    config: 'randomIP',
-    default: true,
-    name: 'Random IP',
-    type: 'Bool',
-  },
+  //1001: {// TODO: Fix my number!
+  //  config: 'static',
+  //  name: 'Static',
+  //  type: 'any',
+  //},
+  //1002: {// TODO: Fix my number!
+  //  config: 'randomIP',
+  //  default: true,
+  //  name: 'Random IP',
+  //  type: 'Bool',
+  //},
 };
 
 // Create inverse config/attr lookup map

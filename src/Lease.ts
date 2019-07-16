@@ -1,4 +1,4 @@
-import { DHCPOptions } from './model';
+import { DHCPOptions } from './DHCPOptions';
 
 export type LeaseState = 'RENEWING' | 'RELEASED' | 'REBINDING' | 'SELECTING' | 'REQUESTING' | 'BOUND' | 'REBOOTING' | 'INIT' | 'OFFERED';
 

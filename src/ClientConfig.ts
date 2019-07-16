@@ -1,6 +1,7 @@
 import { networkInterfaces } from 'os';
-import { DHCPOptions, OptionId } from './model';
+import { OptionId } from './model';
 import { getDHCPId } from './options';
+import { DHCPOptions } from './DHCPOptions';
 
 const extraOption = new Set(['mac', 'features']);
 
@@ -11,7 +12,7 @@ export class ClientConfig extends DHCPOptions {
     constructor(options?: any) {
         super(options);
         if (options)
-            for (const key of options) {
+            for (const key in options) {
                 if (extraOption.has(key))
                     this[key] = options[key];
             }
@@ -62,7 +63,7 @@ export class ClientConfig extends DHCPOptions {
         return defaultFeatures;
       }
 
-    public get(key: OptionId | string): any {
+    public get(key: OptionId | string, remote: DHCPOptions): any {
         if (extraOption.has(key as any)) {
             let val: any = null;
             switch (key) {
@@ -74,10 +75,10 @@ export class ClientConfig extends DHCPOptions {
                     break;
             }
             if (typeof val === 'function') {
-                return val(this);
+                return val.call(this, remote || this);
             }
             return val;
         }
-        return super.get(key);
+        return super.get(key, remote);
     }
 }

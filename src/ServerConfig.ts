@@ -1,4 +1,5 @@
-import { ASCIIs, DHCPOptions, IPs, OptionId} from './model';
+import { DHCPOptions } from './DHCPOptions';
+import { ASCIIs, IPs, OptionId} from './model';
 
 const extraOption = new Set(['range', 'forceOptions', 'randomIP', 'static']);
 
@@ -10,13 +11,18 @@ export class ServerConfig extends DHCPOptions {
 
     constructor(options: any) {
         super(options);
-        for (const key of options) {
-            if (extraOption.has(key))
-                this[key] = options[key];
-        }
+        if (options)
+            for (const key in options) {
+                if (extraOption.has(key))
+                    this[key] = options[key];
+            }
     }
-
-    public get(key: OptionId | string): any {
+    /**
+     * 
+     * @param key the request Key or optionId
+     * @param requested the remote Options
+     */
+    public get(key: OptionId | string, requested: DHCPOptions): any {
         if (extraOption.has(key as any)) {
             let val: any = null;
             switch (key) {
@@ -29,16 +35,15 @@ export class ServerConfig extends DHCPOptions {
                 case 'randomIP':
                     val = this.randomIP;
                     break;
-                case 'static':
-                    val = this.static;
-                    break;
+                case 'static': // can be a function
+                    return this.static;
             }
             if (typeof val === 'function') {
-                return val(this);
+                return val.call(this, requested || this);
             }
             return val;
         }
-        return super.get(key);
+        return super.get(key, requested);
     }
 
     // Option settings

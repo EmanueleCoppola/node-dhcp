@@ -16,8 +16,8 @@ import { ServerConfig } from './ServerConfig';
 exports.DHCP = exports.default = module.exports = {
   addOption: OptionsModel.addOption,
   createBroadcastHandler: (): Server => new Server(null, true),
-  createClient: (opt: ClientConfig): Client => new Client(opt),
-  createServer: (opt: ServerConfig, listenOnly?: boolean): Server => new Server(opt, listenOnly),
+  createClient: (opt: any): Client => new Client(new ClientConfig(opt)),
+  createServer: (opt: any, listenOnly?: boolean): Server => new Server(new ServerConfig(opt), listenOnly),
   /**
    * register extra option
    */
