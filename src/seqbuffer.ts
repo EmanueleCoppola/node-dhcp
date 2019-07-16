@@ -3,6 +3,7 @@
  * http://www.xarg.org/2017/06/a-pure-javascript-dhcp-implementation/
  *
  * Copyright (c) 2017, Robert Eisele (robert@xarg.org)
+ * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
 import { OptionMeta, optsMeta } from './options';

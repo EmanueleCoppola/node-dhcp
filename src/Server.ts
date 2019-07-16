@@ -14,12 +14,12 @@ const CLIENT_PORT = 68;
 export type IP = string;
 
 const ansCommon = {
-    htype: HardwareType.Ethernet,
+    file: '', // unused
     hlen: 6, // Mac addresses are 6 byte
     hops: 0,
+    htype: HardwareType.Ethernet,
     secs: 0, // 0 or seconds since DHCP process started
     sname: '', // unused
-    file: '', // unused
 };
 
 export class Server extends EventEmitter {
@@ -198,14 +198,14 @@ export class Server extends EventEmitter {
         }
 
         // Is there a static binding?
-        const _static = this.getConfig('static', request) as { [key: string]: string } | Function;
+        const staticLeases = this.getConfig('static', request) as { [key: string]: string } | Function;
 
-        if (typeof _static === 'function') {
-            const staticResult = _static(clientMAC, request);
+        if (typeof staticLeases === 'function') {
+            const staticResult = staticLeases(clientMAC, request);
             if (staticResult)
                 return staticResult;
-        } else if (_static[clientMAC]) {
-            return _static[clientMAC];
+        } else if (staticLeases[clientMAC]) {
+            return staticLeases[clientMAC];
         }
 
         const randIP = this.getConfig('randomIP', request);
@@ -281,14 +281,14 @@ export class Server extends EventEmitter {
         const ans: DHCPMessage = {
             op: BootCode.BOOTREPLY,
             ...ansCommon,
-            xid: request.xid, // 'xid' from client DHCPDISCOVER message
-            flags: request.flags,
-            ciaddr: INADDR_ANY,
-            yiaddr,
-            siaddr,
-            giaddr: request.giaddr,
             chaddr: request.chaddr, // Client mac address
+            ciaddr: INADDR_ANY,
+            flags: request.flags,
+            giaddr: request.giaddr,
             options,
+            siaddr,
+            xid: request.xid, // 'xid' from client DHCPDISCOVER message
+            yiaddr,
         };
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
@@ -310,21 +310,22 @@ export class Server extends EventEmitter {
     public sendAck(request: DHCPMessage): Promise<number> {
         // console.log('Send ACK');
         // Formulate the response object
+        const options = this.getOptions(request, {
+            [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPACK,
+        },
+            [DHCPOption.netmask, DHCPOption.router, DHCPOption.leaseTime, DHCPOption.server, DHCPOption.dns],
+            request.options[DHCPOption.dhcpParameterRequestList]);
         const ans: DHCPMessage = {
             op: BootCode.BOOTREPLY,
             ...ansCommon,
-            xid: request.xid, // 'xid' from client DHCPREQUEST message
-            flags: request.flags, // 'flags' from client DHCPREQUEST message
-            ciaddr: request.ciaddr,
-            yiaddr: this.selectAddress(request.chaddr, request), // my offer
-            siaddr: this.getConfigServer(request), // server ip, that's us
-            giaddr: request.giaddr, // 'giaddr' from client DHCPREQUEST message
             chaddr: request.chaddr, // 'chaddr' from client DHCPREQUEST message
-            options: this.getOptions(request, {
-                [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPACK,
-            },
-                [DHCPOption.netmask, DHCPOption.router, DHCPOption.leaseTime, DHCPOption.server, DHCPOption.dns],
-                request.options[DHCPOption.dhcpParameterRequestList]),
+            ciaddr: request.ciaddr,
+            flags: request.flags, // 'flags' from client DHCPREQUEST message
+            giaddr: request.giaddr, // 'giaddr' from client DHCPREQUEST message
+            options,
+            siaddr: this.getConfigServer(request), // server ip, that's us
+            xid: request.xid, // 'xid' from client DHCPREQUEST message
+            yiaddr: this.selectAddress(request.chaddr, request), // my offer
         };
         this.emit('bound', this.leaseState);
         // Send the actual data
@@ -335,20 +336,21 @@ export class Server extends EventEmitter {
     public sendNak(request: DHCPMessage): Promise<number> {
         // console.log('Send NAK');
         // Formulate the response object
+        const options = this.getOptions(request, {
+            [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPNAK,
+        },
+            [DHCPOption.server]);
         const ans: DHCPMessage = {
             ...ansCommon,
-            op: BootCode.BOOTREPLY,
-            xid: request.xid, // 'xid' from client DHCPREQUEST message
-            flags: request.flags, // 'flags' from client DHCPREQUEST message
-            ciaddr: INADDR_ANY,
-            yiaddr: INADDR_ANY,
-            siaddr: INADDR_ANY,
-            giaddr: request.giaddr, // 'giaddr' from client DHCPREQUEST message
             chaddr: request.chaddr, // 'chaddr' from client DHCPREQUEST message
-            options: this.getOptions(request, {
-                [DHCPOption.dhcpMessageType]: DHCP53Code.DHCPNAK,
-            },
-                [DHCPOption.server]),
+            ciaddr: INADDR_ANY,
+            flags: request.flags, // 'flags' from client DHCPREQUEST message
+            giaddr: request.giaddr, // 'giaddr' from client DHCPREQUEST message
+            op: BootCode.BOOTREPLY,
+            options,
+            siaddr: INADDR_ANY,
+            xid: request.xid, // 'xid' from client DHCPREQUEST message
+            yiaddr: INADDR_ANY,
         };
         // Send the actual data
         return this._send(this.getConfigBroadcast(request), ans);

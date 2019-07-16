@@ -25,319 +25,317 @@ export interface OptionMeta {
 
 export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
   1: {// RFC 2132
-    name: 'Subnet Mask',
-    type: 'IP',
     config: 'netmask',
     default: function () {
       // Default is the minimal CIDR for the given range
       const range = this.config('range');
       const net = Tools.netmaskFromRange(range[0], range[1]);
       return Tools.formatIp(net);
-    }
+    },
+    name: 'Subnet Mask',
+    type: 'IP',
   },
   2: {// RFC 2132
+    config: 'timeOffset',
     name: 'Time Offset',
     type: 'Int32',
-    config: 'timeOffset',
   },
   3: {// RFC 2132
-    name: 'Router',
-    type: 'IPs',
     config: 'router',
     default: function () {
       // Let's assume the router is the first host of the range if we don't know better
       // Maybe we should calculate the actual host of the subnet instead of assuming the user made it right
       const range = this.config('range');
       return range[0];
-    }
+    },
+    name: 'Router',
+    type: 'IPs',
   },
   4: {// RFC 2132
+    config: 'timeServer',
     name: 'Time Server',
     type: 'IPs',
-    config: 'timeServer',
   },
   5: {
+    config: 'nameServer',
     name: 'Name Server',
     type: 'IPs',
-    config: 'nameServer',
   },
   6: {// RFC 2132
-    name: 'Domain Name Server',
-    type: 'IPs',
     config: 'dns',
     default: ['8.8.8.8', '8.8.4.4'], // Use Google DNS server as default
+    name: 'Domain Name Server',
+    type: 'IPs',
   },
   7: {// RFC 2132
+    config: 'logServer',
     name: 'Log Server',
     type: 'IPs',
-    config: 'logServer',
   },
   8: {
+    config: 'cookieServer',
     name: 'Cookie Server',
     type: 'IPs',
-    config: 'cookieServer',
   },
   9: {
+    config: 'lprServer',
     name: 'LPR Server',
     type: 'IPs',
-    config: 'lprServer',
   },
   10: {
+    config: 'impressServer',
     name: 'Impress Server',
     type: 'IPs',
-    config: 'impressServer',
   },
   11: {
+    config: 'rscServer',
     name: 'Resource Location Server',
     type: 'IPs',
-    config: 'rscServer',
   },
   12: {// RFC 2132
+    config: 'hostname',
     name: 'Host Name',
     type: 'ASCII',
-    config: 'hostname',
   },
   13: {
+    config: 'bootFileSize',
     name: 'Boot File Size',
     type: 'UInt16',
-    config: 'bootFileSize',
   },
   14: {
+    config: 'dumpFile',
     name: 'Merit Dump File',
     type: 'ASCII',
-    config: 'dumpFile',
   },
   15: {// RFC 2132
+    config: 'domainName',
     name: 'Domain Name',
     type: 'ASCII',
-    config: 'domainName',
   },
   16: {
+    config: 'swapServer',
     name: 'Swap Server',
     type: 'IP',
-    config: 'swapServer',
   },
   17: {
+    config: 'rootPath',
     name: 'Root Path',
     type: 'ASCII',
-    config: 'rootPath',
   },
   18: {
+    config: 'extensionPath',
     name: 'Extension Path',
     type: 'ASCII',
-    config: 'extensionPath',
   },
   19: {
-    name: 'IP Forwarding', // Force client to enable ip forwarding
-    type: 'UInt8',
     config: 'ipForwarding',
     enum: {
       0: 'Disabled',
       1: 'Enabled',
     },
+    name: 'IP Forwarding', // Force client to enable ip forwarding
+    type: 'UInt8',
   },
   20: {
+    config: 'nonLocalSourceRouting',
     name: 'Non-Local Source Routing',
     type: 'Bool',
-    config: 'nonLocalSourceRouting',
   },
   21: {
+    config: 'policyFilter',
     name: 'Policy Filter',
     type: 'IPs',
-    config: 'policyFilter',
   },
   22: {
+    config: 'maxDatagramSize',
     name: 'Maximum Datagram Reassembly Size',
     type: 'UInt16',
-    config: 'maxDatagramSize',
   },
   23: {
+    config: 'datagramTTL',
     name: 'Default IP Time-to-live',
     type: 'UInt8',
-    config: 'datagramTTL',
   },
   24: {
+    config: 'mtuTimeout',
     name: 'Path MTU Aging Timeout',
     type: 'UInt32',
-    config: 'mtuTimeout',
   },
   25: {
+    config: 'mtuSizes',
     name: 'Path MTU Plateau Table',
     type: 'UInt16s',
-    config: 'mtuSizes',
   },
   26: {
+    config: 'mtuInterface',
     name: 'Interface MTU',
     type: 'UInt16',
-    config: 'mtuInterface',
   },
   27: {
-    name: 'All Subnets are Local',
-    type: 'UInt8',
     config: 'subnetsAreLocal',
     enum: {
       0: 'Disabled',
       1: 'Enabled',
     },
+    name: 'All Subnets are Local',
+    type: 'UInt8',
   },
   28: {
-    name: 'Broadcast Address',
-    type: 'IP',
     config: 'broadcast',
     default: function () {
       const range = this.config('range');
       const ip = range[0]; // range begin is obviously a valid ip
       const cidr = Tools.CIDRFromNetmask(this.config('netmask'));
       return Tools.formatIp(Tools.broadcastFromIpCIDR(ip, cidr));
-    }
+    },
+    name: 'Broadcast Address',
+    type: 'IP',
   },
   29: {
-    name: 'Perform Mask Discovery',
-    type: 'UInt8',
     config: 'maskDiscovery',
     enum: {
       0: 'Disabled',
       1: 'Enabled',
     },
+    name: 'Perform Mask Discovery',
+    type: 'UInt8',
   },
   30: {
-    name: 'Mask Supplier',
-    type: 'UInt8',
     config: 'maskSupplier',
     enum: {
       0: 'Disabled',
       1: 'Enabled',
     },
+    name: 'Mask Supplier',
+    type: 'UInt8',
   },
   31: {
-    name: 'Perform Router Discovery',
-    type: 'UInt8',
     config: 'routerDiscovery',
     enum: {
       0: 'Disabled',
       1: 'Enabled',
     },
+    name: 'Perform Router Discovery',
+    type: 'UInt8',
   },
   32: {
+    config: 'routerSolicitation',
     name: 'Router Solicitation Address',
     type: 'IP',
-    config: 'routerSolicitation',
   },
   33: {
+    config: 'staticRoutes',
     name: 'Static Route',
     type: 'IPs', // Always pairs of two must be provided, [destination1, route1, destination2, route2, ...]
-    config: 'staticRoutes',
   },
   34: {
+    config: 'trailerEncapsulation',
     name: 'Trailer Encapsulation',
     type: 'Bool',
-    config: 'trailerEncapsulation',
   },
   35: {
+    config: 'arpCacheTimeout',
     name: 'ARP Cache Timeout',
     type: 'UInt32',
-    config: 'arpCacheTimeout',
   },
   36: {
+    config: 'ethernetEncapsulation',
     name: 'Ethernet Encapsulation',
     type: 'Bool',
-    config: 'ethernetEncapsulation',
   },
   37: {
+    config: 'tcpTTL',
     name: 'TCP Default TTL',
     type: 'UInt8',
-    config: 'tcpTTL',
   },
   38: {
+    config: 'tcpKeepalive',
     name: 'TCP Keepalive Interval',
     type: 'UInt32',
-    config: 'tcpKeepalive',
   },
   39: {
+    config: 'tcpKeepaliveGarbage',
     name: 'TCP Keepalive Garbage',
     type: 'Bool',
-    config: 'tcpKeepaliveGarbage',
   },
   40: {
+    config: 'nisDomain',
     name: 'Network Information Service Domain',
     type: 'ASCII',
-    config: 'nisDomain',
   },
   41: {
+    config: 'nisServer',
     name: 'Network Information Servers',
     type: 'IPs',
-    config: 'nisServer',
   },
   42: {
+    config: 'ntpServer',
     name: 'Network Time Protocol Servers',
     type: 'IPs',
-    config: 'ntpServer',
   },
   43: {// RFC 2132
+    config: 'vendor',
     name: 'Vendor Specific Information',
     type: 'UInt8s',
-    config: 'vendor',
   },
   44: {
+    config: 'nbnsServer',
     name: 'NetBIOS over TCP/IP Name Server',
     type: 'IPs',
-    config: 'nbnsServer',
   },
   45: {
+    config: 'nbddServer',
     name: 'NetBIOS over TCP/IP Datagram Distribution Server',
     type: 'IP',
-    config: 'nbddServer',
   },
   46: {
-    name: 'NetBIOS over TCP/IP Node Type',
-    type: 'UInt8',
+    config: 'nbNodeType',
     enum: {
       0x1: 'B-node',
       0x2: 'P-node',
       0x4: 'M-node',
       0x8: 'H-node',
     },
-    config: 'nbNodeType',
+    name: 'NetBIOS over TCP/IP Node Type',
+    type: 'UInt8',
   },
   47: {
+    config: 'nbScope',
     name: 'NetBIOS over TCP/IP Scope',
     type: 'ASCII',
-    config: 'nbScope',
   },
   48: {
+    config: 'xFontServer',
     name: 'X Window System Font Server',
     type: 'IPs',
-    config: 'xFontServer',
   },
   49: {
+    config: 'xDisplayManager',
     name: 'X Window System Display Manager',
     type: 'IPs',
-    config: 'xDisplayManager',
   },
   50: {// IP wish of client in DHCPDISCOVER
+    attr: 'requestedIpAddress',
     name: 'Requested IP Address',
     type: 'IP',
-    attr: 'requestedIpAddress',
   },
   51: {// RFC 2132
-    name: 'IP Address Lease Time',
-    type: 'UInt32',
     config: 'leaseTime',
     default: 86400,
+    name: 'IP Address Lease Time',
+    type: 'UInt32',
   },
   52: {
-    name: 'Option Overload',
-    type: 'UInt8',
     config: 'dhcpOptionOverload',
     enum: {
       1: 'file',
       2: 'sname',
       3: 'both',
     },
+    name: 'Option Overload',
+    type: 'UInt8',
   },
   53: {
-    name: 'DHCP Message Type',
-    type: 'UInt8',
     config: 'dhcpMessageType',
     enum: {
       1: 'DHCPDISCOVER',
@@ -349,209 +347,212 @@ export const optsMeta: { [key: number]: OptionMeta } = { // id -> config
       7: 'DHCPRELEASE',
       8: 'DHCPINFORM',
     },
+    name: 'DHCP Message Type',
+    type: 'UInt8',
   },
   54: {
+    config: 'server',
     name: 'Server Identifier',
     type: 'IP',
-    config: 'server',
   },
   55: {// Sent by client to show all things the client wants
-    name: 'Parameter Request List',
-    config: 'dhcpParameterRequestList',
-    type: 'UInt8s',
     attr: 'requestParameter',
+    config: 'dhcpParameterRequestList',
+    name: 'Parameter Request List',
+    type: 'UInt8s',
   },
   56: {// Error message sent in DHCPNAK on failure
-    name: 'Message',
     config: 'dhcpMessage',
+    name: 'Message',
     type: 'ASCII',
   },
   57: {
-    name: 'Maximum DHCP Message Size',
-    type: 'UInt16',
     config: 'maxMessageSize',
     default: 1500,
+    name: 'Maximum DHCP Message Size',
+    type: 'UInt16',
   },
   58: {
-    name: 'Renewal (T1) Time Value',
-    type: 'UInt32',
     config: 'renewalTime',
     default: 3600,
+    name: 'Renewal (T1) Time Value',
+    type: 'UInt32',
   },
   59: {
-    name: 'Rebinding (T2) Time Value',
-    type: 'UInt32',
     config: 'rebindingTime',
     default: 14400,
+    name: 'Rebinding (T2) Time Value',
+    type: 'UInt32',
   },
   60: {// RFC 2132: Sent by client to identify type of a client
+    attr: 'vendorClassId', // 'MSFT' (win98, Me, 2000), 'MSFT 98' (win 98, me), 'MSFT 5.0' (win 2000 and up), 'alcatel.noe.0' (alcatel IP touch phone), ...
+    config: 'vendorClassIdentifier',
     name: 'Vendor Class-Identifier',
     type: 'ASCII',
-    config: 'vendorClassIdentifier',
-    attr: 'vendorClassId', // 'MSFT' (win98, Me, 2000), 'MSFT 98' (win 98, me), 'MSFT 5.0' (win 2000 and up), 'alcatel.noe.0' (alcatel IP touch phone), ...
   },
   61: {// Sent by client to specify their unique identifier, to be used to disambiguate the lease on the server
+    attr: 'clientId',
+    config: 'smtpServer',
     name: 'Client-Identifier',
     type: 'ASCII',
-    config: 'dhcpClientIdentifier',
-    attr: 'clientId',
   },
   64: {
+    config: 'smtpServer',
     name: 'Network Information Service+ Domain',
     type: 'ASCII',
-    config: 'nisPlusDomain',
   },
   65: {
+    config: 'smtpServer',
     name: 'Network Information Service+ Servers',
     type: 'IPs',
-    config: 'nisPlusServer',
   },
   66: {// RFC 2132: PXE option
+    config: 'smtpServer',
     name: 'TFTP server name',
     type: 'ASCII',
-    config: 'tftpServer', // e.g. '192.168.0.1'
   },
   67: {// RFC 2132: PXE option
+    config: 'smtpServer',
     name: 'Bootfile name',
     type: 'ASCII',
-    config: 'bootFile', // e.g. 'pxelinux.0'
   },
   68: {
+    config: 'smtpServer',
     name: 'Mobile IP Home Agent',
     type: 'ASCII',
-    config: 'homeAgentAddresses',
   },
   69: {
+    config: 'smtpServer',
     name: 'Simple Mail Transport Protocol (SMTP) Server',
     type: 'IPs',
-    config: 'smtpServer',
   },
   70: {
+    config: 'pop3Server',
     name: 'Post Office Protocol (POP3) Server',
     type: 'IPs',
-    config: 'pop3Server',
   },
   71: {
+    config: 'nntpServer',
     name: 'Network News Transport Protocol (NNTP) Server',
     type: 'IPs',
-    config: 'nntpServer',
   },
   72: {
+    config: 'wwwServer',
     name: 'Default World Wide Web (WWW) Server',
     type: 'IPs',
-    config: 'wwwServer',
   },
   73: {
+    config: 'fingerServer',
     name: 'Default Finger Server',
     type: 'IPs',
-    config: 'fingerServer',
   },
   74: {
+    config: 'ircServer',
     name: 'Default Internet Relay Chat (IRC) Server',
     type: 'IPs',
-    config: 'ircServer',
   },
   75: {
+    config: 'streetTalkServer',
     name: 'StreetTalk Server',
     type: 'IPs',
-    config: 'streetTalkServer',
   },
   76: {
+    config: 'streetTalkDAServer',
     name: 'StreetTalk Directory Assistance (STDA) Server',
     type: 'IPs',
-    config: 'streetTalkDAServer',
   },
   80: {// RFC 4039: http://www.networksorcery.com/enp/rfc/rfc4039.txt
+    attr: 'rapidCommit',
     name: 'Rapid Commit',
     type: 'Bool',
     // config: 'rapidCommit', // may need removal
-    attr: 'rapidCommit',
   }, /*
    82: { // RFC 3046, relayAgentInformation
 
    },*/
   112: {
+    config: 'netinfoServerAddress',
     name: 'Netinfo Address',
     type: 'ASCII',
-    config: 'netinfoServerAddress',
   },
   113: {
+    config: 'netinfoServerTag',
     name: 'Netinfo Tag',
     type: 'ASCII',
-    config: 'netinfoServerTag',
   },
   116: {// RFC 2563: https://tools.ietf.org/html/rfc2563
-    name: 'Auto-Configure',
-    type: 'UInt8',
+    attr: 'autoConfigure',
     enum: {
       0: 'DoNotAutoConfigure',
       1: 'AutoConfigure',
     },
     // config: 'autoConfig', // may need removal
-    attr: 'autoConfigure',
+    name: 'Auto-Configure',
+    type: 'UInt8',
   },
   118: {// RFC 301
+    config: 'subnetSelection',
     name: 'Subnet Selection',
     type: 'IP',
-    config: 'subnetSelection',
   },
   119: {// dns search list
+    config: 'domainSearchList',
     name: 'Domain Search List',
     type: 'ASCII',
-    config: 'domainSearchList',
   },
   121: {// rfc 3442
+    config: 'classlessRoute',
     name: 'Classless Route Option Format',
     type: 'IPs',
-    config: 'classlessRoute',
   },
   125: {
+    config: 'vivso',
     name: 'Vendor Identified Vendor-Specific Information',
     type: 'ASCII',
-    config: 'vivso',
+
   },
   145: {// RFC 6704: https://tools.ietf.org/html/rfc6704
+    attr: 'renewNonce',
+    config: 'renewNonce',
     name: 'Forcerenew Nonce',
     type: 'UInt8s',
-    config: 'renewNonce',
-    attr: 'renewNonce',
   },
   208: {// https://tools.ietf.org/html/rfc5071
-    name: 'PXE Magic Option',
-    type: 'UInt32',
     config: 'pxeMagicOption',
     default: 0xF100747E,
+    name: 'PXE Magic Option',
+    type: 'UInt32',
   },
   209: {// https://tools.ietf.org/html/rfc5071
+    config: 'pxeConfigFile',
     name: 'PXE Config File',
     type: 'ASCII',
-    config: 'pxeConfigFile',
   },
   210: {// https://tools.ietf.org/html/rfc5071
+    config: 'pxePathPrefix',
     name: 'PXE Path Prefix',
     type: 'ASCII',
-    config: 'pxePathPrefix',
   },
   211: {// https://tools.ietf.org/html/rfc5071
+    config: 'pxeRebootTime',
     name: 'PXE Reboot Time',
     type: 'UInt32',
-    config: 'pxeRebootTime',
   },
   252: {// https://en.wikipedia.org/wiki/Web_Proxy_Auto-Discovery_Protocol
+    config: 'wpad',
     name: 'Web Proxy Auto-Discovery',
     type: 'ASCII',
-    config: 'wpad',
   },
   1001: {// TODO: Fix my number!
-    name: 'Static',
     config: 'static',
+    name: 'Static',
     type: 'any',
   },
   1002: {// TODO: Fix my number!
-    name: 'Random IP',
-    type: 'Bool',
     config: 'randomIP',
     default: true,
+    name: 'Random IP',
+    type: 'Bool',
   },
 };
 
