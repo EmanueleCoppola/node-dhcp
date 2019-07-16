@@ -551,17 +551,17 @@ export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
     name: 'Web Proxy Auto-Discovery',
     type: 'ASCII',
   },
-  //1001: {// TODO: Fix my number!
+  // 1001: {// TODO: Fix my number!
   //  config: 'static',
   //  name: 'Static',
   //  type: 'any',
-  //},
-  //1002: {// TODO: Fix my number!
+  // },
+  // 1002: {// TODO: Fix my number!
   //  config: 'randomIP',
   //  default: true,
   //  name: 'Random IP',
   //  type: 'Bool',
-  //},
+  // },
 };
 
 // Create inverse config/attr lookup map

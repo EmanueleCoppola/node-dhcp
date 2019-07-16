@@ -45,20 +45,4 @@ export class ServerConfig extends DHCPOptions {
         }
         return super.get(key, requested);
     }
-
-    // Option settings
-    // netmask: ASCII; // 1
-    // router: IPs; // 3
-    // timeServer: string[]; // 4
-    // nameServer: ASCII; // 5
-    // dns: IPs; // 6
-    // hostname: ASCII; // 12
-    // domainName: ASCII; // 15
-    // broadcast: IP; // 28
-    // server: IP; // 54 This is us
-    // maxMessageSize: UInt16; //57
-    // leaseTime: UInt32; // 51
-    // renewalTime: UInt32; // 58
-    // rebindingTime: UInt32; // 59
-    // bootFile: (req: any, res: any) => string; // 67
 }

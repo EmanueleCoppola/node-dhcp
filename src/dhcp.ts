@@ -13,20 +13,15 @@ import * as OptionsModel from './options';
 import { Server } from './Server';
 import { ServerConfig } from './ServerConfig';
 
-exports.DHCP = exports.default = module.exports = {
+export {DHCPOptions} from './DHCPOptions';
+
+export const createBroadcastHandler = (): Server => new Server(null, true);
+export const createClient = (opt: any): Client => new Client(new ClientConfig(opt));
+export const createServer = (opt: any, listenOnly?: boolean): Server => new Server(new ServerConfig(opt), listenOnly);
+
+export default {
   addOption: OptionsModel.addOption,
-  createBroadcastHandler: (): Server => new Server(null, true),
-  createClient: (opt: any): Client => new Client(new ClientConfig(opt)),
-  createServer: (opt: any, listenOnly?: boolean): Server => new Server(new ServerConfig(opt), listenOnly),
-  /**
-   * register extra option
-   */
-  // DHCPDISCOVER: DHCP53Code.DHCPDISCOVER,
-  // DHCPOFFER: DHCP53Code.DHCPOFFER,
-  // DHCPREQUEST: DHCP53Code.DHCPREQUEST,
-  // DHCPDECLINE: DHCP53Code.DHCPDECLINE,
-  // DHCPACK: DHCP53Code.DHCPACK,
-  // DHCPNAK: DHCP53Code.DHCPNAK,
-  // DHCPRELEASE: DHCP53Code.DHCPRELEASE,
-  // DHCPINFORM: DHCP53Code.DHCPINFORM
+  createBroadcastHandler,
+  createClient,
+  createServer,
 };

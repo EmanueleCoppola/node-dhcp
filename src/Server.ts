@@ -366,7 +366,7 @@ export class Server extends EventEmitter {
     public listen(port: number, host: string): Promise<void> {
         const { socket } = this;
         return new Promise((resolve) => {
-            socket.bind(port || SERVER_PORT, host || INADDR_ANY, () => {
+            socket.bind({port: port || SERVER_PORT, address: host || INADDR_ANY} , () => {
                 socket.setBroadcast(true);
                 resolve();
             });
