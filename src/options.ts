@@ -9,8 +9,9 @@
  * enum: Represents a map of possible enum for this option
  */
 
-import * as Tools from './tools';
 import { DHCPOptions } from './DHCPOptions';
+import { IDHCPMessage } from './model';
+import * as Tools from './tools';
 
 // RFC 1533: https://tools.ietf.org/html/rfc1533
 // RFC 2132: https://www.ietf.org/rfc/rfc2132.txt
@@ -27,7 +28,7 @@ export interface IOptionMeta {
 export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
   1: {// RFC 2132
     config: 'netmask',
-    default: function(requested: DHCPOptions) {
+    default: function(requested: IDHCPMessage) {
       // Default is the minimal CIDR for the given range
       const range = (this as DHCPOptions).get('range', requested);
       const net = Tools.netmaskFromRange(range[0], range[1]);
@@ -43,7 +44,7 @@ export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
   },
   3: {// RFC 2132
     config: 'router',
-    default: function(requested: DHCPOptions) {
+    default: function(requested: IDHCPMessage) {
       // Let's assume the router is the first host of the range if we don't know better
       // Maybe we should calculate the actual host of the subnet instead of assuming the user made it right
       const range = (this as DHCPOptions).get('range', requested);
@@ -183,7 +184,7 @@ export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
   },
   28: {
     config: 'broadcast',
-    default: function(requested: DHCPOptions) {
+    default: function(requested: IDHCPMessage) {
       const range = (this as DHCPOptions).get('range', requested);
       const netmask = (this as DHCPOptions).get('netmask', requested);
       const ip = range[0]; // range begin is obviously a valid ip

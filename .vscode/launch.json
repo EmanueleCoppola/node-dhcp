@@ -16,6 +16,20 @@
             "outFiles": [
                 "${workspaceFolder}/lib/**/*.js"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch DHCP server",
+            "program": "${workspaceFolder}\\examples\\server.js",
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "skipFiles": [
+                "<node_internals>/**/*.js"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/lib/**/*.js"
+            ]
         }
+
     ]
 }

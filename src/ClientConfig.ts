@@ -1,15 +1,20 @@
 import { networkInterfaces } from 'os';
-import { OptionId } from './model';
+import { DHCPOptions, DHCPOptionsBase } from './DHCPOptions';
+import { IDHCPMessage, OptionId } from './model';
 import { getDHCPId } from './options';
-import { DHCPOptions } from './DHCPOptions';
 
 const extraOption = new Set(['mac', 'features']);
+
+export interface IClientConfig extends DHCPOptionsBase {
+  mac?: string;
+  features?: string[];
+}
 
 export class ClientConfig extends DHCPOptions {
     public mac?: string;
     public features?: string[];
 
-    constructor(options?: any) {
+    constructor(options?: IClientConfig) {
         super(options);
         if (options)
             for (const key in options) {
@@ -63,7 +68,7 @@ export class ClientConfig extends DHCPOptions {
         return defaultFeatures;
       }
 
-    public get(key: OptionId | string, remote: DHCPOptions): any {
+    public get(key: OptionId | string, remote: IDHCPMessage): any {
         if (extraOption.has(key as any)) {
             let val: any = null;
             switch (key) {

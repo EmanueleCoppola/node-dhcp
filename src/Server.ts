@@ -1,6 +1,8 @@
+/* tslint:disable no-console */
+
 import * as dgram from 'dgram';
-import { DHCPOptions } from './DHCPOptions';
 import { EventEmitter } from 'events';
+import { DHCPOptions } from './DHCPOptions';
 import { Lease } from './Lease';
 import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId } from './model';
 import * as OptionsModel from './options';
@@ -13,8 +15,6 @@ const INADDR_ANY = '0.0.0.0';
 const SERVER_PORT = 67;
 const CLIENT_PORT = 68;
 
-export type IP = string;
-
 const ansCommon = {
     file: '', // unused
     hlen: 6, // Mac addresses are 6 byte
@@ -26,7 +26,7 @@ const ansCommon = {
 
 export class Server extends EventEmitter {
     // Socket handle
-    private socket: dgram.Socket;
+    private socket: dgram.Socket | null;
     // Config (cache) object
     private config: ServerConfig;
     // All mac -> IP mappings, we currently have assigned or blacklisted
@@ -69,18 +69,27 @@ export class Server extends EventEmitter {
         socket.on('listening', () => self.emit('listening', socket));
         socket.on('close', () => self.emit('close'));
         this.socket = socket;
+        process.on('SIGINT', () => {
+            self.close();
+        });
         this.config = config;
         this.leaseState = {};
     }
 
     public getConfigServer(request: IDHCPMessage): string {
-        return this.config.get('server', request.options) as string;
+        const value = this.config.get('server', request) as string;
+        if (!value)
+            throw Error('server is mandatory in server configuration');
+        return value;
     }
 
     public getConfigBroadcast(request: IDHCPMessage): string {
-        return this.config.get('broadcast', request.options) as string;
+        const value = this.config.get('broadcast', request) as string;
+        if (!value)
+            throw Error('broadcast is mandatory in server configuration');
+        return value;
     }
-/*
+        /*
     public getConfig(key: string, request: IDHCPMessage): any {
         const optId: number = OptionsModel.getDHCPId(key);
         const meta = OptionsModel.optsMeta[optId];
@@ -138,7 +147,7 @@ export class Server extends EventEmitter {
             if (OptionsModel.optsMeta[required] !== undefined) {
                 // Take the first config value always
                 if (pre[required] === undefined)
-                    pre[required] = this.config.get(required, request.options);
+                    pre[required] = this.config.get(required, request);
                 if (!pre[required])
                     throw new Error(`Required option ${OptionsModel.optsMeta[required].config} does not have a value set`);
             } else {
@@ -165,14 +174,14 @@ export class Server extends EventEmitter {
         }
 
         // Finally Add all missing and forced options
-        const forceOptions = this.config.get('forceOptions', request.options);
+        const forceOptions = this.config.get('forceOptions', request);
         if (forceOptions instanceof Array) {
             for (const option of forceOptions) {
                 // Add numeric options right away and look up alias names
                 const id = OptionsModel.getDHCPId(option);
                 // Add option if it is valid and not present yet
                 if (id !== undefined && pre[id] === undefined) {
-                    pre[id] = this.config.get(option, request.options);
+                    pre[id] = this.config.get(option, request);
                 }
             }
         }
@@ -205,7 +214,7 @@ export class Server extends EventEmitter {
         }
 
         // Is there a static binding?
-        const staticLeases = this.config.get('static', request.options) as { [key: string]: string } | Function;
+        const staticLeases = this.config.get('static', request);
 
         if (typeof staticLeases === 'function') {
             const staticResult = staticLeases(clientMAC, request);
@@ -215,8 +224,8 @@ export class Server extends EventEmitter {
             return staticLeases[clientMAC];
         }
 
-        const randIP = this.config.get('randomIP', request.options);
-        const [firstIPstr, lastIPStr] = this.config.get('range', request.options) as string[];
+        const randIP = this.config.get('randomIP', request);
+        const [firstIPstr, lastIPStr] = this.config.get('range', request) as string[];
         const firstIP = parseIp(firstIPstr);
         const lastIP = parseIp(lastIPStr);
 
@@ -269,7 +278,7 @@ export class Server extends EventEmitter {
         // console.log('Handle Discover', req);
         const lease = this.leaseState[request.chaddr] = this.leaseState[request.chaddr] || new Lease();
         lease.address = this.selectAddress(request.chaddr, request);
-        lease.leasePeriod = this.config.get('leaseTime', request.options);
+        lease.leasePeriod = this.config.get('leaseTime', request);
         lease.server = this.getConfigServer(request);
         lease.state = 'OFFERED';
         return this.sendOffer(request);
@@ -307,7 +316,7 @@ export class Server extends EventEmitter {
         // console.log('Handle Request', req);
         const lease = this.leaseState[request.chaddr] = this.leaseState[request.chaddr] || new Lease();
         lease.address = this.selectAddress(request.chaddr, request);
-        lease.leasePeriod = this.config.get('leaseTime', request.options);
+        lease.leasePeriod = this.config.get('leaseTime', request);
         lease.server = this.getConfigServer(request);
         lease.state = 'BOUND';
         lease.bindTime = new Date();
@@ -374,8 +383,11 @@ export class Server extends EventEmitter {
     }
 
     public close(): Promise<any> {
-        const that = this;
-        return new Promise((resolve) => that.socket.close(resolve));
+        const {socket} = this;
+        if (!socket)
+            return Promise.resolve();
+        this.socket = null;
+        return new Promise((resolve) => socket.close(resolve));
     }
 
     private handleRelease() {
@@ -388,6 +400,8 @@ export class Server extends EventEmitter {
 
     private _send(host: string, data: IDHCPMessage): Promise<number> {
         const { socket } = this;
+        if (!socket)
+            throw Error('Socket had bee closed');
         return new Promise((resolve, reject) => {
             const sb = Protocol.format(data);
             socket.send(sb.buffer, 0, sb.w, CLIENT_PORT, host, (err, bytes) => {

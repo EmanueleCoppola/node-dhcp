@@ -17,9 +17,7 @@ s.on('listening', function (sock) {
 });
 
 s.on('bound', function (state) {
-
   console.log("State: ", state);
-
   // `ip address add IP/MASK dev eth0`
   // `echo HOSTNAME > /etc/hostname && hostname HOSTNAME`
   // `ip route add default via 192.168.1.254`
@@ -27,6 +25,8 @@ s.on('bound', function (state) {
   s.close();
 });
 
-s.listen();
+s.listen()
+  .then(() => s.sendDiscover())
+  .then((len) => console.log(`broadcast ${len} bytes`))
 
-s.sendDiscover();
+

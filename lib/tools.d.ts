@@ -1,0 +1,10 @@
+export declare const parseIp: (str: string | number) => number;
+export declare const formatIp: (num: number) => string;
+export declare const netmaskFromCIDR: (cidr: number) => number;
+export declare const netmaskFromIP: (ip: string | number) => number;
+export declare const wildcardFromCIDR: (cidr: number) => number;
+export declare const networkFromIpCIDR: (ip: string | number, cidr: number) => number;
+export declare const broadcastFromIpCIDR: (ip: string | number, cidr: number) => number;
+export declare const CIDRFromNetmask: (net: string | number) => number;
+export declare const gatewayFromIpCIDR: (ip: string | number, cidr: number) => number;
+export declare const netmaskFromRange: (ip1: string | number, ip2: string | number) => number;

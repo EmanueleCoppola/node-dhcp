@@ -1,3 +1,4 @@
+
 /**
  * @license DHCP.js v0.2.18 28/06/2017
  * http://www.xarg.org/2017/06/a-pure-javascript-dhcp-implementation/
@@ -6,6 +7,9 @@
  * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
+
+/* tslint:disable no-console */
+
 import { DHCPOptions } from './DHCPOptions';
 import { IOptionMeta, optsMeta } from './options';
 
@@ -187,7 +191,10 @@ export default class SeqBuffer {
       throw new Error('Invalid hardware address (len=' + hlen + ', type=' + htype + ')');
     }
     this.r += 10; // + 10 since field is 16 byte and only 6 are used for htype=1
-    return mac.toUpperCase().match(/../g).join('-');
+    const matches = mac.toUpperCase().match(/../g);
+    if (! matches)
+      throw new Error('internal mac pasing error');
+    return matches.join('-');
   }
 
   public addBool(): void {

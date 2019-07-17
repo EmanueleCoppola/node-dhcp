@@ -1,8 +1,9 @@
+/* tslint:disable max-classes-per-file */
+import { ASCII, DHCP116Code, DHCP46Code, DHCP52Code, DHCP53Code, DHCPEnabled, IDHCPMessage, Int32, OptionId, UInt16, UInt32, UInt8 } from './model';
+import { IP } from './model';
 import { getDHCPId, optsMeta } from './options';
-import { IP } from './Server';
-import { Int32, ASCII, UInt16, DHCPEnabled, UInt8, UInt32, DHCP46Code, DHCP52Code, DHCP53Code, OptionId, DHCP116Code } from './model';
 
-export class DHCPOptions {
+export class DHCPOptionsBase {
     public 1?: IP;
     public 2?: Int32;
     public 3?: IP;
@@ -89,46 +90,51 @@ export class DHCPOptions {
     public 210?: ASCII;
     public 211?: UInt32;
     public 252?: ASCII;
-  
-    constructor(data?: any) {
-      if (data)
-        for (const key in data) {
-          const n = getDHCPId(key);
-          if (n)
-            this[n] = data[key];
-        }
-    }
-  
-    public get(key: OptionId | string, requested: DHCPOptions): any {
-      const n = getDHCPId(key);
-      let val = this[n];
-      if (val === undefined) {
-        const meta = optsMeta[n];
-        if (meta.default)
-          val = meta.default;
-        else
-          return null;
-      }
-      if (typeof val === 'function') {
-        val = val(requested || this);
-      }
-      /*
-      // mapping or not mapping that the question
-      const meta = OptionsModel.optsMeta[n];
-      if (meta && meta.enum) {
-        const values = OptionsModel.optsMeta[optId].enum;
-        // Check if value is an actual enum string
-        for (const i in values)
-            if (values[i] === val)
-                return Number(i);
-        // Okay, check  if it is the numeral value of the enum
-        if (values[val] === undefined) {
-            throw new Error(`Provided enum value for ${key} is not valid`);
-        } else {
-            val = Number(val);
-        }
-      */
-      return val;
-    }
   }
-  
+
+// export interface IDHCPOptions extends DHCPOptionsBase {
+// }
+
+export class DHCPOptions extends DHCPOptionsBase {
+  constructor(data?: any) {
+    super();
+    if (data)
+      for (const key in data) {
+        const n = getDHCPId(key);
+        if (n)
+          this[n] = data[key];
+      }
+  }
+
+  public get(key: OptionId | string, requested: IDHCPMessage): any {
+    const n = getDHCPId(key);
+    let val = this[n];
+    if (val === undefined) {
+      const meta = optsMeta[n];
+      if (meta.default)
+        val = meta.default;
+      else
+        return null;
+    }
+    if (typeof val === 'function') {
+      val = val(requested || this);
+    }
+    /*
+    // mapping or not mapping that the question
+    const meta = OptionsModel.optsMeta[n];
+    if (meta && meta.enum) {
+      const values = OptionsModel.optsMeta[optId].enum;
+      // Check if value is an actual enum string
+      for (const i in values)
+          if (values[i] === val)
+              return Number(i);
+      // Okay, check  if it is the numeral value of the enum
+      if (values[val] === undefined) {
+          throw new Error(`Provided enum value for ${key} is not valid`);
+      } else {
+          val = Number(val);
+      }
+    */
+    return val;
+  }
+}

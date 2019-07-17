@@ -8,17 +8,19 @@
  */
 
 import { Client } from './Client';
-import { ClientConfig } from './ClientConfig';
+import { ClientConfig, IClientConfig } from './ClientConfig';
 import * as OptionsModel from './options';
 import { Server } from './Server';
-import { ServerConfig } from './ServerConfig';
+import { IServerConfig, ServerConfig } from './ServerConfig';
 
 export {DHCPOptions} from './DHCPOptions';
 export {OptionId} from './model';
+export {IClientConfig} from './ClientConfig';
+export {IServerConfig} from './ServerConfig';
 
 export const createBroadcastHandler = (): Server => new Server(null, true);
-export const createClient = (opt: any): Client => new Client(new ClientConfig(opt));
-export const createServer = (opt: any, listenOnly?: boolean): Server => new Server(new ServerConfig(opt), listenOnly);
+export const createClient = (opt: IClientConfig): Client => new Client(new ClientConfig(opt));
+export const createServer = (opt: IServerConfig): Server => new Server(new ServerConfig(opt));
 
 export default {
   addOption: OptionsModel.addOption,

@@ -1,13 +1,13 @@
 import { DHCPOptions } from './DHCPOptions';
 
-export type IP = string | ((option: DHCPOptions) => string);
-export type IPs = string[] | ((option: DHCPOptions) => string[]);
-export type Int32 = number | ((option: DHCPOptions) => number);
-export type UInt16 = number | ((option: DHCPOptions) => number);
-export type UInt32 = number | ((option: DHCPOptions) => number);
-export type UInt8 = number | ((option: DHCPOptions) => number);
-export type ASCII = string | ((option: DHCPOptions) => string);
-export type ASCIIs = string[] | ((option: DHCPOptions) => string[]);
+export type IP = string | ((option: IDHCPMessage) => string);
+export type IPs = string[] | ((option: IDHCPMessage) => string[]);
+export type Int32 = number | ((option: IDHCPMessage) => number);
+export type UInt16 = number | ((option: IDHCPMessage) => number);
+export type UInt32 = number | ((option: IDHCPMessage) => number);
+export type UInt8 = number | ((option: IDHCPMessage) => number);
+export type ASCII = string | ((option: IDHCPMessage) => string);
+export type ASCIIs = string[] | ((option: IDHCPMessage) => string[]);
 
 export interface IDHCPMessage {
   op: BootCode;
