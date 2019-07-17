@@ -30,7 +30,7 @@ export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
     config: 'netmask',
     default: function(requested: IDHCPMessage) {
       // Default is the minimal CIDR for the given range
-      const range = (this as DHCPOptions).get('range', requested);
+      const range = requested.options.get('range', requested);
       const net = Tools.netmaskFromRange(range[0], range[1]);
       return Tools.formatIp(net);
     },
@@ -47,7 +47,7 @@ export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
     default: function(requested: IDHCPMessage) {
       // Let's assume the router is the first host of the range if we don't know better
       // Maybe we should calculate the actual host of the subnet instead of assuming the user made it right
-      const range = (this as DHCPOptions).get('range', requested);
+      const range = requested.options.get('range', requested);
       return range[0];
     },
     name: 'Router',
@@ -185,8 +185,8 @@ export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
   28: {
     config: 'broadcast',
     default: function(requested: IDHCPMessage) {
-      const range = (this as DHCPOptions).get('range', requested);
-      const netmask = (this as DHCPOptions).get('netmask', requested);
+      const range = requested.options.get('range', requested);
+      const netmask = requested.options.get('netmask', requested);
       const ip = range[0]; // range begin is obviously a valid ip
       const cidr = Tools.CIDRFromNetmask(netmask);
       return Tools.formatIp(Tools.broadcastFromIpCIDR(ip, cidr));

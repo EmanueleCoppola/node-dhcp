@@ -278,7 +278,7 @@ export class Server extends EventEmitter {
         // console.log('Handle Discover', req);
         const lease = this.leaseState[request.chaddr] = this.leaseState[request.chaddr] || new Lease();
         lease.address = this.selectAddress(request.chaddr, request);
-        lease.leasePeriod = this.config.get('leaseTime', request);
+        lease.leasePeriod = this.config.get(OptionId.leaseTime, request);
         lease.server = this.getConfigServer(request);
         lease.state = 'OFFERED';
         return this.sendOffer(request);
