@@ -1,5 +1,6 @@
 import { DHCPOptions, DHCPOptionsBase } from './DHCPOptions';
 import { ASCIIs, IDHCPMessage, IPs, OptionId} from './model';
+import { ILeaseStore } from './store/ILeaseStote';
 
 const extraOption = new Set(['range', 'forceOptions', 'randomIP', 'static']);
 
@@ -7,6 +8,7 @@ export interface IServerConfig extends DHCPOptionsBase {
     randomIP?: boolean; // Get random new IP from pool instead of keeping one ip
     static: { [key: string]: string } | ((mac: string, request: IDHCPMessage) => string | null);
     range: IPs;
+    leaseState?: ILeaseStore;
     forceOptions?: ASCIIs; // Options that need to be sent, even if they were not requested
 }
 
@@ -15,6 +17,7 @@ export type leaseType = (mac: string, request: IDHCPMessage) => string | null;
 export class ServerConfig extends DHCPOptions {
     public randomIP: boolean; // Get random new IP from pool instead of keeping one ip
     public static: leaseType;
+    public leaseState?: ILeaseStore;
     private range: IPs;
     private forceOptions: ASCIIs; // Options that need to be sent, even if they were not requested
 

@@ -1,14 +1,16 @@
 /* tslint:disable no-console */
 
-import * as dgram from 'dgram';
+import { createSocket, Socket } from 'dgram';
 import { EventEmitter } from 'events';
 import { DHCPOptions } from './DHCPOptions';
 import { Lease } from './Lease';
 import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId } from './model';
-import * as OptionsModel from './options';
+import { getDHCPId, optsMeta } from './options';
 import { random } from './prime';
-import * as Protocol from './protocol';
+import { format, parse } from './protocol';
 import { ServerConfig } from './ServerConfig';
+import { ILeaseStore } from './store/ILeaseStote';
+import { LeaseStoreMemory } from './store/LeaseStoreMemory';
 import { formatIp, parseIp } from './tools';
 
 const INADDR_ANY = '0.0.0.0';
@@ -26,25 +28,21 @@ const ansCommon = {
 
 export class Server extends EventEmitter {
     // Socket handle
-    private socket: dgram.Socket | null;
+    private socket: Socket | null;
     // Config (cache) object
     private config: ServerConfig;
     // All mac -> IP mappings, we currently have assigned or blacklisted
-    private leaseState: { [key: string]: Lease };
+    private leaseState: ILeaseStore;
 
     constructor(config: ServerConfig, listenOnly?: boolean) {
         super();
         const self = this;
-        const socket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
-
-        this.on('getLeasesState', () => {
-            this.emit('LeaseState', this.leaseState);
-        });
+        const socket = createSocket({ type: 'udp4', reuseAddr: true });
 
         socket.on('message', (buf: Buffer) => {
             let request: IDHCPMessage;
             try {
-                request = Protocol.parse(buf);
+                request = parse(buf);
             } catch (e) {
                 return self.emit('error', e);
             }
@@ -78,11 +76,7 @@ export class Server extends EventEmitter {
             self.close();
         });
         this.config = config;
-        this.leaseState = {};
-    }
-
-    public getLeases(): Lease[] {
-        return Object.values(this.leaseState);
+        this.leaseState = config.leaseState || new LeaseStoreMemory();
     }
 
     public getConfigServer(request: IDHCPMessage): string {
@@ -102,12 +96,12 @@ export class Server extends EventEmitter {
     public getOptions(request: IDHCPMessage, pre: DHCPOptions, requireds: number[], requested?: any): DHCPOptions {
         for (const required of requireds) {
             // Check if option id actually exists
-            if (OptionsModel.optsMeta[required] !== undefined) {
+            if (optsMeta[required] !== undefined) {
                 // Take the first config value always
                 if (pre[required] === undefined)
                     pre[required] = this.config.get(required, request);
                 if (!pre[required])
-                    throw new Error(`Required option ${OptionsModel.optsMeta[required].config} does not have a value set`);
+                    throw new Error(`Required option ${optsMeta[required].config} does not have a value set`);
             } else {
                 this.emit('error', `Unknown option ${required}`);
             }
@@ -117,7 +111,7 @@ export class Server extends EventEmitter {
         if (requested) {
             for (const req of requested) {
                 // Check if option id actually exists
-                if (OptionsModel.optsMeta[req] !== undefined) {
+                if (optsMeta[req] !== undefined) {
                     // Take the first config value always
                     if (pre[req] === undefined) {
                         const val = this.config.get(req, req.options);
@@ -136,7 +130,7 @@ export class Server extends EventEmitter {
         if (forceOptions instanceof Array) {
             for (const option of forceOptions) {
                 // Add numeric options right away and look up alias names
-                const id = OptionsModel.getDHCPId(option);
+                const id = getDHCPId(option);
                 // Add option if it is valid and not present yet
                 if (id !== undefined && pre[id] === undefined) {
                     pre[id] = this.config.get(option, request);
@@ -167,8 +161,9 @@ export class Server extends EventEmitter {
          * - Check APR if IP exists on net
          */
         // If existing lease for a mac address is present, re-use the IP
-        if (this.leaseState[clientMAC] && this.leaseState[clientMAC].address) {
-            return this.leaseState[clientMAC].address;
+        const l1 = this.leaseState.getLeaseFromMac(clientMAC);
+        if (l1 && l1.address) {
+            return l1.address;
         }
 
         // Is there a static binding?
@@ -187,31 +182,22 @@ export class Server extends EventEmitter {
         const firstIP = parseIp(firstIPstr);
         const lastIP = parseIp(lastIPStr);
 
-        // Add all known addresses and save the oldest lease
-        const ipSet: Set<number> = new Set();
-        // Exclude our own server IP from pool
-        ipSet.add(parseIp(this.getConfigServer(request)));
-        let oldestMac: string = null;
-        let oldestTime = Infinity;
-        let leases = 0;
-        for (const mac in this.leaseState) {
-            if (this.leaseState[mac].address)
-                ipSet.add(parseIp(this.leaseState[mac].address));
-            if (this.leaseState[mac].leaseTime < oldestTime) {
-                oldestTime = this.leaseState[mac].leaseTime;
-                oldestMac = mac;
-            }
-            leases++;
-        }
+        const oldest = this.leaseState.getOldest();
+        const oldestMac: string = oldest ? oldest.mac : '';
+        const oldestTime = oldest ? oldest.leaseTime : Infinity;
+        const leases = this.leaseState.size();
 
         // Check if all IP's are used and delete the oldest
         if (oldestMac !== null && lastIP - firstIP === leases) {
-            const ip = this.leaseState[oldestMac].address;
+            throw Error('DHCP is full');
+            // const ip = this.leaseState[oldestMac].address;
             // TODO: Notify deleted client
-            delete this.leaseState[oldestMac];
-            return ip;
+            // delete this.leaseState[oldestMac];
+            // return ip;
         }
 
+        // Exclude our own server IP from pool
+        const myIP: number = parseIp(this.getConfigServer(request));
         // Select a random IP, using prime number iterator
         if (randIP) {
             let total = lastIP - firstIP;
@@ -220,30 +206,43 @@ export class Server extends EventEmitter {
             while (total--) {
                 offset = (offset + p) % total;
                 const ip = firstIP + offset;
-                if (!ipSet.has(ip))
-                    return formatIp(ip);
+                if (ip === myIP)
+                    continue;
+                const strIP = formatIp(ip);
+                if (!this.leaseState.hasAddress(strIP))
+                    return strIP;
             }
-            console.error('no More IP available');
+            throw Error('DHCP is full');
+            //            console.error('no More IP available');
         }
         // Choose first free IP in subnet
-        for (let i = firstIP; i <= lastIP; i++) {
-            if (!ipSet.has(i))
-                return formatIp(i);
+        for (let ip = firstIP; ip <= lastIP; ip++) {
+            const strIP = formatIp(ip);
+            if (!this.leaseState.hasAddress(strIP))
+                return strIP;
         }
+        throw Error('DHCP is full');
     }
 
     public handleDiscover(request: IDHCPMessage): Promise<number> {
-        // console.log('Handle Discover', req);
-        const lease = this.leaseState[request.chaddr] = this.leaseState[request.chaddr] || new Lease();
+        const { chaddr } = request;
+        let newLease: boolean = false;
+        let lease = this.leaseState.getLeaseFromMac(chaddr);
+        if (!lease) {
+            lease = new Lease(chaddr);
+            newLease = true;
+        }
         lease.address = this.selectAddress(request.chaddr, request);
         lease.leasePeriod = this.config.get(OptionId.leaseTime, request);
         lease.server = this.getConfigServer(request);
         lease.state = 'OFFERED';
+        if (newLease) {
+            this.leaseState.add(lease);
+        }
         return this.sendOffer(request);
     }
 
     public sendOffer(request: IDHCPMessage): Promise<number> {
-        // console.log('Send Offer');
         // Formulate the response object
         const siaddr = this.getConfigServer(request); // next server in bootstrap. That's us
         const yiaddr = this.selectAddress(request.chaddr, request); // My offer
@@ -271,13 +270,21 @@ export class Server extends EventEmitter {
     }
 
     public handleRequest(request: IDHCPMessage): Promise<number> {
-        // console.log('Handle Request', req);
-        const lease = this.leaseState[request.chaddr] = this.leaseState[request.chaddr] || new Lease();
-        lease.address = this.selectAddress(request.chaddr, request);
+        const { chaddr } = request;
+        let newLease: boolean = false;
+        let lease = this.leaseState.getLeaseFromMac(chaddr);
+        if (!lease) {
+            lease = new Lease(chaddr);
+            newLease = true;
+        }
+        lease.address = this.selectAddress(chaddr, request);
         lease.leasePeriod = this.config.get('leaseTime', request);
         lease.server = this.getConfigServer(request);
         lease.state = 'BOUND';
         lease.bindTime = new Date();
+        if (newLease) {
+            this.leaseState.add(lease);
+        }
         return this.sendAck(request);
     }
 
@@ -301,7 +308,7 @@ export class Server extends EventEmitter {
             xid: request.xid, // 'xid' from client DHCPREQUEST message
             yiaddr: this.selectAddress(request.chaddr, request), // my offer
         };
-        this.emit('bound', this.leaseState);
+        // this.emit('bound', this.leaseState);
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         return this._send(this.getConfigBroadcast(request), ans);
@@ -333,7 +340,7 @@ export class Server extends EventEmitter {
     public listen(port: number, host: string): Promise<void> {
         const { socket } = this;
         return new Promise((resolve) => {
-            socket.bind({port: port || SERVER_PORT, address: host || INADDR_ANY} , () => {
+            socket.bind({ port: port || SERVER_PORT, address: host || INADDR_ANY }, () => {
                 socket.setBroadcast(true);
                 resolve();
             });
@@ -341,7 +348,7 @@ export class Server extends EventEmitter {
     }
 
     public close(): Promise<any> {
-        const {socket} = this;
+        const { socket } = this;
         if (!socket)
             return Promise.resolve();
         this.socket = null;
@@ -361,7 +368,7 @@ export class Server extends EventEmitter {
         if (!socket)
             throw Error('Socket had bee closed');
         return new Promise((resolve, reject) => {
-            const sb = Protocol.format(data);
+            const sb = format(data);
             socket.send(sb.buffer, 0, sb.w, CLIENT_PORT, host, (err, bytes) => {
                 if (err) {
                     reject(err);

@@ -2,6 +2,7 @@ import { DHCPOptions } from './DHCPOptions';
 export declare type LeaseState = 'RENEWING' | 'RELEASED' | 'REBINDING' | 'SELECTING' | 'REQUESTING' | 'BOUND' | 'REBOOTING' | 'INIT' | 'OFFERED';
 export declare type IP = string;
 export declare class Lease {
+    mac: string;
     bindTime: Date;
     leasePeriod: number;
     renewPeriod: number;
@@ -14,4 +15,5 @@ export declare class Lease {
     tries: number;
     xid: number;
     router: string;
+    constructor(mac: string);
 }

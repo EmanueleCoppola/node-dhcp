@@ -69,7 +69,7 @@ export class Client extends EventEmitter {
     sock.on('close', () => self.emit('close'));
     this.socket = sock;
     this.config = config || new ClientConfig();
-    this.lastLease = new Lease();
+    this.lastLease = new Lease(''); // unknows Local Mac
   }
 
   public sendDiscover(): Promise<number> {

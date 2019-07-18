@@ -48,11 +48,15 @@
     "test": "mocha tests/*.js"
   },
   "devDependencies": {
+    "@types/debounce": "^1.2.0",
+    "@types/fs-extra": "^8.0.0",
     "@types/node": "^12.6.2",
     "mocha": "*",
     "should": "*"
   },
   "dependencies": {
+    "debounce": "^1.2.0",
+    "fs-extra": "^8.1.0",
     "minimist": "*"
   }
 }

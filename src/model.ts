@@ -21,7 +21,7 @@ export interface IDHCPMessage {
   yiaddr: string; // IP 'your' client IP
   siaddr: string; // IP next server to use in boostrap, returned in OFFER & ACK
   giaddr: string; // IP gateway/relay agent IP
-  chaddr: string; // client hardware address
+  chaddr: string; // MAC: client hardware address
   sname: string; // server host name
   file: string; // boot file name
   magicCookie?: number; // UInt32 contains 99, 130, 83, 99

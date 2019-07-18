@@ -1,7 +1,6 @@
 /// <reference types="node" />
 import { EventEmitter } from 'events';
 import { DHCPOptions } from './DHCPOptions';
-import { Lease } from './Lease';
 import { IDHCPMessage } from './model';
 import { ServerConfig } from './ServerConfig';
 export declare class Server extends EventEmitter {
@@ -9,7 +8,6 @@ export declare class Server extends EventEmitter {
     private config;
     private leaseState;
     constructor(config: ServerConfig, listenOnly?: boolean);
-    getLeases(): Lease[];
     getConfigServer(request: IDHCPMessage): string;
     getConfigBroadcast(request: IDHCPMessage): string;
     getOptions(request: IDHCPMessage, pre: DHCPOptions, requireds: number[], requested?: any): DHCPOptions;
