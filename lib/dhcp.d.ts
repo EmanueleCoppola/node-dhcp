@@ -15,6 +15,7 @@ export { DHCPOptions } from './DHCPOptions';
 export { OptionId } from './model';
 export { IClientConfig } from './ClientConfig';
 export { IServerConfig } from './ServerConfig';
+export { IDHCPMessage } from './model';
 export declare const createBroadcastHandler: () => Server;
 export declare const createClient: (opt: IClientConfig) => Client;
 export declare const createServer: (opt: IServerConfig) => Server;
