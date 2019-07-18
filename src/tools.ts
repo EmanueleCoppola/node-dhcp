@@ -1,5 +1,7 @@
 /* tslint:disable no-bitwise */
 
+import { random } from './prime';
+
 export const parseIp = (str: string | number): number => {
   if (typeof str === 'number')
     return str;
@@ -90,3 +92,40 @@ export const netmaskFromRange = (ip1: string | number, ip2: string | number): nu
   const cidr = 32 - Math.floor(Math.log2((ip1 ^ (ip2 - 1)) + 2)) - 1;
   return netmaskFromCIDR(cidr);
 };
+
+export async function genericGetFreeIP(IP1: string, IP2: string, r1: Set<string>, r2: Set<string>, used: number, rnd?: boolean): Promise<string> {
+  const firstIP = parseIp(IP1);
+  const lastIP = parseIp(IP2);
+
+  const leases = await this.cnt;
+  // Check if all IP's are used and delete the oldest
+  if (lastIP - firstIP === leases) {
+      throw Error('DHCP is full');
+  }
+  // Exclude our own server IP from pool
+
+  // Select a random IP, using prime number iterator
+  if (rnd) {
+      let total = lastIP - firstIP;
+      const p = random(1000, 10000);
+      let offset = 0;
+      while (total--) {
+          offset = (offset + p) % total;
+          const ip = firstIP + offset;
+          const strIP = formatIp(ip);
+          if (r1.has(strIP))
+              continue;
+          if (!r2.has(strIP))
+              return strIP;
+      }
+  } else {
+      // Choose first free IP in subnet
+      for (let ip = firstIP; ip <= lastIP; ip++) {
+          const strIP = formatIp(ip);
+          if (r1.has(strIP))
+              continue;
+          if (!r2.has(strIP))
+              return strIP;
+      }
+  }
+}

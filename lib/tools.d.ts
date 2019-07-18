@@ -8,3 +8,4 @@ export declare const broadcastFromIpCIDR: (ip: string | number, cidr: number) =>
 export declare const CIDRFromNetmask: (net: string | number) => number;
 export declare const gatewayFromIpCIDR: (ip: string | number, cidr: number) => number;
 export declare const netmaskFromRange: (ip1: string | number, ip2: string | number) => number;
+export declare function genericGetFreeIP(IP1: string, IP2: string, r1: Set<string>, r2: Set<string>, used: number, rnd?: boolean): Promise<string>;

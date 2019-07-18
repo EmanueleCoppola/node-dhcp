@@ -1,12 +1,13 @@
 import { Lease } from '../Lease';
 
 export interface ILeaseStore {
-    getLeaseFromMac(mac: string): Lease | null;
-    hasAddress(address: string): boolean;
-    getOldest(): Lease | null;
-    add(lease: Lease): boolean;
-    size(): number;
-    getLeases(): Lease[];
-    getAddresses(): string[];
-    getMacs(): string[];
+    getFreeIP?: (firstIPstr: string, lastIPStr: string, reserverd?: string[], randomIP?: boolean) => Promise<string>;
+    getLeaseFromMac(mac: string): Promise<Lease | null>;
+    hasAddress(address: string): Promise<boolean>;
+    // getOldest(): Lease | null;
+    add(lease: Lease): Promise<boolean>;
+    size(): Promise<number>;
+    getLeases(): Promise<Lease[]>;
+    getAddresses(): Promise<string[]>;
+    getMacs(): Promise<string[]>;
 }

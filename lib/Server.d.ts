@@ -8,10 +8,10 @@ export declare class Server extends EventEmitter {
     private config;
     private leaseState;
     constructor(config: ServerConfig, listenOnly?: boolean);
-    getConfigServer(request: IDHCPMessage): string;
+    getServer(request: IDHCPMessage): string;
     getConfigBroadcast(request: IDHCPMessage): string;
-    getOptions(request: IDHCPMessage, pre: DHCPOptions, requireds: number[], requested?: any): DHCPOptions;
-    selectAddress(clientMAC: string, request: IDHCPMessage): string;
+    getOptions(request: IDHCPMessage, pre: DHCPOptions, requireds: number[], requested?: Array<number | string>): DHCPOptions;
+    selectAddress(clientMAC: string, request: IDHCPMessage): Promise<string>;
     handleDiscover(request: IDHCPMessage): Promise<number>;
     sendOffer(request: IDHCPMessage): Promise<number>;
     handleRequest(request: IDHCPMessage): Promise<number>;

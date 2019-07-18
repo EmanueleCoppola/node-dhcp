@@ -1,6 +1,7 @@
 import debounce from 'debounce';
 import * as fse from 'fs-extra';
 import { Lease } from '../Lease';
+import { genericGetFreeIP } from '../tools';
 import { ILeaseStore } from './ILeaseStote';
 
 export class LeaseStoreFile implements ILeaseStore {
@@ -24,26 +25,26 @@ export class LeaseStoreFile implements ILeaseStore {
         this.reIndex(data);
     }
 
-    public getLeaseFromMac(mac: string): Lease | null {
+    public async getLeaseFromMac(mac: string): Promise<Lease | null> {
         return this.cache[mac] || null;
     }
 
-    public hasAddress(address: string): boolean {
+    public async hasAddress(address: string): Promise<boolean> {
         return this.address.has(address);
     }
 
-    public size(): number {
+    public async size(): Promise<number> {
     return this.cnt;
     }
 
-    public add(lease: Lease) {
+    public async add(lease: Lease): Promise<boolean> {
         const out = this._add(lease);
         if (out)
             this.save();
         return out;
     }
 
-    public getOldest(): Lease | null {
+    public async getOldest(): Promise<Lease | null> {
         if (this.oldest)
             return this.oldest;
         let oldest: Lease | null = null;
@@ -58,16 +59,32 @@ export class LeaseStoreFile implements ILeaseStore {
         return oldest;
     }
 
-    public getLeases(): Lease[] {
+    public async getLeases(): Promise<Lease[]> {
         return Object.values(this.cache);
     }
 
-    public getAddresses(): string[] {
+    public async getAddresses(): Promise<string[]> {
         return [...this.address];
     }
 
-    public getMacs(): string[] {
+    public async getMacs(): Promise<string[]> {
         return Object.keys(this.cache);
+    }
+
+    public getLeases2(): Lease[] {
+        return Object.values(this.cache);
+    }
+
+    public getAddresses2(): string[] {
+        return [...this.address];
+    }
+
+    public getMacs2(): string[] {
+        return Object.keys(this.cache);
+    }
+
+    public async getFreeIP(IP1: string, IP2: string, reserverd?: string[], randomIP?: boolean): Promise<string> {
+        return genericGetFreeIP(IP1, IP2, new Set(reserverd), this.address, this.cnt, randomIP);
     }
 
     private _save() {
