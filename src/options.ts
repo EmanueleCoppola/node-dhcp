@@ -1,4 +1,3 @@
-/* tslint:disable object-literal-shorthand */
 /**
  * Format:
  * name: A string description of the option
@@ -9,7 +8,6 @@
  * enum: Represents a map of possible enum for this option
  */
 
-import { DHCPOptions } from './DHCPOptions';
 import { IDHCPMessage } from './model';
 import * as Tools from './tools';
 
@@ -28,7 +26,7 @@ export interface IOptionMeta {
 export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
   1: {// RFC 2132
     config: 'netmask',
-    default: function(requested: IDHCPMessage) {
+    default(requested: IDHCPMessage) {
       // Default is the minimal CIDR for the given range
       const range = requested.options.get('range', requested);
       const net = Tools.netmaskFromRange(range[0], range[1]);
@@ -44,7 +42,7 @@ export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
   },
   3: {// RFC 2132
     config: 'router',
-    default: function(requested: IDHCPMessage) {
+    default(requested: IDHCPMessage) {
       // Let's assume the router is the first host of the range if we don't know better
       // Maybe we should calculate the actual host of the subnet instead of assuming the user made it right
       const range = requested.options.get('range', requested);
@@ -184,7 +182,7 @@ export const optsMeta: { [key: number]: IOptionMeta } = { // id -> config
   },
   28: {
     config: 'broadcast',
-    default: function(requested: IDHCPMessage) {
+    default(requested: IDHCPMessage) {
       const range = requested.options.get('range', requested);
       const netmask = requested.options.get('netmask', requested);
       const ip = range[0]; // range begin is obviously a valid ip
