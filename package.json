@@ -1,10 +1,10 @@
 {
-  "name": "dhcp",
+  "name": "@u4/dhcp",
   "title": "dhcp",
   "version": "0.2.18",
-  "homepage": "https://github.com/infusion/node-dhcp",
+  "homepage": "https://github.com/urielch/node-dhcp",
   "bugs": {
-    "url": "https://github.com/infusion/node-dhcp/issues"
+    "url": "https://github.com/urielch/node-dhcp/issues"
   },
   "description": "A DHCP server written in JavaScript",
   "keywords": [
@@ -19,7 +19,10 @@
     "dhclient",
     "udp"
   ],
-  "author": "Robert Eisele <robert@xarg.org> (http://www.xarg.org/)",
+  "author": "Uriel Chemouni <uchemouni@gmail.com>",
+  "contributors": [
+    "Robert Eisele <robert@xarg.org> (http://www.xarg.org/)"
+  ],
   "main": "lib/dhcp.js",
   "private": false,
   "readmeFilename": "README.md",
@@ -32,14 +35,14 @@
   "license": "MIT OR GPL-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/infusion/node-dhcp.git"
+    "url": "git://github.com/urielch/node-dhcp.git"
   },
   "bin": {
     "dhcp": "./bin/dhcp-cli.js",
     "dhcpd": "./bin/dhcpd-cli.js"
   },
   "engines": {
-    "node": ">=5.10.0"
+    "node": ">=8.0.0"
   },
   "scripts": {
     "test": "mocha tests/*.js"

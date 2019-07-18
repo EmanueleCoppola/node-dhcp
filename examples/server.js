@@ -1,11 +1,15 @@
-
 var dhcpd = require('../lib/dhcp.js');
 
-var s = dhcpd.createServer({
+const server = dhcpd.createServer({
   // System settings
-  range: [
-    "192.168.3.10", "192.168.3.99"
-  ],
+  /**
+   * @param {IDHCPMessage} a 
+   */
+  range: function (a) {
+    return [
+      "10.0.0.139", "10.0.0.200"
+    ]
+  },
   forceOptions: ['hostname'], // Options that need to be sent, even if they were not requested
   randomIP: true, // Get random new IP from pool instead of keeping one ip
   static: {
@@ -15,23 +19,21 @@ var s = dhcpd.createServer({
   // Option settings
   netmask: '255.255.255.0',
   router: [
-    '192.168.0.1'
+    '10.0.0.138'
   ],
   timeServer: null,
   nameServer: null,
   dns: ["8.8.8.8", "8.8.4.4"],
   hostname: "kacknup",
   domainName: "xarg.org",
-  broadcast: '192.168.0.255',
-  server: '192.168.0.1', // This is us
+  broadcast: '10.0.0.255',
+  server: '10.0.0.39', // This is us
   maxMessageSize: 1500,
   leaseTime: 86400,
   renewalTime: 60,
   rebindingTime: 120,
-  bootFile: function(req, res) {
-
+  bootFile: function (req, res) {
     // res.ip - the actual ip allocated for the client
-
     if (req.clientId === 'foo bar') {
       return 'x86linux.0';
     } else {
@@ -40,30 +42,28 @@ var s = dhcpd.createServer({
   }
 });
 
-s.on('message', function(data) {
-  console.log(data);
-});
+server.on('message', (data) => console.log(data));
 
-s.on('bound', function(state) {
+server.on('bound', (state) => {
   console.log("BOUND:");
   console.log(state);
 });
 
-s.on("error", function(err, data) {
+server.on("error", (err, data) => {
   console.log(err, data);
 });
 
-s.on("listening", function(sock) {
+server.on("listening", (sock) => {
   var address = sock.address();
   console.info('Server Listening: ' + address.address + ':' + address.port);
 });
 
-s.on("close", function() {
+server.on("close", () => {
   console.log('close');
 });
 
-s.listen();
+server.listen();
 
 process.on('SIGINT', () => {
-  s.close();
+  server.close();
 });

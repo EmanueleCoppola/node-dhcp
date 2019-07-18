@@ -13,10 +13,11 @@ import * as OptionsModel from './options';
 import { Server } from './Server';
 import { IServerConfig, ServerConfig } from './ServerConfig';
 
-export {DHCPOptions} from './DHCPOptions';
-export {OptionId} from './model';
-export {IClientConfig} from './ClientConfig';
-export {IServerConfig} from './ServerConfig';
+export { DHCPOptions } from './DHCPOptions';
+export { OptionId } from './model';
+export { IClientConfig } from './ClientConfig';
+export { IServerConfig } from './ServerConfig';
+export { IDHCPMessage } from './model';
 
 export const createBroadcastHandler = (): Server => new Server(null, true);
 export const createClient = (opt: IClientConfig): Client => new Client(new ClientConfig(opt));

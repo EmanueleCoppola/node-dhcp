@@ -16,11 +16,12 @@ export class ClientConfig extends DHCPOptions {
 
     constructor(options?: IClientConfig) {
         super(options);
-        if (options)
-            for (const key in options) {
-                if (extraOption.has(key))
-                    this[key] = options[key];
-            }
+        if (!options)
+          return;
+        for (const key in options) {
+            if (extraOption.has(key))
+                this[key] = options[key];
+        }
     }
 
     public getMac(): string {
