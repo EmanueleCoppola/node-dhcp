@@ -4,7 +4,7 @@ import { DHCPOptions } from './DHCPOptions';
 import { Lease } from './Lease';
 import { IDHCPMessage } from './model';
 import { ServerConfig } from './ServerConfig';
-export declare class DHCPServer extends EventEmitter {
+export declare class Server extends EventEmitter {
     private socket;
     private config;
     private leaseState;

@@ -2,7 +2,7 @@
 import { EventEmitter } from 'events';
 import { ClientConfig } from './ClientConfig';
 import { IDHCPMessage } from './model';
-export declare class DHCPClient extends EventEmitter {
+export declare class Client extends EventEmitter {
     private socket;
     private config;
     private lastLease;
