@@ -40,28 +40,28 @@ export class Client extends EventEmitter {
     const self = this;
     const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true });
     sock.on('message', (buf: Buffer): any => {
-      let req: IDHCPMessage;
+      let request: IDHCPMessage;
       try {
-        req = Protocol.parse(buf);
+        request = Protocol.parse(buf);
       } catch (e) {
         return self.emit('error', e);
       }
       // self._req = req;
-      if (req.op !== BootCode.BOOTREPLY) {
-        return self.emit('error', new Error('Malformed packet'), req);
+      if (request.op !== BootCode.BOOTREPLY) {
+        return self.emit('error', new Error('Malformed packet'), request);
       }
-      if (!req.options[OptionId.dhcpMessageType]) {
-        return self.emit('error', new Error('Got message, without valid message type'), req);
+      if (!request.options[OptionId.dhcpMessageType]) {
+        return self.emit('error', new Error('Got message, without valid message type'), request);
       }
-      self.emit('message', req);
+      self.emit('message', request);
       // Handle request
-      switch (req.options[OptionId.dhcpMessageType]) {
+      switch (request.options[OptionId.dhcpMessageType]) {
         case DHCP53Code.DHCPOFFER:
-          self.handleOffer(req);
+          self.handleOffer(request);
           break;
         case DHCP53Code.DHCPACK:
         case DHCP53Code.DHCPNAK:
-          self.handleAck(req);
+          self.handleAck(request);
           break;
       }
     });

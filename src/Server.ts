@@ -37,7 +37,7 @@ export class Server extends EventEmitter {
         const self = this;
         const socket = dgram.createSocket({ type: 'udp4', reuseAddr: true });
 
-        this.on('getLeaseState', () => {
+        this.on('getLeasesState', () => {
             this.emit('LeaseState', this.leaseState);
         });
 
@@ -81,7 +81,7 @@ export class Server extends EventEmitter {
         this.leaseState = {};
     }
 
-    public geLease(): Lease[] {
+    public getLeases(): Lease[] {
         return Object.values(this.leaseState);
     }
 

@@ -9,7 +9,7 @@ export declare class Server extends EventEmitter {
     private config;
     private leaseState;
     constructor(config: ServerConfig, listenOnly?: boolean);
-    geLease(): Lease[];
+    getLeases(): Lease[];
     getConfigServer(request: IDHCPMessage): string;
     getConfigBroadcast(request: IDHCPMessage): string;
     getOptions(request: IDHCPMessage, pre: DHCPOptions, requireds: number[], requested?: any): DHCPOptions;
