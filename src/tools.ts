@@ -96,8 +96,9 @@ export const netmaskFromRange = (ip1: string | number, ip2: string | number): nu
 export async function genericGetFreeIP(IP1: string, IP2: string, r1: Set<string>, r2: Set<string>, used: number, rnd?: boolean): Promise<string> {
   const firstIP = parseIp(IP1);
   const lastIP = parseIp(IP2);
+  const total = lastIP - firstIP;
 
-  const leases = await this.cnt;
+  const leases = used;
   // Check if all IP's are used and delete the oldest
   if (lastIP - firstIP === leases) {
       throw Error('DHCP is full');
@@ -106,11 +107,10 @@ export async function genericGetFreeIP(IP1: string, IP2: string, r1: Set<string>
 
   // Select a random IP, using prime number iterator
   if (rnd) {
-      let total = lastIP - firstIP;
-      const p = random(1000, 10000);
+      const prime = random(1000, 10000);
       let offset = 0;
-      while (total--) {
-          offset = (offset + p) % total;
+      for (let i = 0; i < total; i++) {
+          offset = (offset + prime) % total;
           const ip = firstIP + offset;
           const strIP = formatIp(ip);
           if (r1.has(strIP))

@@ -17,7 +17,7 @@ export declare class Server extends EventEmitter {
     handleRequest(request: IDHCPMessage): Promise<number>;
     sendAck(request: IDHCPMessage): Promise<number>;
     sendNak(request: IDHCPMessage): Promise<number>;
-    listen(port: number, host: string): Promise<void>;
+    listen(port?: number, host?: string): Promise<void>;
     close(): Promise<any>;
     private handleRelease;
     private handleRenew;

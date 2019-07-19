@@ -41,7 +41,7 @@ export class Server extends EventEmitter {
         this.leaseState = config.leaseState || new LeaseStoreMemory();
         this.socket = socket;
 
-        socket.on('message', (buf: Buffer) => {
+        socket.on('message', async (buf: Buffer) => {
             let request: IDHCPMessage;
             try {
                 request = parse(buf);
@@ -54,20 +54,22 @@ export class Server extends EventEmitter {
                 return self.emit('error', new Error('Got message, without valid message type'), request);
 
             self.emit('message', request);
-            if (!listenOnly) {
+            if (listenOnly)
+                return;
+            try {
                 // Handle request
                 const mode = request.options[OptionId.dhcpMessageType];
                 switch (mode) {
                     case DHCP53Code.DHCPDISCOVER: // 1.
-                        self.handleDiscover(request);
-                        break;
+                        return await self.handleDiscover(request);
                     case DHCP53Code.DHCPREQUEST: // 3.
-                        self.handleRequest(request);
-                        break;
+                        return await self.handleRequest(request);
                     case DHCP53Code.DHCPINFORM:
                     default:
                         console.error('Not implemented DHCP 53 Type', request.options[53]);
                 }
+            } catch (e) {
+                console.error(e);
             }
         });
         socket.on('listening', () => self.emit('listening', socket));
@@ -337,7 +339,7 @@ export class Server extends EventEmitter {
         return this._send(this.getConfigBroadcast(request), ans);
     }
 
-    public listen(port: number, host: string): Promise<void> {
+    public listen(port?: number, host?: string): Promise<void> {
         const { socket } = this;
         return new Promise((resolve) => {
             socket.bind({ port: port || SERVER_PORT, address: host || INADDR_ANY }, () => {

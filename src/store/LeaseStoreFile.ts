@@ -44,20 +44,20 @@ export class LeaseStoreFile implements ILeaseStore {
         return out;
     }
 
-    public async getOldest(): Promise<Lease | null> {
-        if (this.oldest)
-            return this.oldest;
-        let oldest: Lease | null = null;
-        let oldestTime = Infinity;
-        for (const lease of Object.values(this.cache)) {
-            if (lease.leaseTime < oldestTime) {
-                oldestTime = lease.leaseTime;
-                oldest = lease;
-            }
-        }
-        this.oldest = oldest;
-        return oldest;
-    }
+    // public async getOldest(): Promise<Lease | null> {
+    //    if (this.oldest)
+    //        return this.oldest;
+    //    let oldest: Lease | null = null;
+    //    let oldestTime = Infinity;
+    //    for (const lease of Object.values(this.cache)) {
+    //        if (lease.leaseTime < oldestTime) {
+    //            oldestTime = lease.leaseTime;
+    //            oldest = lease;
+    //        }
+    //    }
+    //    this.oldest = oldest;
+    //    return oldest;
+    // }
 
     public async getLeases(): Promise<Lease[]> {
         return Object.values(this.cache);
@@ -104,9 +104,16 @@ export class LeaseStoreFile implements ILeaseStore {
     }
 
     private _add(lease: Lease) {
+        const prev = this.cache[lease.mac];
+        if (prev) {
+            if (prev.address !== lease.address) {
+                delete this.address[prev.address];
+            }
+        }
         this.cache[lease.mac] = lease;
         this.address.add(lease.address);
-        this.cnt++;
+        if (prev)
+            this.cnt++;
         return true;
     }
 }

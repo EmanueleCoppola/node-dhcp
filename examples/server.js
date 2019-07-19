@@ -1,10 +1,10 @@
+// @ts-check
+
 var dhcpd = require('../lib/dhcp.js');
 
-const server = dhcpd.createServer({
+const server = dhcpd.createServer(/** @type {IServerConfig} */ {
+  leaseState: new dhcpd.LeaseStoreFile('leases.json'),
   // System settings
-  /**
-   * @param {IDHCPMessage} a 
-   */
   range: function (a) {
     return [
       "10.0.0.139", "10.0.0.200"

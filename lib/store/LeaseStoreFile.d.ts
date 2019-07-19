@@ -14,7 +14,6 @@ export declare class LeaseStoreFile implements ILeaseStore {
     hasAddress(address: string): Promise<boolean>;
     size(): Promise<number>;
     add(lease: Lease): Promise<boolean>;
-    getOldest(): Promise<Lease | null>;
     getLeases(): Promise<Lease[]>;
     getAddresses(): Promise<string[]>;
     getMacs(): Promise<string[]>;
