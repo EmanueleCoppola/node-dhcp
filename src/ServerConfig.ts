@@ -1,9 +1,7 @@
 import { DHCPOptions } from "./DHCPOptions";
-import { ILeaseStore } from "./leaseStore/ILeaseStote";
-import { LeaseStoreMemory } from "./leaseStore/LeaseStoreMemory";
+import { ILeaseStore, LeaseStoreMemory } from "./leaseLive";
+import { IStaticLeaseStore, StaticLeaseStoreMemory } from "./leaseStatic";
 import { ASCIIs, DHCPOptionsBase, IDHCPMessage, IPs, OptionId } from "./model";
-import { IStaticLeaseStore } from "./staticLeaseStore/IStaticLeaseStore";
-import { StaticLeaseStoreMemory } from "./staticLeaseStore/StaticLeaseStoreMemory";
 
 export interface IServerConfig extends DHCPOptionsBase {
     randomIP?: boolean; // Get random new IP from pool instead of keeping one ip

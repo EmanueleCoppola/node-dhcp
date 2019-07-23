@@ -21,8 +21,8 @@ export { IDHCPMessage } from "./model";
 export { Client } from "./Client";
 export { Server } from "./Server";
 export { ILease as Lease } from "./Lease";
-export { ILeaseStore, LeaseStoreFile, LeaseStoreMemory } from "./leaseStore/";
-export { IStaticLeaseStore, StaticLeaseStoreMemory } from "./staticLeaseStore/";
+export { ILeaseStore, LeaseStoreFile, LeaseStoreMemory } from "./leaseLive";
+export { IStaticLeaseStore, StaticLeaseStoreMemory } from "./leaseStatic";
 
 export const createBroadcastHandler = (): Server => new Server(null, true);
 export const createClient = (opt: IClientConfig): Client => new Client(new ClientConfig(opt));
