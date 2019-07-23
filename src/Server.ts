@@ -139,6 +139,14 @@ export class Server extends EventEmitter {
     }
 
     public async selectAddress(clientMAC: string, request: IDHCPMessage): Promise<string> {
+        /**
+         * IP Selection algorithm:
+         *
+         * 0. static lease are checked before this call since they can be fully customisable
+         * 1. look for a previous lease
+         * 2. look for a free lease from the pool
+         */
+
         /*
          * IP Selection algorithm:
          *
@@ -163,9 +171,9 @@ export class Server extends EventEmitter {
 
         // Is there a static binding?
         const statik = this.config.getStatic();
-        const staticResult = statik.getIP(clientMAC, request);
+        const staticResult = statik.getLease(clientMAC, request);
         if (staticResult)
-            return staticResult;
+            return staticResult.address;
 
         const randIP = this.config.get('randomIP', request);
         const [firstIPstr, lastIPStr] = this.config.get('range', request) as string[];

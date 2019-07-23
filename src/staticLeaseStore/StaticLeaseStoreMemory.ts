@@ -1,6 +1,10 @@
+import { ILeaseLT } from '../Lease';
 import { IDHCPMessage } from '../model';
 import { IStaticLeaseStore } from './IStaticLeaseStore';
 
+/**
+ * basic static Lease conmfiguration module
+ */
 export class StaticLeaseStoreMemory implements IStaticLeaseStore {
     private data: { [key: string]: string } = {};
     private set: Set<string>;
@@ -26,8 +30,16 @@ export class StaticLeaseStoreMemory implements IStaticLeaseStore {
         delete this.data[mac];
     }
 
+    public getLease(mac: string, request: IDHCPMessage): ILeaseLT | null {
+        const address = this.data[mac];
+        if (address)
+            return { mac, address };
+        return null;
+    }
+
+
     public getIP(mac: string, request: IDHCPMessage): string {
-        return this.data[mac];
+        return;
     }
 
     public getReservedIP(): Set<string> {

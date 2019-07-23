@@ -1,6 +1,6 @@
 import { networkInterfaces } from 'os';
-import { DHCPOptions, DHCPOptionsBase } from './DHCPOptions';
-import { IDHCPMessage, OptionId } from './model';
+import { DHCPOptions } from './DHCPOptions';
+import { DHCPOptionsBase, IDHCPMessage, OptionId } from './model';
 import { getDHCPId } from './options';
 
 const extraOption = new Set(['mac', 'features']);
