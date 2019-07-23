@@ -91,9 +91,8 @@ export class LeaseStoreFile implements ILeaseStore {
     private _add(lease: Lease) {
         const prev = this.cache[lease.mac];
         if (prev) {
-            if (prev.address !== lease.address) {
-                delete this.address[prev.address];
-            }
+            if (prev.address !== lease.address)
+                this.address.delete(prev.address);
         }
         this.cache[lease.mac] = lease;
         this.address.add(lease.address);
