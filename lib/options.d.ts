@@ -9,7 +9,7 @@
  */
 export interface IOptionMeta {
     name: string;
-    type: 'IP' | 'Int32' | 'UInt32' | 'UInt16' | 'UInt8' | 'IPs' | 'IP' | 'ASCII' | 'Bool' | 'UInt16s' | 'UInt8s' | 'any';
+    type: "IP" | "Int32" | "UInt32" | "UInt16" | "UInt8" | "IPs" | "IP" | "ASCII" | "Bool" | "UInt16s" | "UInt8s" | "any";
     attr?: string;
     enum?: {
         [key: number]: string;

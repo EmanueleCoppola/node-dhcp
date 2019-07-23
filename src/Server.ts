@@ -1,9 +1,10 @@
 /* tslint:disable no-console */
+/* tslint:disable object-literal-sort-keys */
 
 import { createSocket, Socket } from "dgram";
 import { EventEmitter } from "events";
 import { DHCPOptions } from "./DHCPOptions";
-import { Lease } from "./Lease";
+import { ILease } from "./Lease";
 import { ILeaseStore } from "./leaseStore/ILeaseStote";
 import { LeaseStoreMemory } from "./leaseStore/LeaseStoreMemory";
 import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId } from "./model";
@@ -25,6 +26,15 @@ const ansCommon = {
     secs: 0, // 0 or seconds since DHCP process started
     sname: "", // unused
 };
+
+const newLease = (mac: string): ILease => ({
+    mac,
+    leasePeriod: 86400, // Seconds the lease is allowed to live, next lease in "leasePeriod - (now - bindTime)"
+    renewPeriod: 1440, // Seconds till a renew is due, next renew in "renewPeriod - (now - bindTime)"
+    rebindPeriod: 14400, // Seconds till a rebind is due, next rebind in "rebindPeriod - (now - bindTime)"
+    tries: 0, // number of tries in order to complete a state
+    xid: 1, // unique id, incremented with every request
+  } as ILease);
 
 export class Server extends EventEmitter {
     private socket: Socket | null;
@@ -227,17 +237,17 @@ export class Server extends EventEmitter {
 
     public async handleDiscover(request: IDHCPMessage): Promise<number> {
         const { chaddr } = request;
-        let newLease: boolean = false;
+        let nextLease: boolean = false;
         let lease = await this.leaseState.getLeaseFromMac(chaddr);
         if (!lease) {
-            lease = new Lease(chaddr);
-            newLease = true;
+            lease = newLease(chaddr);
+            nextLease = true;
         }
         lease.address = await this.selectAddress(request.chaddr, request);
         lease.leasePeriod = this.config.get(OptionId.leaseTime, request);
         lease.server = this.getServer(request);
         lease.state = "OFFERED";
-        if (newLease) {
+        if (nextLease) {
             this.leaseState.add(lease);
         }
         return this.sendOffer(request);
@@ -274,18 +284,18 @@ export class Server extends EventEmitter {
 
     public async handleRequest(request: IDHCPMessage): Promise<number> {
         const { chaddr } = request;
-        let newLease: boolean = false;
+        let nextLease: boolean = false;
         let lease = await this.leaseState.getLeaseFromMac(chaddr);
         if (!lease) {
-            lease = new Lease(chaddr);
-            newLease = true;
+            lease = newLease(chaddr);
+            nextLease = true;
         }
         lease.address = await this.selectAddress(chaddr, request);
         lease.leasePeriod = this.config.get("leaseTime", request);
         lease.server = this.getServer(request);
         lease.state = "BOUND";
         lease.bindTime = new Date();
-        if (newLease) {
+        if (nextLease) {
             this.leaseState.add(lease);
         }
         return this.sendAck(request);

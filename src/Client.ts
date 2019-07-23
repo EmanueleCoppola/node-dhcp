@@ -1,8 +1,10 @@
+/* tslint:disable object-literal-sort-keys */
+
 import * as dgram from "dgram";
 import { EventEmitter } from "events";
 import { ClientConfig } from "./ClientConfig";
 import { DHCPOptions } from "./DHCPOptions";
-import { Lease } from "./Lease";
+import { ILease } from "./Lease";
 import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId } from "./model";
 import * as OptionsModel from "./options";
 import * as Protocol from "./protocol";
@@ -27,13 +29,22 @@ const ansCommon = {
   yiaddr: INADDR_ANY,
 };
 
+const newLease = (mac: string): ILease => ({
+  mac,
+  leasePeriod: 86400, // Seconds the lease is allowed to live, next lease in "leasePeriod - (now - bindTime)"
+  renewPeriod: 1440, // Seconds till a renew is due, next renew in "renewPeriod - (now - bindTime)"
+  rebindPeriod: 14400, // Seconds till a rebind is due, next rebind in "rebindPeriod - (now - bindTime)"
+  tries: 0, // number of tries in order to complete a state
+  xid: 1, // unique id, incremented with every request
+} as ILease);
+
 export class Client extends EventEmitter {
   // Socket handle
   private socket: dgram.Socket;
   // Config (cache) object
   private config: ClientConfig;
   // Current client state
-  private lastLease: Lease;
+  private lastLease: ILease;
 
   constructor(config: ClientConfig) {
     super();
@@ -69,7 +80,7 @@ export class Client extends EventEmitter {
     sock.on("close", () => self.emit("close"));
     this.socket = sock;
     this.config = config || new ClientConfig();
-    this.lastLease = new Lease(""); // unknows Local Mac
+    this.lastLease = newLease(""); // unknows Local Mac
   }
 
   public sendDiscover(): Promise<number> {

@@ -7,7 +7,7 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
 /// <reference types="node" />
-import { IDHCPMessage } from './model';
-import SeqBuffer from './seqbuffer';
+import { IDHCPMessage } from "./model";
+import SeqBuffer from "./seqbuffer";
 export declare const parse: (buf: Buffer) => IDHCPMessage;
 export declare const format: (data: IDHCPMessage) => SeqBuffer;

@@ -1,13 +1,13 @@
 import debounce from "debounce";
 import * as fse from "fs-extra";
-import { Lease } from "../Lease";
+import { ILease } from "../Lease";
 import { genericGetFreeIP } from "../tools";
 import { ILeaseStore } from "./ILeaseStote";
 
 export class LeaseStoreFile implements ILeaseStore {
-    public cache: { [key: string]: Lease } = {};
+    public cache: { [key: string]: ILease } = {};
     public address: Set<string> = new Set();
-    public oldest: Lease | null = null;
+    public oldest: ILease | null = null;
     public cnt = 0;
     public save: () => void;
 
@@ -16,7 +16,7 @@ export class LeaseStoreFile implements ILeaseStore {
     constructor(file: string) {
         this.file = file;
         this.save = debounce(() => this._save(), 300);
-        let data: Lease[];
+        let data: ILease[];
         try {
             data = fse.readJSONSync(this.file);
         } catch (e) {
@@ -25,7 +25,7 @@ export class LeaseStoreFile implements ILeaseStore {
         this.reIndex(data);
     }
 
-    public async getLeaseFromMac(mac: string): Promise<Lease | null> {
+    public async getLeaseFromMac(mac: string): Promise<ILease | null> {
         return this.cache[mac] || null;
     }
 
@@ -37,14 +37,14 @@ export class LeaseStoreFile implements ILeaseStore {
     return this.cnt;
     }
 
-    public async add(lease: Lease): Promise<boolean> {
+    public async add(lease: ILease): Promise<boolean> {
         const out = this._add(lease);
         if (out)
             this.save();
         return out;
     }
 
-    public async getLeases(): Promise<Lease[]> {
+    public async getLeases(): Promise<ILease[]> {
         return Object.values(this.cache);
     }
 
@@ -56,7 +56,7 @@ export class LeaseStoreFile implements ILeaseStore {
         return Object.keys(this.cache);
     }
 
-    public getLeases2(): Lease[] {
+    public getLeases2(): ILease[] {
         return Object.values(this.cache);
     }
 
@@ -76,8 +76,8 @@ export class LeaseStoreFile implements ILeaseStore {
         return fse.writeJSON(`${this.file}`, Object.values(this.cache), { spaces: 2 });
     }
 
-    private reIndex(leases: Lease[]) {
-        const index: { [key: string]: Lease } = {};
+    private reIndex(leases: ILease[]) {
+        const index: { [key: string]: ILease } = {};
         this.cache = {};
         this.address = new Set();
         this.oldest = null;
@@ -88,7 +88,7 @@ export class LeaseStoreFile implements ILeaseStore {
         }
     }
 
-    private _add(lease: Lease) {
+    private _add(lease: ILease) {
         const prev = this.cache[lease.mac];
         if (prev) {
             if (prev.address !== lease.address)

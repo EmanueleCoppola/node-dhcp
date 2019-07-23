@@ -20,7 +20,7 @@ export { IServerConfig } from "./ServerConfig";
 export { IDHCPMessage } from "./model";
 export { Client } from "./Client";
 export { Server } from "./Server";
-export { Lease } from "./Lease";
+export { ILease as Lease } from "./Lease";
 export { ILeaseStore, LeaseStoreFile, LeaseStoreMemory } from "./leaseStore/";
 export { IStaticLeaseStore, StaticLeaseStoreMemory } from "./staticLeaseStore/";
 

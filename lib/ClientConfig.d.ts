@@ -1,5 +1,5 @@
-import { DHCPOptions, DHCPOptionsBase } from './DHCPOptions';
-import { IDHCPMessage, OptionId } from './model';
+import { DHCPOptions } from "./DHCPOptions";
+import { DHCPOptionsBase, IDHCPMessage, OptionId } from "./model";
 export interface IClientConfig extends DHCPOptionsBase {
     mac?: string;
     features?: string[];

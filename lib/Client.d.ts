@@ -1,7 +1,7 @@
 /// <reference types="node" />
-import { EventEmitter } from 'events';
-import { ClientConfig } from './ClientConfig';
-import { IDHCPMessage } from './model';
+import { EventEmitter } from "events";
+import { ClientConfig } from "./ClientConfig";
+import { IDHCPMessage } from "./model";
 export declare class Client extends EventEmitter {
     private socket;
     private config;

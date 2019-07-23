@@ -1,7 +1,7 @@
-import { DHCPOptions, DHCPOptionsBase } from './DHCPOptions';
-import { ILeaseStore } from './leaseStore/ILeaseStote';
-import { ASCIIs, IDHCPMessage, IPs, OptionId } from './model';
-import { IStaticLeaseStore } from './staticLeaseStore/IStaticLeaseStore';
+import { DHCPOptions, DHCPOptionsBase } from "./DHCPOptions";
+import { ILeaseStore } from "./leaseStore/ILeaseStote";
+import { ASCIIs, IDHCPMessage, IPs, OptionId } from "./model";
+import { IStaticLeaseStore } from "./staticLeaseStore/IStaticLeaseStore";
 export interface IServerConfig extends DHCPOptionsBase {
     randomIP?: boolean;
     static: IStaticLeaseStore;

@@ -1,14 +1,14 @@
-import { Lease } from "../Lease";
+import { ILease } from "../Lease";
 import { genericGetFreeIP } from "../tools";
 import { ILeaseStore } from "./ILeaseStote";
 
 export class LeaseStoreMemory implements ILeaseStore {
-    public cache: { [key: string]: Lease } = {};
+    public cache: { [key: string]: ILease } = {};
     public address: Set<string> = new Set();
-    public oldest: Lease | null = null;
+    public oldest: ILease | null = null;
     public cnt = 0;
 
-    public async getLeaseFromMac(mac: string): Promise<Lease | null> {
+    public async getLeaseFromMac(mac: string): Promise<ILease | null> {
         return this.cache[mac] || null;
     }
 
@@ -20,7 +20,7 @@ export class LeaseStoreMemory implements ILeaseStore {
         return this.cnt;
     }
 
-    public async add(lease: Lease): Promise<boolean> {
+    public async add(lease: ILease): Promise<boolean> {
         this.cache[lease.mac] = lease;
         this.address.add(lease.address);
         this.cnt++;
@@ -42,7 +42,7 @@ export class LeaseStoreMemory implements ILeaseStore {
     //    return oldest;
     // }
 
-    public async getLeases(): Promise<Lease[]> {
+    public async getLeases(): Promise<ILease[]> {
         return Object.values(this.cache);
     }
 
@@ -54,7 +54,7 @@ export class LeaseStoreMemory implements ILeaseStore {
         return Object.keys(this.cache);
     }
 
-    public getLeases2(): Lease[] {
+    public getLeases2(): ILease[] {
         return Object.values(this.cache);
     }
 

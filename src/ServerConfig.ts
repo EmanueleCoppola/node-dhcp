@@ -1,7 +1,7 @@
-import { DHCPOptions, DHCPOptionsBase } from "./DHCPOptions";
+import { DHCPOptions } from "./DHCPOptions";
 import { ILeaseStore } from "./leaseStore/ILeaseStote";
 import { LeaseStoreMemory } from "./leaseStore/LeaseStoreMemory";
-import { ASCIIs, IDHCPMessage, IPs, OptionId } from "./model";
+import { ASCIIs, DHCPOptionsBase, IDHCPMessage, IPs, OptionId } from "./model";
 import { IStaticLeaseStore } from "./staticLeaseStore/IStaticLeaseStore";
 import { StaticLeaseStoreMemory } from "./staticLeaseStore/StaticLeaseStoreMemory";
 

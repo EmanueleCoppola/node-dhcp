@@ -1,23 +1,23 @@
-import { Lease } from '../Lease';
-import { ILeaseStore } from './ILeaseStote';
+import { ILease } from "../Lease";
+import { ILeaseStore } from "./ILeaseStote";
 export declare class LeaseStoreFile implements ILeaseStore {
     cache: {
-        [key: string]: Lease;
+        [key: string]: ILease;
     };
     address: Set<string>;
-    oldest: Lease | null;
+    oldest: ILease | null;
     cnt: number;
     save: () => void;
     private file;
     constructor(file: string);
-    getLeaseFromMac(mac: string): Promise<Lease | null>;
+    getLeaseFromMac(mac: string): Promise<ILease | null>;
     hasAddress(address: string): Promise<boolean>;
     size(): Promise<number>;
-    add(lease: Lease): Promise<boolean>;
-    getLeases(): Promise<Lease[]>;
+    add(lease: ILease): Promise<boolean>;
+    getLeases(): Promise<ILease[]>;
     getAddresses(): Promise<string[]>;
     getMacs(): Promise<string[]>;
-    getLeases2(): Lease[];
+    getLeases2(): ILease[];
     getAddresses2(): string[];
     getMacs2(): string[];
     getFreeIP(IP1: string, IP2: string, reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string>;

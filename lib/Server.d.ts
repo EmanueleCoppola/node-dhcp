@@ -1,8 +1,8 @@
 /// <reference types="node" />
-import { EventEmitter } from 'events';
-import { DHCPOptions } from './DHCPOptions';
-import { IDHCPMessage } from './model';
-import { ServerConfig } from './ServerConfig';
+import { EventEmitter } from "events";
+import { DHCPOptions } from "./DHCPOptions";
+import { IDHCPMessage } from "./model";
+import { ServerConfig } from "./ServerConfig";
 export declare class Server extends EventEmitter {
     private socket;
     private config;

@@ -7,7 +7,7 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
 /// <reference types="node" />
-import { DHCPOptions } from './DHCPOptions';
+import { DHCPOptions } from "./DHCPOptions";
 export default class SeqBuffer {
     buffer: Buffer;
     r: number;

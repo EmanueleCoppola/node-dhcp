@@ -1,2 +1,2 @@
-export { IStaticLeaseStore } from './IStaticLeaseStore';
-export { StaticLeaseStoreMemory } from './StaticLeaseStoreMemory';
+export { IStaticLeaseStore } from "./IStaticLeaseStore";
+export { StaticLeaseStoreMemory } from "./StaticLeaseStoreMemory";
