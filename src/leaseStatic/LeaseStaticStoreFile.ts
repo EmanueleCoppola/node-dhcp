@@ -1,7 +1,7 @@
 import { debounce } from "debounce";
 import * as fse from "fs-extra";
 import { ILeaseEx } from "../Lease";
-import { IDHCPMessage, IOptionsId, IOptionsTxt, OptionId } from "../model";
+import { IDHCPMessage, IOptionsId, IOptionsTxt } from "../model";
 import { getDHCPId } from "../options";
 import { ILeaseStaticStore } from "./ILeaseStaticStore";
 

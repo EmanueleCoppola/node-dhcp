@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { EventEmitter } from "events";
 import { DHCPOptions } from "./DHCPOptions";
-import { IDHCPMessage } from "./model";
+import { IDHCPMessage, IOptionsId } from "./model";
 import { ServerConfig } from "./ServerConfig";
 export declare class Server extends EventEmitter {
     private socket;
@@ -13,11 +13,11 @@ export declare class Server extends EventEmitter {
     getServer(request: IDHCPMessage): string;
     getConfigBroadcast(request: IDHCPMessage): string;
     validOption(optionId: number | string): boolean;
-    getOptions(request: IDHCPMessage, pre: DHCPOptions, requireds: number[], requested?: number[]): DHCPOptions;
+    getOptions(request: IDHCPMessage, pre: DHCPOptions, customOpts: IOptionsId, requireds: number[], requested?: number[]): DHCPOptions;
     selectAddress(clientMAC: string, request: IDHCPMessage): Promise<string>;
     handle_Discover(request: IDHCPMessage): Promise<number>;
-    handle_Release(request: IDHCPMessage): Promise<number>;
     handle_Request(request: IDHCPMessage): Promise<number>;
+    handle_Release(request: IDHCPMessage): Promise<number>;
     /**
      * Formulate the response object
      */
