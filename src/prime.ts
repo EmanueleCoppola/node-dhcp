@@ -12,7 +12,7 @@ export const isPrime = (p: number): number => {
     if (!p) return 0;
     if (p < 4) return -1;
     if (p === p + 1)
-        throw new RangeError('the number is out of range, max value is ~2^53');
+        throw new RangeError("the number is out of range, max value is ~2^53");
     if (p % 2 === 0) return 2;
     // search for divisors
     for (; i <= qx; i += 2) if (p % i === 0) return i;

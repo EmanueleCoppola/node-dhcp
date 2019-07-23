@@ -1,11 +1,11 @@
 /* tslint:disable no-bitwise */
 
-import { random } from './prime';
+import { random } from "./prime";
 
 export const parseIp = (str: string | number): number => {
-  if (typeof str === 'number')
+  if (typeof str === "number")
     return str;
-  const octs = str.split('.');
+  const octs = str.split(".");
   if (octs.length !== 4) {
     throw new Error(`Invalid IP address ${str}`);
   }
@@ -20,10 +20,10 @@ export const parseIp = (str: string | number): number => {
 };
 
 export const formatIp = (num: number): string => {
-  let ip = '';
+  let ip = "";
   for (let i = 24; i >= 0; i -= 8) {
     if (ip)
-      ip += '.';
+      ip += ".";
     ip += ((num >>> i) & 0xFF).toString(10);
   }
   return ip;
@@ -101,7 +101,7 @@ export async function genericGetFreeIP(IP1: string, IP2: string, reservedSet: Ar
   const leases = used;
   // Check if all IP's are used and delete the oldest
   if (lastIP - firstIP === leases) {
-    throw Error('DHCP is full');
+    throw Error("DHCP is full");
   }
   // Exclude our own server IP from pool
 

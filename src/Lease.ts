@@ -1,7 +1,7 @@
-import { DHCPOptions } from './DHCPOptions';
-import { IOptionsTxt } from './model';
+import { DHCPOptions } from "./DHCPOptions";
+import { IOptionsTxt } from "./model";
 
-export type LeaseState = 'RENEWING' | 'RELEASED' | 'REBINDING' | 'SELECTING' | 'REQUESTING' | 'BOUND' | 'REBOOTING' | 'INIT' | 'OFFERED';
+export type LeaseState = "RENEWING" | "RELEASED" | "REBINDING" | "SELECTING" | "REQUESTING" | "BOUND" | "REBOOTING" | "INIT" | "OFFERED";
 
 /**
  * Lease format for static lease

@@ -7,22 +7,22 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
 
-import { Client } from './Client';
-import { ClientConfig, IClientConfig } from './ClientConfig';
-import * as OptionsModel from './options';
-import { Server } from './Server';
-import { IServerConfig, ServerConfig } from './ServerConfig';
+import { Client } from "./Client";
+import { ClientConfig, IClientConfig } from "./ClientConfig";
+import * as OptionsModel from "./options";
+import { Server } from "./Server";
+import { IServerConfig, ServerConfig } from "./ServerConfig";
 
-export { DHCPOptions } from './DHCPOptions';
-export { OptionId } from './model';
-export { IClientConfig } from './ClientConfig';
-export { IServerConfig } from './ServerConfig';
-export { IDHCPMessage } from './model';
-export { Client } from './Client';
-export { Server } from './Server';
-export { Lease } from './Lease';
-export { ILeaseStore, LeaseStoreFile, LeaseStoreMemory } from './leaseStore/';
-export { IStaticLeaseStore, StaticLeaseStoreMemory } from './staticLeaseStore/';
+export { DHCPOptions } from "./DHCPOptions";
+export { OptionId } from "./model";
+export { IClientConfig } from "./ClientConfig";
+export { IServerConfig } from "./ServerConfig";
+export { IDHCPMessage } from "./model";
+export { Client } from "./Client";
+export { Server } from "./Server";
+export { Lease } from "./Lease";
+export { ILeaseStore, LeaseStoreFile, LeaseStoreMemory } from "./leaseStore/";
+export { IStaticLeaseStore, StaticLeaseStoreMemory } from "./staticLeaseStore/";
 
 export const createBroadcastHandler = (): Server => new Server(null, true);
 export const createClient = (opt: IClientConfig): Client => new Client(new ClientConfig(opt));

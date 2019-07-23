@@ -1,21 +1,21 @@
-import * as dgram from 'dgram';
-import { EventEmitter } from 'events';
-import { ClientConfig } from './ClientConfig';
-import { DHCPOptions } from './DHCPOptions';
-import { Lease } from './Lease';
-import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId } from './model';
-import * as OptionsModel from './options';
-import * as Protocol from './protocol';
-import * as Tools from './tools';
+import * as dgram from "dgram";
+import { EventEmitter } from "events";
+import { ClientConfig } from "./ClientConfig";
+import { DHCPOptions } from "./DHCPOptions";
+import { Lease } from "./Lease";
+import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId } from "./model";
+import * as OptionsModel from "./options";
+import * as Protocol from "./protocol";
+import * as Tools from "./tools";
 
 const SERVER_PORT = 67;
 const CLIENT_PORT = 68;
 
-const INADDR_ANY = '0.0.0.0';
-const INADDR_BROADCAST = '255.255.255.255';
+const INADDR_ANY = "0.0.0.0";
+const INADDR_BROADCAST = "255.255.255.255";
 
 const ansCommon = {
-  file: '', // unused
+  file: "", // unused
   giaddr: INADDR_ANY,
   hlen: 6, // Mac addresses are 6 byte
   hops: 0,
@@ -23,7 +23,7 @@ const ansCommon = {
   op: BootCode.BOOTREQUEST,
   secs: 0, // 0 or seconds since DHCP process started
   siaddr: INADDR_ANY,
-  sname: '', // unused
+  sname: "", // unused
   yiaddr: INADDR_ANY,
 };
 
@@ -38,22 +38,22 @@ export class Client extends EventEmitter {
   constructor(config: ClientConfig) {
     super();
     const self = this;
-    const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true });
-    sock.on('message', (buf: Buffer): any => {
+    const sock = dgram.createSocket({ type: "udp4", reuseAddr: true });
+    sock.on("message", (buf: Buffer): any => {
       let request: IDHCPMessage;
       try {
         request = Protocol.parse(buf);
       } catch (e) {
-        return self.emit('error', e);
+        return self.emit("error", e);
       }
       // self._req = req;
       if (request.op !== BootCode.BOOTREPLY) {
-        return self.emit('error', new Error('Malformed packet'), request);
+        return self.emit("error", new Error("Malformed packet"), request);
       }
       if (!request.options[OptionId.dhcpMessageType]) {
-        return self.emit('error', new Error('Got message, without valid message type'), request);
+        return self.emit("error", new Error("Got message, without valid message type"), request);
       }
-      self.emit('message', request);
+      self.emit("message", request);
       // Handle request
       switch (request.options[OptionId.dhcpMessageType]) {
         case DHCP53Code.DHCPOFFER:
@@ -65,11 +65,11 @@ export class Client extends EventEmitter {
           break;
       }
     });
-    sock.on('listening', () => self.emit('listening', sock));
-    sock.on('close', () => self.emit('close'));
+    sock.on("listening", () => self.emit("listening", sock));
+    sock.on("close", () => self.emit("close"));
     this.socket = sock;
     this.config = config || new ClientConfig();
-    this.lastLease = new Lease(''); // unknows Local Mac
+    this.lastLease = new Lease(""); // unknows Local Mac
   }
 
   public sendDiscover(): Promise<number> {
@@ -91,7 +91,7 @@ export class Client extends EventEmitter {
       }),
       xid: this.lastLease.xid++, // Selected by client on DHCPDISCOVER
     };
-    this.lastLease.state = 'SELECTING';
+    this.lastLease.state = "SELECTING";
     this.lastLease.tries = 0;
     // TODO: set timeouts
     // Send the actual data
@@ -107,11 +107,11 @@ export class Client extends EventEmitter {
 
     if (req.options[OptionId.server]) {
       // Check if we already sent a request to the first appearing server
-      if (this.lastLease.state !== 'REQUESTING') {
+      if (this.lastLease.state !== "REQUESTING") {
         this.sendRequest(req);
       }
     } else {
-      this.emit('error', 'Offer does not have a server identifier', req);
+      this.emit("error", "Offer does not have a server identifier", req);
     }
   }
 
@@ -137,7 +137,7 @@ export class Client extends EventEmitter {
 
     this.lastLease.server = req.options.get(OptionId.server, req) as string;
     this.lastLease.address = req.yiaddr;
-    this.lastLease.state = 'REQUESTING';
+    this.lastLease.state = "REQUESTING";
     this.lastLease.tries = 0;
 
     // TODO: retry timeout
@@ -152,7 +152,7 @@ export class Client extends EventEmitter {
       // We now know the IP for sure
       // console.log('Handle ACK', req);
       lastLease.bindTime = new Date();
-      lastLease.state = 'BOUND';
+      lastLease.state = "BOUND";
       lastLease.address = req.yiaddr;
       lastLease.options = new DHCPOptions();
 
@@ -216,7 +216,7 @@ export class Client extends EventEmitter {
           Tools.broadcastFromIpCIDR(lastLease.address, cidr));
       }
 
-      this.emit('bound', lastLease);
+      this.emit("bound", lastLease);
 
     } else {
       // We're sorry, today we have no IP for you...
@@ -239,9 +239,9 @@ export class Client extends EventEmitter {
       xid: this.lastLease.xid++, // Selected by client on DHCPRELEASE
     };
     this.lastLease.bindTime = null;
-    this.lastLease.state = 'RELEASED';
+    this.lastLease.state = "RELEASED";
     this.lastLease.tries = 0;
-    this.emit('released');
+    this.emit("released");
     // Send the actual data
     return this.send(this.lastLease.server, ans); // Send release directly to server
   }
@@ -263,7 +263,7 @@ export class Client extends EventEmitter {
       },
       xid: this.lastLease.xid++, // Selected by client on DHCPRELEASE
     } as IDHCPMessage;
-    this.lastLease.state = 'RENEWING';
+    this.lastLease.state = "RENEWING";
     this.lastLease.tries = 0;
     // Send the actual data
     return this.send(this.lastLease.server, ans); // Send release directly to server
@@ -286,7 +286,7 @@ export class Client extends EventEmitter {
       }),
       xid: this.lastLease.xid++, // Selected by client on DHCPRELEASE
     };
-    this.lastLease.state = 'REBINDING';
+    this.lastLease.state = "REBINDING";
     this.lastLease.tries = 0;
     // TODO: timeout
     // Send the actual data

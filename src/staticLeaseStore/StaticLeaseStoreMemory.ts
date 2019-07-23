@@ -1,6 +1,6 @@
-import { ILeaseLT } from '../Lease';
-import { IDHCPMessage } from '../model';
-import { IStaticLeaseStore } from './IStaticLeaseStore';
+import { ILeaseLT } from "../Lease";
+import { IDHCPMessage } from "../model";
+import { IStaticLeaseStore } from "./IStaticLeaseStore";
 
 /**
  * basic static Lease conmfiguration module
@@ -36,7 +36,6 @@ export class StaticLeaseStoreMemory implements IStaticLeaseStore {
             return { mac, address };
         return null;
     }
-
 
     public getIP(mac: string, request: IDHCPMessage): string {
         return;

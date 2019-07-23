@@ -1,6 +1,6 @@
-import { Lease } from '../Lease';
-import { genericGetFreeIP } from '../tools';
-import { ILeaseStore } from './ILeaseStote';
+import { Lease } from "../Lease";
+import { genericGetFreeIP } from "../tools";
+import { ILeaseStore } from "./ILeaseStote";
 
 export class LeaseStoreMemory implements ILeaseStore {
     public cache: { [key: string]: Lease } = {};

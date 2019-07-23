@@ -10,11 +10,11 @@
 
 /* tslint:disable no-console */
 
-import { DHCPOptions } from './DHCPOptions';
-import { IOptionMeta, optsMeta } from './options';
+import { DHCPOptions } from "./DHCPOptions";
+import { IOptionMeta, optsMeta } from "./options";
 
 function trimZero(str: string): string {
-  const pos = str.indexOf('\x00');
+  const pos = str.indexOf("\x00");
   return pos === -1 ? str : str.substr(0, pos);
 }
 
@@ -84,55 +84,55 @@ export default class SeqBuffer {
   }
 
   public addUTF8(val: string): SeqBuffer {
-    this.w += this.buffer.write(val, this.w, 'utf8');
+    this.w += this.buffer.write(val, this.w, "utf8");
     return this;
   }
 
   public addUTF8Pad(val: string, fixLen: number): SeqBuffer {
-    let len = Buffer.from(val, 'utf8').length;
+    let len = Buffer.from(val, "utf8").length;
     for (let n = 0; len > fixLen; n++) {
       val = val.slice(0, fixLen - n); // Truncate as long as character length is > fixLen
-      len = Buffer.from(val, 'utf8').length;
+      len = Buffer.from(val, "utf8").length;
     }
 
     this.buffer.fill(0, this.w, this.w + fixLen);
-    this.buffer.write(val, this.w, 'utf8');
+    this.buffer.write(val, this.w, "utf8");
     this.w += fixLen;
     return this;
   }
 
   public getUTF8(len: number): string {
-    return trimZero(this.buffer.toString('utf8', this.r, this.r += len));
+    return trimZero(this.buffer.toString("utf8", this.r, this.r += len));
   }
   //
   public addASCII(val: string): SeqBuffer {
-    this.w += this.buffer.write(val, this.w, 'ascii');
+    this.w += this.buffer.write(val, this.w, "ascii");
     return this;
   }
 
   public addASCIIPad(val: string, fixLen: number): SeqBuffer {
     this.buffer.fill(0, this.w, this.w + fixLen);
-    this.buffer.write(val.slice(0, fixLen), this.w, 'ascii');
+    this.buffer.write(val.slice(0, fixLen), this.w, "ascii");
     this.w += fixLen;
     return this;
   }
 
   public getASCII(len: number): string {
-    return trimZero(this.buffer.toString('ascii', this.r, this.r += len));
+    return trimZero(this.buffer.toString("ascii", this.r, this.r += len));
   }
 
   public addIP(ip: string): SeqBuffer {
     const self = this;
-    const octs = ip.split('.');
+    const octs = ip.split(".");
     if (octs.length !== 4) {
-      throw new Error('Invalid IP address ' + ip);
+      throw new Error("Invalid IP address " + ip);
     }
     for (const txt of octs) {
       const val = parseInt(txt, 10);
       if (0 <= val && val < 256) {
         self.addUInt8(val);
       } else {
-        throw new Error('Invalid IP address ' + ip);
+        throw new Error("Invalid IP address " + ip);
       }
     }
     return this;
@@ -140,9 +140,9 @@ export default class SeqBuffer {
 
   public getIP(): string {
     return this.getUInt8() +
-      '.' + this.getUInt8() +
-      '.' + this.getUInt8() +
-      '.' + this.getUInt8();
+      "." + this.getUInt8() +
+      "." + this.getUInt8() +
+      "." + this.getUInt8();
   }
 
   public addIPs(ips: string | string[]): SeqBuffer {
@@ -166,7 +166,7 @@ export default class SeqBuffer {
   public addMac(mac: string): SeqBuffer {
     const octs: string[] = mac.split(/[-:]/);
     if (octs.length !== 6) {
-      throw new Error('Invalid Mac address ' + mac);
+      throw new Error("Invalid Mac address " + mac);
     }
 
     for (const valStr of octs) {
@@ -174,7 +174,7 @@ export default class SeqBuffer {
       if (0 <= val && val < 256) {
         this.addUInt8(val);
       } else {
-        throw new Error('Invalid Mac address ' + mac);
+        throw new Error("Invalid Mac address " + mac);
       }
     }
 
@@ -186,15 +186,15 @@ export default class SeqBuffer {
   }
 
   public getMAC(htype: number, hlen: number): string {
-    const mac = this.buffer.toString('hex', this.r, this.r += hlen);
+    const mac = this.buffer.toString("hex", this.r, this.r += hlen);
     if (htype !== 1 || hlen !== 6) {
-      throw new Error('Invalid hardware address (len=' + hlen + ', type=' + htype + ')');
+      throw new Error("Invalid hardware address (len=" + hlen + ", type=" + htype + ")");
     }
     this.r += 10; // + 10 since field is 16 byte and only 6 are used for htype=1
     const matches = mac.toUpperCase().match(/../g);
     if (! matches)
-      throw new Error('internal mac pasing error');
-    return matches.join('-');
+      throw new Error("internal mac pasing error");
+    return matches.join("-");
   }
 
   public addBool(): void {
@@ -217,28 +217,28 @@ export default class SeqBuffer {
         continue;
       }
       switch (opt.type) {
-        case 'UInt8':
+        case "UInt8":
           // case 'Int8':
           len = 1;
           break;
-        case 'UInt16':
+        case "UInt16":
           // case 'Int16':
           len = 2;
           break;
-        case 'UInt32':
-        case 'Int32':
-        case 'IP':
+        case "UInt32":
+        case "Int32":
+        case "IP":
           len = 4;
           break;
-        case 'IPs':
+        case "IPs":
           len = val instanceof Array ? 4 * val.length : 4;
           break;
-        case 'ASCII':
+        case "ASCII":
           len = val.length;
           if (len === 0)
             continue; // Min length has to be 1
           if (len > 255) {
-            console.error(val + ' too long, truncating...');
+            console.error(val + " too long, truncating...");
             val = val.slice(0, 255);
             len = 255;
           }
@@ -252,26 +252,26 @@ export default class SeqBuffer {
         //    len = Buffer.from(val, 'utf8').length;
         //  }
         //  break;
-        case 'Bool':
-          if (!(val === true || val === 1 || val === '1' || val === 'true' || val === 'TRUE' || val === 'True'))
+        case "Bool":
+          if (!(val === true || val === 1 || val === "1" || val === "true" || val === "TRUE" || val === "True"))
             continue;
           // Length must be zero, so nothing to do here
           break;
-        case 'UInt8s':
+        case "UInt8s":
           len = val instanceof Array ? val.length : 1;
           break;
-        case 'UInt16s':
+        case "UInt16s":
           len = val instanceof Array ? 2 * val.length : 2;
           break;
         default:
-          throw new Error('No such type ' + opt.type);
+          throw new Error("No such type " + opt.type);
       }
       // Write code
       this.addUInt8(i);
       // Write length
       this.addUInt8(len);
       // Write actual data
-      this['add' + opt.type](val);
+      this["add" + opt.type](val);
     }
     return this;
   }
@@ -338,7 +338,7 @@ export default class SeqBuffer {
 
   //
   public getHex(len: number): string {
-    return this.buffer.toString('hex', this.r, this.r += len);
+    return this.buffer.toString("hex", this.r, this.r += len);
   }
 }
 

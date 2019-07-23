@@ -1,6 +1,6 @@
 /* tslint:disable max-classes-per-file */
-import { DHCPOptionsBase, IDHCPMessage, OptionId } from './model';
-import { getDHCPId, optsMeta } from './options';
+import { DHCPOptionsBase, IDHCPMessage, OptionId } from "./model";
+import { getDHCPId, optsMeta } from "./options";
 
 export class DHCPOptions extends DHCPOptionsBase {
   constructor(data?: any | DHCPOptionsBase) {
@@ -23,7 +23,7 @@ export class DHCPOptions extends DHCPOptionsBase {
       else
         return null;
     }
-    if (typeof val === 'function') {
+    if (typeof val === "function") {
       val = val(requested || this);
     }
     /*

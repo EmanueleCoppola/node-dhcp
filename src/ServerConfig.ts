@@ -1,9 +1,9 @@
-import { DHCPOptions, DHCPOptionsBase } from './DHCPOptions';
-import { ILeaseStore } from './leaseStore/ILeaseStote';
-import { LeaseStoreMemory } from './leaseStore/LeaseStoreMemory';
-import { ASCIIs, IDHCPMessage, IPs, OptionId } from './model';
-import { IStaticLeaseStore } from './staticLeaseStore/IStaticLeaseStore';
-import { StaticLeaseStoreMemory } from './staticLeaseStore/StaticLeaseStoreMemory';
+import { DHCPOptions, DHCPOptionsBase } from "./DHCPOptions";
+import { ILeaseStore } from "./leaseStore/ILeaseStote";
+import { LeaseStoreMemory } from "./leaseStore/LeaseStoreMemory";
+import { ASCIIs, IDHCPMessage, IPs, OptionId } from "./model";
+import { IStaticLeaseStore } from "./staticLeaseStore/IStaticLeaseStore";
+import { StaticLeaseStoreMemory } from "./staticLeaseStore/StaticLeaseStoreMemory";
 
 export interface IServerConfig extends DHCPOptionsBase {
     randomIP?: boolean; // Get random new IP from pool instead of keeping one ip
@@ -13,7 +13,7 @@ export interface IServerConfig extends DHCPOptionsBase {
     forceOptions?: ASCIIs; // Options that need to be sent, even if they were not requested
 }
 
-const extraOption = new Set(['range', 'forceOptions', 'randomIP', 'static', 'leaseState']);
+const extraOption = new Set(["range", "forceOptions", "randomIP", "static", "leaseState"]);
 
 export class ServerConfig extends DHCPOptions {
     public randomIP: boolean; // Get random new IP from pool instead of keeping one ip
@@ -28,9 +28,9 @@ export class ServerConfig extends DHCPOptions {
         this.static = options.static || new StaticLeaseStoreMemory({});
         this.range = options.range;
         this.leaseState = options.leaseState || new LeaseStoreMemory();
-        this.forceOptions = options.forceOptions || ['hostname'];
-        if (!this.get('server'))
-            throw Error('server option is mandatoy');
+        this.forceOptions = options.forceOptions || ["hostname"];
+        if (!this.get("server"))
+            throw Error("server option is mandatoy");
     }
 
     public get(key: OptionId | string, requested?: IDHCPMessage): any;
@@ -43,21 +43,21 @@ export class ServerConfig extends DHCPOptions {
         if (extraOption.has(key as any)) {
             let val: any = null;
             switch (key) {
-                case 'range':
+                case "range":
                     val = this.range;
                     break;
-                case 'forceOptions':
+                case "forceOptions":
                     val = this.forceOptions;
                     break;
-                case 'randomIP':
+                case "randomIP":
                     val = this.randomIP;
                     break;
-                case 'static': // can be a function
+                case "static": // can be a function
                     return this.static;
-                case 'leaseState': // can be a function
+                case "leaseState": // can be a function
                     return this.leaseState;
             }
-            if (typeof val === 'function') {
+            if (typeof val === "function") {
                 return val.call(this, requested || this);
             }
             return val;

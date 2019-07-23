@@ -8,12 +8,12 @@
  */
 /* tslint:disable object-literal-sort-keys */
 
-import { IDHCPMessage } from './model';
-import SeqBuffer from './seqbuffer';
+import { IDHCPMessage } from "./model";
+import SeqBuffer from "./seqbuffer";
 
 export const parse = (buf: Buffer): IDHCPMessage => {
   if (buf.length < 230) { // 230 byte minimum length of DHCP packet
-    throw new Error('Received data is too short');
+    throw new Error("Received data is too short");
   }
   const sb = new SeqBuffer(buf);
   let hlen: number;

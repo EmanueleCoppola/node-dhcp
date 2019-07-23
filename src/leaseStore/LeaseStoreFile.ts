@@ -1,8 +1,8 @@
-import debounce from 'debounce';
-import * as fse from 'fs-extra';
-import { Lease } from '../Lease';
-import { genericGetFreeIP } from '../tools';
-import { ILeaseStore } from './ILeaseStote';
+import debounce from "debounce";
+import * as fse from "fs-extra";
+import { Lease } from "../Lease";
+import { genericGetFreeIP } from "../tools";
+import { ILeaseStore } from "./ILeaseStote";
 
 export class LeaseStoreFile implements ILeaseStore {
     public cache: { [key: string]: Lease } = {};

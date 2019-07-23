@@ -1,4 +1,4 @@
-import { DHCPOptions } from './DHCPOptions';
+import { DHCPOptions } from "./DHCPOptions";
 
 export type IP = string | ((option: IDHCPMessage) => string);
 export type IPs = string[] | ((option: IDHCPMessage) => string[]);
@@ -72,10 +72,10 @@ export enum DHCP53Code {
 }
 
 export enum DHCP46Code {
-  'B-node' = 0x1,
-  'P-node' = 0x2,
-  'M-node' = 0x4,
-  'H-node' = 0x8,
+  "B-node" = 0x1,
+  "P-node" = 0x2,
+  "M-node" = 0x4,
+  "H-node" = 0x8,
 }
 
 export enum DHCP52Code {
