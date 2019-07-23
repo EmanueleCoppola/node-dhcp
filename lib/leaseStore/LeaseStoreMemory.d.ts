@@ -17,5 +17,5 @@ export declare class LeaseStoreMemory implements ILeaseStore {
     getLeases2(): Lease[];
     getAddresses2(): string[];
     getMacs2(): string[];
-    getFreeIP(IP1: string, IP2: string, reserverd?: string[], randomIP?: boolean): Promise<string>;
+    getFreeIP(IP1: string, IP2: string, reserverd?: Array<Set<string>>, randomIP?: boolean): Promise<string>;
 }

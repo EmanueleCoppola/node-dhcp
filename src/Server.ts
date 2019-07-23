@@ -4,13 +4,13 @@ import { createSocket, Socket } from 'dgram';
 import { EventEmitter } from 'events';
 import { DHCPOptions } from './DHCPOptions';
 import { Lease } from './Lease';
+import { ILeaseStore } from './leaseStore/ILeaseStote';
+import { LeaseStoreMemory } from './leaseStore/LeaseStoreMemory';
 import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId } from './model';
 import { getDHCPId, optsMeta } from './options';
 import { random } from './prime';
 import { format, parse } from './protocol';
 import { ServerConfig } from './ServerConfig';
-import { ILeaseStore } from './store/ILeaseStote';
-import { LeaseStoreMemory } from './store/LeaseStoreMemory';
 import { formatIp, parseIp } from './tools';
 
 const INADDR_ANY = '0.0.0.0';
@@ -162,22 +162,18 @@ export class Server extends EventEmitter {
         }
 
         // Is there a static binding?
-        const staticLeases = this.config.get('static', request);
-
-        if (typeof staticLeases === 'function') {
-            const staticResult = await staticLeases(clientMAC, request);
-            if (staticResult)
-                return staticResult;
-        } else if (staticLeases[clientMAC]) {
-            return staticLeases[clientMAC];
-        }
+        const statik = this.config.getStatic();
+        const staticResult = statik.getIP(clientMAC, request);
+        if (staticResult)
+            return staticResult;
 
         const randIP = this.config.get('randomIP', request);
         const [firstIPstr, lastIPStr] = this.config.get('range', request) as string[];
         const myIPStr = this.getServer(request) as string;
 
+        const staticSerserve = statik.getReservedIP();
         if (this.leaseState.getFreeIP) {
-            const strIP = await this.leaseState.getFreeIP(firstIPstr, lastIPStr, [myIPStr], randIP);
+            const strIP = await this.leaseState.getFreeIP(firstIPstr, lastIPStr, [new Set(myIPStr), staticSerserve], randIP);
             if (strIP)
                 return strIP;
             throw Error('DHCP is full');
@@ -204,8 +200,11 @@ export class Server extends EventEmitter {
                 if (ip === myIP)
                     continue;
                 const strIP = formatIp(ip);
-                if (!await this.leaseState.hasAddress(strIP))
-                    return strIP;
+                if (staticSerserve.has(strIP))
+                    continue;
+                if (await this.leaseState.hasAddress(strIP))
+                    continue;
+                return strIP;
             }
         } else {
             // Choose first free IP in subnet
@@ -215,7 +214,6 @@ export class Server extends EventEmitter {
                     return strIP;
             }
         }
-
         throw Error('DHCP is full');
     }
 

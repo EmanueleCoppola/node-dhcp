@@ -1,40 +1,37 @@
 import { DHCPOptions, DHCPOptionsBase } from './DHCPOptions';
-import { ASCIIs, IDHCPMessage, IPs, OptionId} from './model';
-import { ILeaseStore } from './store/ILeaseStote';
+import { ILeaseStore } from './leaseStore/ILeaseStote';
+import { LeaseStoreMemory } from './leaseStore/LeaseStoreMemory';
+import { ASCIIs, IDHCPMessage, IPs, OptionId } from './model';
+import { IStaticLeaseStore } from './staticLeaseStore/IStaticLeaseStore';
+import { StaticLeaseStoreMemory } from './staticLeaseStore/StaticLeaseStoreMemory';
 
 export interface IServerConfig extends DHCPOptionsBase {
     randomIP?: boolean; // Get random new IP from pool instead of keeping one ip
-    static: { [key: string]: string } | ((mac: string, request: IDHCPMessage) => string | null);
+    static: IStaticLeaseStore;
     range: IPs;
     leaseState?: ILeaseStore;
     forceOptions?: ASCIIs; // Options that need to be sent, even if they were not requested
 }
 
-export type leaseType = (mac: string, request: IDHCPMessage) => string | null;
-
 const extraOption = new Set(['range', 'forceOptions', 'randomIP', 'static', 'leaseState']);
 
 export class ServerConfig extends DHCPOptions {
     public randomIP: boolean; // Get random new IP from pool instead of keeping one ip
-    public static: leaseType;
-    public leaseState?: ILeaseStore;
+    public static: IStaticLeaseStore;
+    public leaseState: ILeaseStore;
     private range: IPs;
     private forceOptions: ASCIIs; // Options that need to be sent, even if they were not requested
 
     constructor(options: IServerConfig) {
         super(options);
-        if (options)
-            for (const key in options) {
-                if (extraOption.has(key))
-                    this[key] = options[key];
-            }
-        if (!options.forceOptions)
-            this.forceOptions = ['hostname' ];
+        this.randomIP = options.randomIP || false;
+        this.static = options.static || new StaticLeaseStoreMemory({});
+        this.range = options.range;
+        this.leaseState = options.leaseState || new LeaseStoreMemory();
+        this.forceOptions = options.forceOptions || ['hostname'];
         if (!this.get('server'))
             throw Error('server option is mandatoy');
     }
-
-    public get(key: 'static', requested?: IDHCPMessage): { [key: string]: string } | leaseType;
 
     public get(key: OptionId | string, requested?: IDHCPMessage): any;
 
@@ -66,5 +63,9 @@ export class ServerConfig extends DHCPOptions {
             return val;
         }
         return super.get(key, requested);
+    }
+
+    public getStatic(): IStaticLeaseStore | undefined {
+        return this.static;
     }
 }

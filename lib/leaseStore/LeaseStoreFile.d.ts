@@ -20,7 +20,7 @@ export declare class LeaseStoreFile implements ILeaseStore {
     getLeases2(): Lease[];
     getAddresses2(): string[];
     getMacs2(): string[];
-    getFreeIP(IP1: string, IP2: string, reserverd?: string[], randomIP?: boolean): Promise<string>;
+    getFreeIP(IP1: string, IP2: string, reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string>;
     private _save;
     private reIndex;
     private _add;

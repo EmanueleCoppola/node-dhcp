@@ -44,21 +44,6 @@ export class LeaseStoreFile implements ILeaseStore {
         return out;
     }
 
-    // public async getOldest(): Promise<Lease | null> {
-    //    if (this.oldest)
-    //        return this.oldest;
-    //    let oldest: Lease | null = null;
-    //    let oldestTime = Infinity;
-    //    for (const lease of Object.values(this.cache)) {
-    //        if (lease.leaseTime < oldestTime) {
-    //            oldestTime = lease.leaseTime;
-    //            oldest = lease;
-    //        }
-    //    }
-    //    this.oldest = oldest;
-    //    return oldest;
-    // }
-
     public async getLeases(): Promise<Lease[]> {
         return Object.values(this.cache);
     }
@@ -83,8 +68,8 @@ export class LeaseStoreFile implements ILeaseStore {
         return Object.keys(this.cache);
     }
 
-    public async getFreeIP(IP1: string, IP2: string, reserverd?: string[], randomIP?: boolean): Promise<string> {
-        return genericGetFreeIP(IP1, IP2, new Set(reserverd), this.address, this.cnt, randomIP);
+    public async getFreeIP(IP1: string, IP2: string,  reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string> {
+        return genericGetFreeIP(IP1, IP2, [...reserverd, this.address], this.cnt, randomIP);
     }
 
     private _save() {

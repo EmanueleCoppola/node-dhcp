@@ -30,7 +30,7 @@ export const formatIp = (num: number): string => {
 };
 
 // Source: http://www.xarg.org/tools/subnet-calculator/
-export const netmaskFromCIDR = (cidr: number): number =>  -1 << (32 - cidr);
+export const netmaskFromCIDR = (cidr: number): number => -1 << (32 - cidr);
 
 export const netmaskFromIP = (ip: string | number): number => {
   // we don't have much information, pick a class related netmask
@@ -93,7 +93,7 @@ export const netmaskFromRange = (ip1: string | number, ip2: string | number): nu
   return netmaskFromCIDR(cidr);
 };
 
-export async function genericGetFreeIP(IP1: string, IP2: string, r1: Set<string>, r2: Set<string>, used: number, rnd?: boolean): Promise<string> {
+export async function genericGetFreeIP(IP1: string, IP2: string, reservedSet: Array<Set<string>>, used: number, rnd?: boolean): Promise<string> {
   const firstIP = parseIp(IP1);
   const lastIP = parseIp(IP2);
   const total = lastIP - firstIP;
@@ -101,31 +101,30 @@ export async function genericGetFreeIP(IP1: string, IP2: string, r1: Set<string>
   const leases = used;
   // Check if all IP's are used and delete the oldest
   if (lastIP - firstIP === leases) {
-      throw Error('DHCP is full');
+    throw Error('DHCP is full');
   }
   // Exclude our own server IP from pool
 
   // Select a random IP, using prime number iterator
   if (rnd) {
-      const prime = random(1000, 10000);
-      let offset = 0;
-      for (let i = 0; i < total; i++) {
-          offset = (offset + prime) % total;
-          const ip = firstIP + offset;
-          const strIP = formatIp(ip);
-          if (r1.has(strIP))
-              continue;
-          if (!r2.has(strIP))
-              return strIP;
-      }
+    const prime = random(1000, 10000);
+    let offset = 0;
+    loop: for (let i = 0; i < total; i++) {
+      offset = (offset + prime) % total;
+      const ip = firstIP + offset;
+      const strIP = formatIp(ip);
+      for (const set of reservedSet)
+        if (set.has(strIP))
+          continue loop;
+    }
   } else {
-      // Choose first free IP in subnet
-      for (let ip = firstIP; ip <= lastIP; ip++) {
-          const strIP = formatIp(ip);
-          if (r1.has(strIP))
-              continue;
-          if (!r2.has(strIP))
-              return strIP;
-      }
+    // Choose first free IP in subnet
+    loop: for (let ip = firstIP; ip <= lastIP; ip++) {
+      const strIP = formatIp(ip);
+      for (const set of reservedSet)
+        if (set.has(strIP))
+          continue loop;
+      return strIP;
+    }
   }
 }
