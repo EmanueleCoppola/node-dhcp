@@ -148,35 +148,36 @@ export class Client extends EventEmitter {
 
   public handleAck(req: IDHCPMessage): void {
     if (req.options[OptionId.dhcpMessageType] === DHCP53Code.DHCPACK) {
+      const { lastLease } = this;
       // We now know the IP for sure
       // console.log('Handle ACK', req);
-      this.lastLease.bindTime = new Date();
-      this.lastLease.state = 'BOUND';
-      this.lastLease.address = req.yiaddr;
-      this.lastLease.options = new DHCPOptions();
+      lastLease.bindTime = new Date();
+      lastLease.state = 'BOUND';
+      lastLease.address = req.yiaddr;
+      lastLease.options = new DHCPOptions();
 
       // Lease time is available
       if (req.options[OptionId.leaseTime]) {
         const leaseTime = req.options.get(OptionId.leaseTime, req) as number;
-        this.lastLease.leasePeriod = leaseTime;
-        this.lastLease.renewPeriod = leaseTime / 2;
-        this.lastLease.rebindPeriod = leaseTime;
+        lastLease.leasePeriod = leaseTime;
+        lastLease.renewPeriod = leaseTime / 2;
+        lastLease.rebindPeriod = leaseTime;
       }
 
       // Renewal time is available
       if (req.options[OptionId.renewalTime]) {
-        this.lastLease.renewPeriod = req.options.get(OptionId.renewalTime, req) as number;
+        lastLease.renewPeriod = req.options.get(OptionId.renewalTime, req) as number;
       }
 
       // Rebinding time is available
       if (req.options[OptionId.rebindingTime]) {
-        this.lastLease.rebindPeriod = req.options.get(OptionId.rebindingTime, req) as number;
+        lastLease.rebindPeriod = req.options.get(OptionId.rebindingTime, req) as number;
       }
 
       // TODO: set renew & rebind timer
 
       const options = req.options;
-      this.lastLease.options = new DHCPOptions();
+      lastLease.options = new DHCPOptions();
 
       // Map all options from request
       for (const id in options) {
@@ -189,33 +190,33 @@ export class Client extends EventEmitter {
         const key = conf.config || conf.attr;
 
         if (conf.enum) {
-          this.lastLease.options[key] = conf.enum[options[id]];
+          lastLease.options[key] = conf.enum[options[id]];
         } else {
-          this.lastLease.options[key] = options[id];
+          lastLease.options[key] = options[id];
         }
       }
 
       // If netmask is not given, set it to a class related mask
-      if (!this.lastLease.options[OptionId.netmask]) {
-        this.lastLease.options[OptionId.netmask] = Tools.formatIp(
-          Tools.netmaskFromIP(this.lastLease.address));
+      if (!lastLease.options[OptionId.netmask]) {
+        lastLease.options[OptionId.netmask] = Tools.formatIp(
+          Tools.netmaskFromIP(lastLease.address));
       }
 
-      const cidr = Tools.CIDRFromNetmask(this.lastLease.options.get(OptionId.netmask, req) as string);
+      const cidr = Tools.CIDRFromNetmask(lastLease.options.get(OptionId.netmask, req) as string);
 
       // If router is not given, guess one
-      if (!this.lastLease.options[OptionId.router]) {
-        const router = Tools.formatIp(Tools.gatewayFromIpCIDR(this.lastLease.address, cidr));
-        this.lastLease.options[OptionId.router] = [router];
+      if (!lastLease.options[OptionId.router]) {
+        const router = Tools.formatIp(Tools.gatewayFromIpCIDR(lastLease.address, cidr));
+        lastLease.options[OptionId.router] = [router];
       }
 
       // If broadcast is missing
-      if (!this.lastLease.options[OptionId.broadcast]) {
-        this.lastLease.options[OptionId.broadcast] = Tools.formatIp(
-          Tools.broadcastFromIpCIDR(this.lastLease.address, cidr));
+      if (!lastLease.options[OptionId.broadcast]) {
+        lastLease.options[OptionId.broadcast] = Tools.formatIp(
+          Tools.broadcastFromIpCIDR(lastLease.address, cidr));
       }
 
-      this.emit('bound', this.lastLease);
+      this.emit('bound', lastLease);
 
     } else {
       // We're sorry, today we have no IP for you...
