@@ -1,14 +1,13 @@
 import debounce from "debounce";
 import * as fse from "fs-extra";
-import { ILease } from "../Lease";
+import { ILeaseLive } from "../Lease";
 import { genericGetFreeIP } from "../tools";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
 
 export class LeaseLiveStoreFile implements ILeaseLiveStore {
-    public cache: { [key: string]: ILease } = {};
+    public cache: { [key: string]: ILeaseLive } = {};
     public address: Set<string> = new Set();
-    public oldest: ILease | null = null;
-    public cnt = 0;
+    public oldest: ILeaseLive | null = null;
     public save: () => void;
 
     private file: string;
@@ -16,7 +15,7 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
     constructor(file: string) {
         this.file = file;
         this.save = debounce(() => this._save(), 300);
-        let data: ILease[];
+        let data: ILeaseLive[];
         try {
             data = fse.readJSONSync(this.file);
         } catch (e) {
@@ -25,7 +24,7 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
         this.reIndex(data);
     }
 
-    public async getLeaseFromMac(mac: string): Promise<ILease | null> {
+    public async getLeaseFromMac(mac: string): Promise<ILeaseLive | null> {
         return this.cache[mac] || null;
     }
 
@@ -33,18 +32,23 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
         return this.address.has(address);
     }
 
-    public async size(): Promise<number> {
-    return this.cnt;
-    }
-
-    public async add(lease: ILease): Promise<boolean> {
+    public async add(lease: ILeaseLive): Promise<boolean> {
         const out = this._add(lease);
         if (out)
             this.save();
         return out;
     }
 
-    public async getLeases(): Promise<ILease[]> {
+    public async release(mac: string): Promise<ILeaseLive | null> {
+        const old = this.cache[mac];
+        if (old) {
+            this._delete(old);
+            this.save();
+        }
+        return old;
+    }
+
+    public async getLeases(): Promise<ILeaseLive[]> {
         return Object.values(this.cache);
     }
 
@@ -56,7 +60,7 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
         return Object.keys(this.cache);
     }
 
-    public getLeases2(): ILease[] {
+    public getLeases2(): ILeaseLive[] {
         return Object.values(this.cache);
     }
 
@@ -68,27 +72,26 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
         return Object.keys(this.cache);
     }
 
-    public async getFreeIP(IP1: string, IP2: string,  reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string> {
-        return genericGetFreeIP(IP1, IP2, [...reserverd, this.address], this.cnt, randomIP);
+    public async getFreeIP(IP1: string, IP2: string, reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string> {
+        return genericGetFreeIP(IP1, IP2, [...reserverd, this.address], randomIP);
     }
 
     private _save() {
         return fse.writeJSON(`${this.file}`, Object.values(this.cache), { spaces: 2 });
     }
 
-    private reIndex(leases: ILease[]) {
-        const index: { [key: string]: ILease } = {};
+    private reIndex(leases: ILeaseLive[]) {
+        const index: { [key: string]: ILeaseLive } = {};
         this.cache = {};
         this.address = new Set();
         this.oldest = null;
-        this.cnt = 0;
 
         for (const entry of leases) {
             this._add(entry);
         }
     }
 
-    private _add(lease: ILease) {
+    private _add(lease: ILeaseLive) {
         const prev = this.cache[lease.mac];
         if (prev) {
             if (prev.address !== lease.address)
@@ -96,8 +99,18 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
         }
         this.cache[lease.mac] = lease;
         this.address.add(lease.address);
-        if (prev)
-            this.cnt++;
         return true;
     }
+
+    private _delete(lease: ILeaseLive) {
+        if (!lease)
+            return false;
+        const prev = this.cache[lease.mac];
+        if (prev) {
+            this.address.delete(prev.address);
+            delete this.cache[lease.mac];
+        }
+        return true;
+    }
+
 }

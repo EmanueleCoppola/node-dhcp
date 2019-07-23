@@ -1,4 +1,4 @@
-import { ILeaseLT } from "../Lease";
+import { ILeaseEx } from "../Lease";
 import { IDHCPMessage } from "../model";
 import { ILeaseStaticStore } from "./ILeaseStaticStore";
 
@@ -30,7 +30,7 @@ export class LeaseStaticStoreMemory implements ILeaseStaticStore {
         delete this.data[mac];
     }
 
-    public getLease(mac: string, request: IDHCPMessage): ILeaseLT | null {
+    public getLease(mac: string, request: IDHCPMessage): ILeaseEx | null {
         const address = this.data[mac];
         if (address)
             return { mac, address };

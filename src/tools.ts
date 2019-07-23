@@ -93,17 +93,10 @@ export const netmaskFromRange = (ip1: string | number, ip2: string | number): nu
   return netmaskFromCIDR(cidr);
 };
 
-export async function genericGetFreeIP(IP1: string, IP2: string, reservedSet: Array<Set<string>>, used: number, rnd?: boolean): Promise<string> {
+export async function genericGetFreeIP(IP1: string, IP2: string, reservedSet: Array<Set<string>>, rnd?: boolean): Promise<string> {
   const firstIP = parseIp(IP1);
   const lastIP = parseIp(IP2);
   const total = lastIP - firstIP;
-
-  const leases = used;
-  // Check if all IP's are used and delete the oldest
-  if (lastIP - firstIP === leases) {
-    throw Error("DHCP is full");
-  }
-  // Exclude our own server IP from pool
 
   // Select a random IP, using prime number iterator
   if (rnd) {

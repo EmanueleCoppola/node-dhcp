@@ -6,19 +6,26 @@ import { ServerConfig } from "./ServerConfig";
 export declare class Server extends EventEmitter {
     private socket;
     private config;
-    private leaseState;
+    private leaseStatic;
+    private leaseLive;
+    private leaseOffer;
     constructor(config: ServerConfig, listenOnly?: boolean);
     getServer(request: IDHCPMessage): string;
     getConfigBroadcast(request: IDHCPMessage): string;
-    getOptions(request: IDHCPMessage, pre: DHCPOptions, requireds: number[], requested?: Array<number | string>): DHCPOptions;
+    validOption(optionId: number | string): boolean;
+    getOptions(request: IDHCPMessage, pre: DHCPOptions, requireds: number[], requested?: number[]): DHCPOptions;
     selectAddress(clientMAC: string, request: IDHCPMessage): Promise<string>;
-    handleDiscover(request: IDHCPMessage): Promise<number>;
-    sendOffer(request: IDHCPMessage): Promise<number>;
-    handleRequest(request: IDHCPMessage): Promise<number>;
-    sendAck(request: IDHCPMessage): Promise<number>;
+    handle_Discover(request: IDHCPMessage): Promise<number>;
+    handle_Release(request: IDHCPMessage): Promise<number>;
+    handle_Request(request: IDHCPMessage): Promise<number>;
+    /**
+     * Formulate the response object
+     */
     sendNak(request: IDHCPMessage): Promise<number>;
     listen(port?: number, host?: string): Promise<void>;
     close(): Promise<any>;
+    private newLease;
+    private getExpiration;
     private handleRelease;
     private handleRenew;
     private _send;

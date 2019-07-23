@@ -1,20 +1,18 @@
-import { ILease } from "../Lease";
+import { ILeaseLive } from "../Lease";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
 export declare class LeaseLiveStoreMemory implements ILeaseLiveStore {
     cache: {
-        [key: string]: ILease;
+        [key: string]: ILeaseLive;
     };
     address: Set<string>;
-    oldest: ILease | null;
-    cnt: number;
-    getLeaseFromMac(mac: string): Promise<ILease | null>;
+    getLeaseFromMac(mac: string): Promise<ILeaseLive | null>;
     hasAddress(address: string): Promise<boolean>;
-    size(): Promise<number>;
-    add(lease: ILease): Promise<boolean>;
-    getLeases(): Promise<ILease[]>;
+    release(mac: string): Promise<ILeaseLive | null>;
+    add(lease: ILeaseLive): Promise<boolean>;
+    getLeases(): Promise<ILeaseLive[]>;
     getAddresses(): Promise<string[]>;
     getMacs(): Promise<string[]>;
-    getLeases2(): ILease[];
+    getLeases2(): ILeaseLive[];
     getAddresses2(): string[];
     getMacs2(): string[];
     getFreeIP(IP1: string, IP2: string, reserverd?: Array<Set<string>>, randomIP?: boolean): Promise<string>;

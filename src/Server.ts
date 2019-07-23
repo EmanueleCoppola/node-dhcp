@@ -4,50 +4,57 @@
 import { createSocket, Socket } from "dgram";
 import { EventEmitter } from "events";
 import { DHCPOptions } from "./DHCPOptions";
-import { ILease } from "./Lease";
-import { ILeaseStore, LeaseStoreMemory } from "./leaseLive";
+import { ILeaseLive } from "./Lease";
+import { ILeaseLiveStore, LeaseLiveStoreMemory } from "./leaseLive";
+import { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
 import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId } from "./model";
 import { getDHCPId, optsMeta } from "./options";
 import { random } from "./prime";
 import { format, parse } from "./protocol";
 import { ServerConfig } from "./ServerConfig";
 import { formatIp, parseIp } from "./tools";
+import { ILeaseStaticStore, LeaseStaticStoreMemory } from "./leaseStatic";
 
 const INADDR_ANY = "0.0.0.0";
 const SERVER_PORT = 67;
 const CLIENT_PORT = 68;
 
-const ansCommon = {
-    file: "", // unused
-    hlen: 6, // Mac addresses are 6 byte
-    hops: 0,
-    htype: HardwareType.Ethernet,
-    secs: 0, // 0 or seconds since DHCP process started
-    sname: "", // unused
-};
-
-const newLease = (mac: string): ILease => ({
-    mac,
-    leasePeriod: 86400, // Seconds the lease is allowed to live, next lease in "leasePeriod - (now - bindTime)"
-    renewPeriod: 1440, // Seconds till a renew is due, next renew in "renewPeriod - (now - bindTime)"
-    rebindPeriod: 14400, // Seconds till a rebind is due, next rebind in "rebindPeriod - (now - bindTime)"
-    tries: 0, // number of tries in order to complete a state
-    xid: 1, // unique id, incremented with every request
-  } as ILease);
-
+function toResponse(request: IDHCPMessage, options: DHCPOptions): IDHCPMessage {
+    return {
+        op: BootCode.BOOTREPLY,
+        htype: HardwareType.Ethernet,
+        hlen: 6, // Mac addresses are 6 byte
+        hops: 0,
+        xid: request.xid, // 'xid' from client DHCPDISCOVER message
+        secs: 0, // 0 or seconds since DHCP process started
+        flags: request.flags,
+        // ciaddr
+        // yiaddr
+        // siaddr
+        giaddr: request.giaddr,
+        chaddr: request.chaddr, // Client mac address
+        sname: "",
+        file: "",
+        options,
+    } as IDHCPMessage;
+}
 export class Server extends EventEmitter {
     private socket: Socket | null;
     // Config (cache) object
     private config: ServerConfig;
     // actif Lease
-    private leaseState: ILeaseStore;
+    private leaseStatic: ILeaseStaticStore;
+    private leaseLive: ILeaseLiveStore;
+    private leaseOffer: ILeaseOfferStore;
 
     constructor(config: ServerConfig, listenOnly?: boolean) {
         super();
         const self = this;
         const socket = createSocket({ type: "udp4", reuseAddr: true });
         this.config = config;
-        this.leaseState = config.leaseState || new LeaseStoreMemory();
+        this.leaseLive = config.leaseLive || new LeaseLiveStoreMemory();
+        this.leaseOffer = config.LeaseOffer || new LeaseOfferStoreMemory();
+        this.leaseStatic = config.leaseStatic || new LeaseStaticStoreMemory({});
         this.socket = socket;
 
         socket.on("message", async (buf: Buffer) => {
@@ -69,11 +76,22 @@ export class Server extends EventEmitter {
                 // Handle request
                 const mode = request.options[OptionId.dhcpMessageType];
                 switch (mode) {
-                    case DHCP53Code.DHCPDISCOVER: // 1.
-                        return await self.handleDiscover(request);
-                    case DHCP53Code.DHCPREQUEST: // 3.
-                        return await self.handleRequest(request);
-                    case DHCP53Code.DHCPINFORM:
+                    case DHCP53Code.DHCPDISCOVER: // 1
+                        return await self.handle_Discover(request);
+                    case DHCP53Code.DHCPOFFER: // 2,
+                        return; // nothink to do with incomming offer
+                    case DHCP53Code.DHCPREQUEST: // 3
+                        return await self.handle_Request(request);
+                    case DHCP53Code.DHCPDECLINE: // 4
+                        return console.error("Not implemented DHCPDECLINE");
+                    case DHCP53Code.DHCPACK: // 5,
+                        return; // nothink to do with incomming ACK
+                    case DHCP53Code.DHCPNAK: // 6,
+                        return; // nothink to do with incomming NAK
+                    case DHCP53Code.DHCPRELEASE: // 7
+                        return await self.handle_Release(request);
+                    case DHCP53Code.DHCPINFORM: // 8
+                    return console.error("Not implemented DHCPINFORM");
                     default:
                         console.error("Not implemented DHCP 53 Type", request.options[53]);
                 }
@@ -100,35 +118,36 @@ export class Server extends EventEmitter {
         return value;
     }
 
-    public getOptions(request: IDHCPMessage, pre: DHCPOptions, requireds: number[], requested?: Array<number | string>): DHCPOptions {
+    public validOption(optionId: number | string) {
+        if (optsMeta[optionId])
+            return true;
+        this.emit("error", `Unknown option ${optionId}`);
+        return false;
+    }
+
+    public getOptions(request: IDHCPMessage, pre: DHCPOptions, requireds: number[], requested?: number[]): DHCPOptions {
+        // Check if option id actually exists
+        requested = requested || [];
+        requireds = requireds.filter((o) => this.validOption(o));
+        requested = requested.filter((o) => this.validOption(o));
+
         for (const required of requireds) {
-            // Check if option id actually exists
-            if (optsMeta[required] !== undefined) {
-                // Take the first config value always
-                if (pre[required] === undefined)
-                    pre[required] = this.config.get(required, request);
+            // Take the first config value always
+            if (!pre[required]) {
+                pre[required] = this.config.get(required, request);
                 if (!pre[required])
                     throw new Error(`Required option ${optsMeta[required].config} does not have a value set`);
-            } else {
-                this.emit("error", `Unknown option ${required}`);
             }
         }
 
         // Add all values, the user wants, which are not already provided:
-        if (requested) {
-            for (const optionId of requested) {
-                // Check if option id actually exists
-                if (optsMeta[optionId]) {
-                    // Take the first config value always
-                    if (pre[optionId]) {
-                        const val = this.config.get(optionId, request);
-                        // Add value only, if it's meaningful
-                        if (val)
-                            pre[optionId] = val;
-                    }
-                } else {
-                    this.emit("error", `Unknown option ${optionId}`);
-                }
+        for (const optionId of requested) {
+            // Take the first config value always
+            if (pre[optionId]) {
+                const val = this.config.get(optionId, request);
+                // Add value only, if it's meaningful
+                if (val)
+                    pre[optionId] = val;
             }
         }
 
@@ -173,14 +192,14 @@ export class Server extends EventEmitter {
          * - Check APR if IP exists on net
          */
         // If existing lease for a mac address is present, re-use the IP
-        const l1 = await this.leaseState.getLeaseFromMac(clientMAC);
+        const l1 = await this.leaseLive.getLeaseFromMac(clientMAC);
         if (l1 && l1.address) {
             return l1.address;
         }
 
         // Is there a static binding?
-        const statik = this.config.getStatic();
-        const staticResult = statik.getLease(clientMAC, request);
+
+        const staticResult = this.leaseStatic.getLease(clientMAC, request);
         if (staticResult)
             return staticResult.address;
 
@@ -188,9 +207,9 @@ export class Server extends EventEmitter {
         const [firstIPstr, lastIPStr] = this.config.get("range", request) as string[];
         const myIPStr = this.getServer(request) as string;
 
-        const staticSerserve = statik.getReservedIP();
-        if (this.leaseState.getFreeIP) {
-            const strIP = await this.leaseState.getFreeIP(firstIPstr, lastIPStr, [new Set(myIPStr), staticSerserve], randIP);
+        const staticSerserve = this.leaseStatic.getReservedIP();
+        if (this.leaseLive.getFreeIP) {
+            const strIP = await this.leaseLive.getFreeIP(firstIPstr, lastIPStr, [new Set(myIPStr), staticSerserve], randIP);
             if (strIP)
                 return strIP;
             throw Error("DHCP is full");
@@ -199,11 +218,11 @@ export class Server extends EventEmitter {
         const firstIP = parseIp(firstIPstr);
         const lastIP = parseIp(lastIPStr);
 
-        const leases = await this.leaseState.size();
+        // const leases = await this.leaseLive.size();
         // Check if all IP's are used and delete the oldest
-        if (lastIP - firstIP === leases) {
-            throw Error("DHCP is full");
-        }
+        // if (lastIP - firstIP === leases) {
+        //    throw Error("DHCP is full");
+        // }
         // Exclude our own server IP from pool
         const myIP: number = parseIp(myIPStr);
         // Select a random IP, using prime number iterator
@@ -219,7 +238,7 @@ export class Server extends EventEmitter {
                 const strIP = formatIp(ip);
                 if (staticSerserve.has(strIP))
                     continue;
-                if (await this.leaseState.hasAddress(strIP))
+                if (await this.leaseLive.hasAddress(strIP))
                     continue;
                 return strIP;
             }
@@ -227,129 +246,113 @@ export class Server extends EventEmitter {
             // Choose first free IP in subnet
             for (let ip = firstIP; ip <= lastIP; ip++) {
                 const strIP = formatIp(ip);
-                if (!await this.leaseState.hasAddress(strIP))
+                if (!await this.leaseLive.hasAddress(strIP))
                     return strIP;
             }
         }
         throw Error("DHCP is full");
     }
 
-    public async handleDiscover(request: IDHCPMessage): Promise<number> {
+    public async handle_Discover(request: IDHCPMessage): Promise<number> {
         const { chaddr } = request;
         let nextLease: boolean = false;
-        let lease = await this.leaseState.getLeaseFromMac(chaddr);
+        let lease = await this.leaseLive.getLeaseFromMac(chaddr);
         if (!lease) {
-            lease = newLease(chaddr);
+            lease = this.newLease(request);
             nextLease = true;
+        } else {
+            // extand lease time
+            lease.expiration = this.getExpiration(request);
         }
         lease.address = await this.selectAddress(request.chaddr, request);
-        lease.leasePeriod = this.config.get(OptionId.leaseTime, request);
-        lease.server = this.getServer(request);
-        lease.state = "OFFERED";
+        // lease.server = this.getServer(request);
+        // lease.state = "OFFERED";
         if (nextLease) {
-            this.leaseState.add(lease);
+            this.leaseOffer.add(lease);
         }
-        return this.sendOffer(request);
-    }
-
-    public async sendOffer(request: IDHCPMessage): Promise<number> {
-        // Formulate the response object
         const siaddr = this.getServer(request); // next server in bootstrap. That's us
-        const yiaddr = await this.selectAddress(request.chaddr, request); // My offer
-        const pre = new DHCPOptions({
-            [OptionId.dhcpMessageType]: DHCP53Code.DHCPOFFER,
-        });
+        const pre = new DHCPOptions({ [OptionId.dhcpMessageType]: DHCP53Code.DHCPOFFER });
         const requireds = [OptionId.netmask, OptionId.router, OptionId.leaseTime, OptionId.server, OptionId.dns];
-        const requested = request.options[OptionId.dhcpParameterRequestList] as Array<string | number>;
+        const requested = request.options[OptionId.dhcpParameterRequestList] as number[];
 
         const options = this.getOptions(request, pre, requireds, requested);
-        const ans: IDHCPMessage = {
-            op: BootCode.BOOTREPLY,
-            ...ansCommon,
-            chaddr: request.chaddr, // Client mac address
-            ciaddr: INADDR_ANY,
-            flags: request.flags,
-            giaddr: request.giaddr,
-            options,
-            siaddr,
-            xid: request.xid, // 'xid' from client DHCPDISCOVER message
-            yiaddr,
-        };
+        const ans = toResponse(request, options);
+        ans.ciaddr = INADDR_ANY;
+        ans.yiaddr = lease.address;
+        ans.siaddr = siaddr;
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         const broadcast = this.getConfigBroadcast(request);
         return this._send(broadcast, ans);
     }
 
-    public async handleRequest(request: IDHCPMessage): Promise<number> {
+    public async handle_Release(request: IDHCPMessage): Promise<number> {
         const { chaddr } = request;
-        let nextLease: boolean = false;
-        let lease = await this.leaseState.getLeaseFromMac(chaddr);
-        if (!lease) {
-            lease = newLease(chaddr);
-            nextLease = true;
-        }
-        lease.address = await this.selectAddress(chaddr, request);
-        lease.leasePeriod = this.config.get("leaseTime", request);
-        lease.server = this.getServer(request);
-        lease.state = "BOUND";
-        lease.bindTime = new Date();
-        if (nextLease) {
-            this.leaseState.add(lease);
-        }
-        return this.sendAck(request);
+        this.leaseOffer.pop(chaddr);
+        this.leaseLive.release(chaddr);
+        const pre = new DHCPOptions({ [OptionId.dhcpMessageType]: DHCP53Code.DHCPACK });
+        const requireds = [OptionId.server];
+        const options = this.getOptions(request, pre, requireds);
+        const ans = toResponse(request, options);
+        ans.ciaddr = INADDR_ANY; // not shure
+        ans.yiaddr = INADDR_ANY; // not shure
+        ans.siaddr = INADDR_ANY; // not shure
+        // Send the actual data
+        return this._send(this.getConfigBroadcast(request), ans);
+
     }
 
-    public async sendAck(request: IDHCPMessage): Promise<number> {
-        // console.log('Send ACK');
-        // Formulate the response object
-        const pre = new DHCPOptions({
-            [OptionId.dhcpMessageType]: DHCP53Code.DHCPACK,
-        });
+    public async handle_Request(request: IDHCPMessage): Promise<number> {
+        const { chaddr } = request;
+        let nextLease: boolean = false;
+
+        let lease = this.leaseOffer.pop(chaddr);
+        if (!lease) {
+            lease = await this.leaseLive.getLeaseFromMac(chaddr);
+            nextLease = true;
+        } else if (!lease) {
+            this.emit("error", "Get request for an non existing lease, you may extant offer timeout");
+            return 0;
+            // error;
+            // lease = this.newLease(request);
+            // nextLease = true;
+        } else {
+            // extand lease time
+            lease.expiration = this.getExpiration(request);
+        }
+        lease.address = await this.selectAddress(chaddr, request);
+        // lease.server = this.getServer(request);
+        // lease.state = "BOUND";
+        // lease.bindTime = new Date();
+        if (nextLease) {
+            this.leaseLive.add(lease);
+        }
+        const pre = new DHCPOptions({ [OptionId.dhcpMessageType]: DHCP53Code.DHCPACK });
         const requireds = [OptionId.netmask, OptionId.router, OptionId.leaseTime, OptionId.server, OptionId.dns];
-        const requested = request.options[OptionId.dhcpParameterRequestList] as Array<string | number>;
+        const requested = request.options[OptionId.dhcpParameterRequestList] as number[];
         const options = this.getOptions(request, pre, requireds, requested);
-
-        const address = await this.selectAddress(request.chaddr, request);
-
-        const ans: IDHCPMessage = {
-            op: BootCode.BOOTREPLY,
-            ...ansCommon,
-            chaddr: request.chaddr, // 'chaddr' from client DHCPREQUEST message
-            ciaddr: request.ciaddr,
-            flags: request.flags, // 'flags' from client DHCPREQUEST message
-            giaddr: request.giaddr, // 'giaddr' from client DHCPREQUEST message
-            options,
-            siaddr: this.getServer(request), // server ip, that's us
-            xid: request.xid, // 'xid' from client DHCPREQUEST message
-            yiaddr: address, // my offer
-        };
+        const address = lease.address; //  await this.selectAddress(request.chaddr, request);
+        const ans = toResponse(request, options);
+        ans.ciaddr = request.ciaddr;
+        ans.yiaddr = address;
+        ans.siaddr = this.getServer(request); // server ip, that's us
         // this.emit('bound', this.leaseState);
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         return this._send(this.getConfigBroadcast(request), ans);
     }
 
+    /**
+     * Formulate the response object
+     */
     public sendNak(request: IDHCPMessage): Promise<number> {
-        // console.log('Send NAK');
-        // Formulate the response object
-        const pre = new DHCPOptions({
-            [OptionId.dhcpMessageType]: DHCP53Code.DHCPNAK,
-        });
+        const pre = new DHCPOptions({ [OptionId.dhcpMessageType]: DHCP53Code.DHCPNAK });
         const requireds = [OptionId.server];
         const options = this.getOptions(request, pre, requireds);
-        const ans: IDHCPMessage = {
-            ...ansCommon,
-            chaddr: request.chaddr, // 'chaddr' from client DHCPREQUEST message
-            ciaddr: INADDR_ANY,
-            flags: request.flags, // 'flags' from client DHCPREQUEST message
-            giaddr: request.giaddr, // 'giaddr' from client DHCPREQUEST message
-            op: BootCode.BOOTREPLY,
-            options,
-            siaddr: INADDR_ANY,
-            xid: request.xid, // 'xid' from client DHCPREQUEST message
-            yiaddr: INADDR_ANY,
-        };
+        const ans = toResponse(request, options);
+        ans.ciaddr = INADDR_ANY;
+        ans.yiaddr = INADDR_ANY;
+        ans.siaddr = INADDR_ANY;
         // Send the actual data
         return this._send(this.getConfigBroadcast(request), ans);
     }
@@ -370,6 +373,17 @@ export class Server extends EventEmitter {
             return Promise.resolve();
         this.socket = null;
         return new Promise((resolve) => socket.close(resolve));
+    }
+
+    private newLease(request: IDHCPMessage): ILeaseLive {
+        const { chaddr } = request;
+        const name = request.options[OptionId.hostname] || "";
+        const expiration = this.getExpiration(request);
+        return { address: "", mac: chaddr, name: name as string, expiration };
+    }
+
+    private getExpiration(request: IDHCPMessage): number {
+        return this.config.get(OptionId.leaseTime, request) + Math.round(new Date().getTime() / 1000);
     }
 
     private handleRelease() {

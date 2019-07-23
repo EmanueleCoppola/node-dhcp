@@ -1,14 +1,12 @@
-import { ILease } from "../Lease";
+import { ILeaseLive } from "../Lease";
 import { genericGetFreeIP } from "../tools";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
 
 export class LeaseLiveStoreMemory implements ILeaseLiveStore {
-    public cache: { [key: string]: ILease } = {};
+    public cache: { [key: string]: ILeaseLive } = {};
     public address: Set<string> = new Set();
-    public oldest: ILease | null = null;
-    public cnt = 0;
 
-    public async getLeaseFromMac(mac: string): Promise<ILease | null> {
+    public async getLeaseFromMac(mac: string): Promise<ILeaseLive | null> {
         return this.cache[mac] || null;
     }
 
@@ -16,33 +14,22 @@ export class LeaseLiveStoreMemory implements ILeaseLiveStore {
         return this.address.has(address);
     }
 
-    public async size(): Promise<number> {
-        return this.cnt;
+    public async release(mac: string): Promise<ILeaseLive | null> {
+        const old = this.cache[mac];
+        if (old) {
+            delete this.cache[old.mac];
+            this.address.delete(old.address);
+        }
+        return old;
     }
 
-    public async add(lease: ILease): Promise<boolean> {
+    public async add(lease: ILeaseLive): Promise<boolean> {
         this.cache[lease.mac] = lease;
         this.address.add(lease.address);
-        this.cnt++;
         return true;
     }
 
-    // public getOldest(): Lease | null {
-    //    if (this.oldest)
-    //        return this.oldest;
-    //    let oldest: Lease | null = null;
-    //    let oldestTime = Infinity;
-    //    for (const lease of Object.values(this.cache)) {
-    //        if (lease.leaseTime < oldestTime) {
-    //            oldestTime = lease.leaseTime;
-    //            oldest = lease;
-    //        }
-    //    }
-    //    this.oldest = oldest;
-    //    return oldest;
-    // }
-
-    public async getLeases(): Promise<ILease[]> {
+    public async getLeases(): Promise<ILeaseLive[]> {
         return Object.values(this.cache);
     }
 
@@ -54,7 +41,7 @@ export class LeaseLiveStoreMemory implements ILeaseLiveStore {
         return Object.keys(this.cache);
     }
 
-    public getLeases2(): ILease[] {
+    public getLeases2(): ILeaseLive[] {
         return Object.values(this.cache);
     }
 
@@ -67,7 +54,7 @@ export class LeaseLiveStoreMemory implements ILeaseLiveStore {
     }
 
     public async getFreeIP(IP1: string, IP2: string, reserverd?: Array<Set<string>>, randomIP?: boolean): Promise<string> {
-        return genericGetFreeIP(IP1, IP2, [...reserverd, this.address], this.cnt, randomIP);
+        return genericGetFreeIP(IP1, IP2, [...reserverd, this.address], randomIP);
     }
 
 }

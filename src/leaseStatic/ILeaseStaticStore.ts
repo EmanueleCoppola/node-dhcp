@@ -1,7 +1,7 @@
-import { ILeaseLT } from "../Lease";
+import { ILeaseEx } from "../Lease";
 import { IDHCPMessage } from "../model";
 
 export interface ILeaseStaticStore {
-    getLease(mac: string, request: IDHCPMessage): ILeaseLT | null;
+    getLease(mac: string, request: IDHCPMessage): ILeaseEx | null;
     getReservedIP(): Set<string>;
 }
