@@ -1,22 +1,14 @@
+const dhcp = require('../lib/dhcp.js');
 
-var dhcp = require('../lib/dhcp.js');
-
-var s = dhcp.createClient();
-
-s.on('message', function (data) {
-  console.log(data);
-});
-
-s.on('error', function (err, data) {
-  console.log(err, data);
-});
-
-s.on('listening', function (sock) {
+const s = dhcp.createClient();
+s.on('message', (data) => console.log(data));
+s.on('error', (err, data) => console.log(err, data));
+s.on('listening', (sock) => {
   var address = sock.address();
   console.info('Client Listening: ' + address.address + ':' + address.port);
 });
 
-s.on('bound', function (state) {
+s.on('bound', (state) => {
   console.log("State: ", state);
   // `ip address add IP/MASK dev eth0`
   // `echo HOSTNAME > /etc/hostname && hostname HOSTNAME`

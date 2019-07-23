@@ -205,8 +205,8 @@ export class Client extends EventEmitter {
 
       // If router is not given, guess one
       if (!this.lastLease.options[OptionId.router]) {
-        this.lastLease.options[OptionId.router] = Tools.formatIp(
-          Tools.gatewayFromIpCIDR(this.lastLease.address, cidr));
+        const router = Tools.formatIp(Tools.gatewayFromIpCIDR(this.lastLease.address, cidr));
+        this.lastLease.options[OptionId.router] = [router];
       }
 
       // If broadcast is missing

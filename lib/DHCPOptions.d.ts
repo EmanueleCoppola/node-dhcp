@@ -3,7 +3,7 @@ import { IP } from './model';
 export declare class DHCPOptionsBase {
     1?: IP;
     2?: Int32;
-    3?: IP;
+    3?: IP[];
     4?: IP[];
     5?: IP[];
     6?: IP[];

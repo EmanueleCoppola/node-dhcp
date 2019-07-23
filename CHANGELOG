@@ -1,0 +1,7 @@
+- Use Async hook, so can use an external database to store lease.
+- Static lease are now reseved.
+- New free lease detection algoritm.
+- Project converted to Typescript.
+- Refactor configuration model.
+- Datastorage can be share and fill by an extrenal live interface.
+- remove auto remove oldest lease.

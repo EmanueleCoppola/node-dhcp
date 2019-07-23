@@ -6,7 +6,7 @@ import { getDHCPId, optsMeta } from './options';
 export class DHCPOptionsBase {
     public 1?: IP;
     public 2?: Int32;
-    public 3?: IP;
+    public 3?: IP[]; // router
     public 4?: IP[];
     public 5?: IP[];
     public 6?: IP[];
@@ -16,7 +16,7 @@ export class DHCPOptionsBase {
     public 10?: IP[];
     public 11?: IP[];
     public 12?: ASCII;
-    public 13?: UInt16;
+    public 13?: UInt16; // Boot File Size
     public 14?: ASCII;
     public 15?: ASCII;
     public 16?: IP;

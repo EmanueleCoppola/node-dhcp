@@ -1,9 +1,9 @@
 // @ts-check
 
-var dhcpd = require('../lib/dhcp.js');
+const { OptionId, createServer, LeaseStoreFile, StaticLeaseStoreMemory} = require('../lib/dhcp.js');
 
-const server = dhcpd.createServer(/** @type {IServerConfig} */ {
-  leaseState: new dhcpd.LeaseStoreFile('leases.json'),
+const server = createServer(/** @type {IServerConfig} */ {
+  leaseState: new LeaseStoreFile('leases.json'),
   // System settings
   range: function (a) {
     return [
@@ -12,27 +12,27 @@ const server = dhcpd.createServer(/** @type {IServerConfig} */ {
   },
   forceOptions: ['hostname'], // Options that need to be sent, even if they were not requested
   randomIP: true, // Get random new IP from pool instead of keeping one ip
-  static: {
+  static: new StaticLeaseStoreMemory({
     "11:22:33:44:55:66": "192.168.3.100"
-  },
+  }),
 
   // Option settings
-  netmask: '255.255.255.0',
-  router: [
+  [OptionId.netmask]: '255.255.255.0',
+  [OptionId.router]: [
     '10.0.0.138'
   ],
-  timeServer: null,
-  nameServer: null,
-  dns: ["8.8.8.8", "8.8.4.4"],
-  hostname: "kacknup",
-  domainName: "xarg.org",
-  broadcast: '10.0.0.255',
-  server: '10.0.0.39', // This is us
-  maxMessageSize: 1500,
-  leaseTime: 86400,
-  renewalTime: 60,
-  rebindingTime: 120,
-  bootFile: function (req, res) {
+  [OptionId.timeServer]: null,
+  [OptionId.nameServer]: null,
+  [OptionId.dns]: ["8.8.8.8", "8.8.4.4"],
+  [OptionId.hostname]: "kacknup",
+  [OptionId.domainName]: "xarg.org",
+  [OptionId.broadcast]: '10.0.0.255',
+  [OptionId.server]: '10.0.0.39', // This is us
+  [OptionId.maxMessageSize]: 1500,
+  [OptionId.leaseTime]: 86400,
+  [OptionId.renewalTime]: 60,
+  [OptionId.rebindingTime]: 120,
+  [OptionId.bootFile]: function (req, res) {
     // res.ip - the actual ip allocated for the client
     if (req.clientId === 'foo bar') {
       return 'x86linux.0';
@@ -58,12 +58,8 @@ server.on("listening", (sock) => {
   console.info('Server Listening: ' + address.address + ':' + address.port);
 });
 
-server.on("close", () => {
-  console.log('close');
-});
+server.on("close", () => console.log('server closed'));
 
 server.listen();
 
-process.on('SIGINT', () => {
-  server.close();
-});
+process.on('SIGINT', () => server.close());
