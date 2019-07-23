@@ -1,5 +1,3 @@
-/* tslint:disable object-literal-sort-keys */
-
 import * as dgram from "dgram";
 import { EventEmitter } from "events";
 import { ClientConfig } from "./ClientConfig";

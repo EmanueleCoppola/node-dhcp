@@ -1,19 +1,17 @@
 /* tslint:disable no-console */
-/* tslint:disable object-literal-sort-keys */
-
 import { createSocket, Socket } from "dgram";
 import { EventEmitter } from "events";
 import { DHCPOptions } from "./DHCPOptions";
 import { ILeaseLive } from "./Lease";
 import { ILeaseLiveStore, LeaseLiveStoreMemory } from "./leaseLive";
 import { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
+import { ILeaseStaticStore, LeaseStaticStoreMemory } from "./leaseStatic";
 import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId } from "./model";
 import { getDHCPId, optsMeta } from "./options";
 import { random } from "./prime";
 import { format, parse } from "./protocol";
 import { ServerConfig } from "./ServerConfig";
 import { formatIp, parseIp } from "./tools";
-import { ILeaseStaticStore, LeaseStaticStoreMemory } from "./leaseStatic";
 
 const INADDR_ANY = "0.0.0.0";
 const SERVER_PORT = 67;

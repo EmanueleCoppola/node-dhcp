@@ -6,7 +6,6 @@
  * Copyright (c) 2019, Chemouni Uriel (uchemouni@gmail.com)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
-/* tslint:disable object-literal-sort-keys */
 
 import { IDHCPMessage } from "./model";
 import SeqBuffer from "./seqbuffer";

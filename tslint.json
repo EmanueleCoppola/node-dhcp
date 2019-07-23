@@ -8,7 +8,8 @@
         "curly": false,
         "quotemark": [true, "double", "avoid-escape", "avoid-template"],
         "max-line-length": [true, 160],
-        "forin": false
+        "forin": false,
+        "object-literal-sort-keys": false
     },
     "rulesDirectory": []
 }

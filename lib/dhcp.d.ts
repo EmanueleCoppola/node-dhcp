@@ -20,7 +20,7 @@ export { Client } from "./Client";
 export { Server } from "./Server";
 export { ILease as Lease } from "./Lease";
 export { ILeaseLiveStore, LeaseLiveStoreFile, LeaseLiveStoreMemory } from "./leaseLive";
-export { ILeaseStaticStore, LeaseStaticStoreMemory } from "./leaseStatic";
+export { ILeaseStaticStore, LeaseStaticStoreFile, LeaseStaticStoreMemory } from "./leaseStatic";
 export { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
 export declare const createBroadcastHandler: () => Server;
 export declare const createClient: (opt: IClientConfig) => Client;

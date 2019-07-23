@@ -1,5 +1,5 @@
 import { DHCPOptions } from "./DHCPOptions";
-import { IOptionsTxt } from "./model";
+import { IOptionsId } from "./model";
 export declare type LeaseState = "RENEWING" | "RELEASED" | "REBINDING" | "SELECTING" | "REQUESTING" | "BOUND" | "REBOOTING" | "INIT" | "OFFERED";
 /**
  * Lease format for static lease
@@ -9,8 +9,7 @@ export declare type LeaseState = "RENEWING" | "RELEASED" | "REBINDING" | "SELECT
 export interface ILeaseEx {
     mac: string;
     address: string;
-    tag?: string[];
-    options?: IOptionsTxt;
+    options?: IOptionsId;
 }
 /**
  * a lise from a living Host
