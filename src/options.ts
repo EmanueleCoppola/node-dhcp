@@ -396,7 +396,7 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
       // Sent by client to specify their unique identifier, to be used to disambiguate the lease on the server
       config: "dhcpClientIdentifier",
       name: "Client-Identifier",
-      type: "UInt8s",
+      type: "ASCII", //  should be "UInt8s",
     },
     62: { // RFC 2242 Sec 2
       config: "netwareIPDomainName",
