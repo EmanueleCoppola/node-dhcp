@@ -1,9 +1,14 @@
 // @ts-check
 
-const { OptionId, createServer, LeaseStoreFile, StaticLeaseStoreMemory} = require('../lib/dhcp.js');
+const { OptionId, createServer, LeaseLiveStoreFile, LeaseStaticStoreMemory, LeaseOfferStoreMemory} = require('../lib/dhcp.js');
+
+const leaseOffer = new LeaseOfferStoreMemory();
+const leaseLive = new LeaseLiveStoreFile('leases.json');
+const leaseStatic = new LeaseStaticStoreMemory({
+  "11:22:33:44:55:66": "192.168.3.100"
+});
 
 const server = createServer(/** @type {IServerConfig} */ {
-  leaseState: new LeaseStoreFile('leases.json'),
   // System settings
   range: function (a) {
     return [
@@ -12,10 +17,9 @@ const server = createServer(/** @type {IServerConfig} */ {
   },
   forceOptions: ['hostname'], // Options that need to be sent, even if they were not requested
   randomIP: true, // Get random new IP from pool instead of keeping one ip
-  static: new StaticLeaseStoreMemory({
-    "11:22:33:44:55:66": "192.168.3.100"
-  }),
-
+  leaseOffer,
+  leaseLive,
+  leaseStatic,
   // Option settings
   [OptionId.netmask]: '255.255.255.0',
   [OptionId.router]: [
@@ -44,18 +48,13 @@ const server = createServer(/** @type {IServerConfig} */ {
 
 server.on('message', (data) => console.log(data));
 
-server.on('bound', (state) => {
-  console.log("BOUND:");
-  console.log(state);
-});
+server.on('bound', (state) => console.log("BOUND:", state));
 
-server.on("error", (err, data) => {
-  console.log(err, data);
-});
+server.on("error", (err, data) => console.log(err, data));
 
 server.on("listening", (sock) => {
-  var address = sock.address();
-  console.info('Server Listening: ' + address.address + ':' + address.port);
+  const address = sock.address();
+  console.info(`Server Listening: ${address.address}:${address.port}`);
 });
 
 server.on("close", () => console.log('server closed'));

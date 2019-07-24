@@ -7,7 +7,7 @@ export interface IServerConfig extends DHCPOptionsFnc {
     randomIP?: Bool;
     range: IPs;
     leaseStatic?: ILeaseStaticStore;
-    leaseState?: ILeaseLiveStore;
+    leaseLive?: ILeaseLiveStore;
     leaseOffer?: ILeaseOfferStore;
     forceOptions?: ASCIIs;
 }

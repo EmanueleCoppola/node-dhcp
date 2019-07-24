@@ -8,7 +8,7 @@ export interface IServerConfig extends DHCPOptionsFnc {
     randomIP?: Bool; // Get random new IP from pool instead of keeping one ip
     range: IPs;
     leaseStatic?: ILeaseStaticStore;
-    leaseState?: ILeaseLiveStore;
+    leaseLive?: ILeaseLiveStore;
     leaseOffer?: ILeaseOfferStore;
     forceOptions?: ASCIIs; // Options that need to be sent, even if they were not requested
 }
@@ -27,7 +27,7 @@ export class ServerConfig extends DHCPOptions {
         this.randomIP = options.randomIP || false;
         this.leaseStatic = options.leaseStatic || new LeaseStaticStoreMemory({});
         this.range = options.range;
-        this.leaseLive = options.leaseState || new LeaseLiveStoreMemory();
+        this.leaseLive = options.leaseLive || new LeaseLiveStoreMemory();
         this.leaseOffer = options.leaseOffer || new LeaseOfferStoreMemory();
         this.forceOptions = options.forceOptions || ["hostname"];
         if (!this[OptionId.server])
