@@ -39,7 +39,7 @@ export interface IDHCPMessage {
   sname: string; // server host name
   file: string; // boot file name
   magicCookie?: number; // UInt32 contains 99, 130, 83, 99
-  options: DHCPOptions;
+  options: IOptionsId; // staticly populate options
 }
 
 // RFC1700, hardware

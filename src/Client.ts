@@ -1,9 +1,7 @@
 import * as dgram from "dgram";
 import { EventEmitter } from "events";
 import { ClientConfig } from "./ClientConfig";
-import { DHCPOptions } from "./DHCPOptions";
-import { ILease } from "./Lease";
-import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId } from "./model";
+import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, OptionId, IOptionsId } from "./model";
 import * as OptionsModel from "./options";
 import * as Protocol from "./protocol";
 import * as Tools from "./tools";
@@ -26,6 +24,24 @@ const ansCommon = {
   sname: "", // unused
   yiaddr: INADDR_ANY,
 };
+
+export type LeaseState = "RENEWING" | "RELEASED" | "REBINDING" | "SELECTING" | "REQUESTING" | "BOUND" | "REBOOTING" | "INIT" | "OFFERED";
+
+export interface ILease {
+  mac: string; // macAddr
+  bindTime: Date; // Time when we got an ACK
+  leasePeriod: number; // = 86400; // Seconds the lease is allowed to live, next lease in "leasePeriod - (now - bindTime)"
+  renewPeriod: number; // = 1440; // Seconds till a renew is due, next renew in "renewPeriod - (now - bindTime)"
+  rebindPeriod: number; // = 14400; // Seconds till a rebind is due, next rebind in "rebindPeriod - (now - bindTime)"
+  leaseTime: number;
+  state?: LeaseState;
+  server: string; // The server we got our config from
+  address: string; // actual IP address we got
+  options: IOptionsId; // object of all other options we got
+  tries: number; // = 0; // number of tries in order to complete a state
+  xid: number; // = 1; // unique id, incremented with every request
+  router: string;
+}
 
 const newLease = (mac: string): ILease => ({
   mac,
@@ -91,13 +107,13 @@ export class Client extends EventEmitter {
       chaddr: mac,
       ciaddr: INADDR_ANY, // 0 for DHCPDISCOVER, other implementations send currently assigned IP - but we follow RFC
       flags: 0, // 0 or 0x80 (if client requires broadcast reply)
-      options: new DHCPOptions({
+      options: {
         [OptionId.maxMessageSize]: 1500, // Max message size
         [OptionId.dhcpMessageType]: DHCP53Code.DHCPDISCOVER,
         [OptionId.dhcpClientIdentifier]: mac, // MAY
         [OptionId.dhcpParameterRequestList]: features, // MAY
         // TODO: requested IP optional
-      }),
+      },
       xid: this.lastLease.xid++, // Selected by client on DHCPDISCOVER
     };
     this.lastLease.state = "SELECTING";
@@ -133,18 +149,18 @@ export class Client extends EventEmitter {
       chaddr: mac,
       ciaddr: INADDR_ANY, // 0 for DHCPREQUEST
       flags: 0, // 0 or 0x80 (if client requires broadcast reply)
-      options: new DHCPOptions({
+      options: {
         [OptionId.maxMessageSize]: 1500, // Max message size
         [OptionId.dhcpMessageType]: DHCP53Code.DHCPREQUEST,
         [OptionId.dhcpClientIdentifier]: mac, // MAY
         [OptionId.dhcpParameterRequestList]: this.config.getFeatures(), // MAY
         [OptionId.requestedIpAddress]: this.lastLease.address, // requested IP, TODO: MUST (selecting or INIT REBOOT) MUST NOT (BOUND, RENEW)
         // TODO: server identifier: MUST (after selecting) MUST NOT (INIT REBOOT, BOUND, RENEWING, REBINDING)
-      }),
+      },
       xid: req.xid, // 'xid' from server DHCPOFFER message
     };
 
-    this.lastLease.server = req.options.get(OptionId.server, req) as string;
+    this.lastLease.server = req.options[OptionId.server];
     this.lastLease.address = req.yiaddr;
     this.lastLease.state = "REQUESTING";
     this.lastLease.tries = 0;
@@ -163,11 +179,11 @@ export class Client extends EventEmitter {
       lastLease.bindTime = new Date();
       lastLease.state = "BOUND";
       lastLease.address = req.yiaddr;
-      lastLease.options = new DHCPOptions();
+      lastLease.options = {};
 
       // Lease time is available
       if (req.options[OptionId.leaseTime]) {
-        const leaseTime = req.options.get(OptionId.leaseTime, req) as number;
+        const leaseTime = req.options[OptionId.leaseTime];
         lastLease.leasePeriod = leaseTime;
         lastLease.renewPeriod = leaseTime / 2;
         lastLease.rebindPeriod = leaseTime;
@@ -175,18 +191,18 @@ export class Client extends EventEmitter {
 
       // Renewal time is available
       if (req.options[OptionId.renewalTime]) {
-        lastLease.renewPeriod = req.options.get(OptionId.renewalTime, req) as number;
+        lastLease.renewPeriod = req.options[OptionId.renewalTime];
       }
 
       // Rebinding time is available
       if (req.options[OptionId.rebindingTime]) {
-        lastLease.rebindPeriod = req.options.get(OptionId.rebindingTime, req) as number;
+        lastLease.rebindPeriod = req.options[OptionId.rebindingTime];
       }
 
       // TODO: set renew & rebind timer
 
       const options = req.options;
-      lastLease.options = new DHCPOptions();
+      lastLease.options = {};
 
       // Map all options from request
       for (const id in options) {
@@ -211,7 +227,7 @@ export class Client extends EventEmitter {
           Tools.netmaskFromIP(lastLease.address));
       }
 
-      const cidr = Tools.CIDRFromNetmask(lastLease.options.get(OptionId.netmask, req) as string);
+      const cidr = Tools.CIDRFromNetmask(lastLease.options[OptionId.netmask]);
 
       // If router is not given, guess one
       if (!lastLease.options[OptionId.router]) {
@@ -240,11 +256,11 @@ export class Client extends EventEmitter {
       chaddr: this.config.getMac(),
       ciaddr: this.lastLease.server, // this.getConfig('server'),
       flags: 0,
-      options: new DHCPOptions({
+      options: {
         [OptionId.dhcpMessageType]: DHCP53Code.DHCPRELEASE,
         // TODO: MAY clientID
         [OptionId.server]: this.lastLease.server, // MUST server identifier
-      }),
+      },
       xid: this.lastLease.xid++, // Selected by client on DHCPRELEASE
     };
     this.lastLease.bindTime = null;
@@ -287,12 +303,12 @@ export class Client extends EventEmitter {
       chaddr: this.config.getMac(),
       ciaddr: this.lastLease.server, // <string>this.getConfig('server'),
       flags: 0,
-      options: new DHCPOptions({
+      options: {
         [OptionId.dhcpMessageType]: DHCP53Code.DHCPREQUEST,
         [OptionId.requestedIpAddress]: this.lastLease.address,
         // TODO: MAY clientID
         [OptionId.server]: this.lastLease.server, // MUST server identifier
-      }),
+      },
       xid: this.lastLease.xid++, // Selected by client on DHCPRELEASE
     };
     this.lastLease.state = "REBINDING";

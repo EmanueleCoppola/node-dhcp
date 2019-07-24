@@ -1,5 +1,8 @@
-import { ILeaseLive } from "../Lease";
+/**
+ * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
+ */
 import { genericGetFreeIP } from "../tools";
+import { ILeaseLive } from "./ILeaseLiveStore";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
 
 export class LeaseLiveStoreMemory implements ILeaseLiveStore {
@@ -27,6 +30,10 @@ export class LeaseLiveStoreMemory implements ILeaseLiveStore {
         this.cache[lease.mac] = lease;
         this.address.add(lease.address);
         return true;
+    }
+
+    public async updateLease(lease: ILeaseLive): Promise<void> {
+        // nothink to do
     }
 
     public async getLeases(): Promise<ILeaseLive[]> {

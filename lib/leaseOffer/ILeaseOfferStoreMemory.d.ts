@@ -1,4 +1,7 @@
-import { ILeaseLive } from "../Lease";
+/**
+ * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
+ */
+import { ILeaseLive } from "../leaseLive/ILeaseLiveStore";
 import { ILeaseOfferStore } from "./ILeaseOfferStore";
 export declare class LeaseOfferStoreMemory implements ILeaseOfferStore {
     private cache;

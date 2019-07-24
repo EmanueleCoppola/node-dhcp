@@ -1,5 +1,7 @@
+/**
+ * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
+ */
 /* tslint:disable no-bitwise */
-
 const rand = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
 
 const ceil = Math.ceil;

@@ -2,7 +2,7 @@
 import { createSocket, Socket } from "dgram";
 import { EventEmitter } from "events";
 import { DHCPOptions } from "./DHCPOptions";
-import { ILeaseLive } from "./Lease";
+import { ILeaseLive } from "./leaseLive";
 import { ILeaseLiveStore, LeaseLiveStoreMemory } from "./leaseLive";
 import { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
 import { ILeaseStaticStore, LeaseStaticStoreMemory } from "./leaseStatic";
@@ -17,7 +17,7 @@ const INADDR_ANY = "0.0.0.0";
 const SERVER_PORT = 67;
 const CLIENT_PORT = 68;
 
-function toResponse(request: IDHCPMessage, options: DHCPOptions): IDHCPMessage {
+function toResponse(request: IDHCPMessage, options: IOptionsId): IDHCPMessage {
     return {
         op: BootCode.BOOTREPLY,
         htype: HardwareType.Ethernet,
@@ -89,7 +89,7 @@ export class Server extends EventEmitter {
                     case DHCP53Code.DHCPRELEASE: // 7
                         return await self.handle_Release(request);
                     case DHCP53Code.DHCPINFORM: // 8
-                    return console.error("Not implemented DHCPINFORM");
+                        return console.error("Not implemented DHCPINFORM");
                     default:
                         console.error("Not implemented DHCP 53 Type", request.options[53]);
                 }
@@ -123,7 +123,7 @@ export class Server extends EventEmitter {
         return false;
     }
 
-    public getOptions(request: IDHCPMessage, pre: DHCPOptions, customOpts: IOptionsId, requireds: number[], requested?: number[]): DHCPOptions {
+    public getOptions(request: IDHCPMessage, pre: IOptionsId, customOpts: IOptionsId, requireds: number[], requested?: number[]): IOptionsId {
         // Check if option id actually exists
         customOpts = customOpts || {};
         requested = requested || [];
@@ -248,11 +248,11 @@ export class Server extends EventEmitter {
         if (lease) {
             // extand lease time
             lease.expiration = this.getExpiration(request);
+            await this.leaseLive.updateLease(lease);
         } else {
             lease = this.newLease(request);
             nextLease = true;
         }
-
         const staticLease = this.leaseStatic.getLease(request.chaddr, request);
         let customOpts: IOptionsId = {};
         if (staticLease) {
@@ -264,9 +264,9 @@ export class Server extends EventEmitter {
         if (nextLease) {
             this.leaseOffer.add(lease);
         }
-        const pre = new DHCPOptions({ [OptionId.dhcpMessageType]: DHCP53Code.DHCPOFFER });
+        const pre = { [OptionId.dhcpMessageType]: DHCP53Code.DHCPOFFER };
         const requireds = [OptionId.netmask, OptionId.router, OptionId.leaseTime, OptionId.server, OptionId.dns];
-        const requested = request.options[OptionId.dhcpParameterRequestList] as number[];
+        const requested = request.options[OptionId.dhcpParameterRequestList];
         const options = this.getOptions(request, pre, customOpts, requireds, requested);
         const ans = toResponse(request, options);
         ans.ciaddr = INADDR_ANY;
@@ -292,9 +292,9 @@ export class Server extends EventEmitter {
             // error;
             // lease = this.newLease(request);
             // nextLease = true;
-        } else {
-            // extand lease time
+        } else { // extand lease time
             lease.expiration = this.getExpiration(request);
+            await this.leaseLive.updateLease(lease);
         }
         const staticLease = this.leaseStatic.getLease(request.chaddr, request);
         let customOpts: IOptionsId = {};
@@ -310,7 +310,7 @@ export class Server extends EventEmitter {
         if (nextLease) {
             this.leaseLive.add(lease);
         }
-        const pre = new DHCPOptions({ [OptionId.dhcpMessageType]: DHCP53Code.DHCPACK });
+        const pre = { [OptionId.dhcpMessageType]: DHCP53Code.DHCPACK };
         const requireds = [OptionId.netmask, OptionId.router, OptionId.leaseTime, OptionId.server, OptionId.dns];
         const requested = request.options[OptionId.dhcpParameterRequestList] as number[];
         const options = this.getOptions(request, pre, customOpts, requireds, requested);
@@ -328,7 +328,7 @@ export class Server extends EventEmitter {
         const { chaddr } = request;
         this.leaseOffer.pop(chaddr);
         this.leaseLive.release(chaddr);
-        const pre = new DHCPOptions({ [OptionId.dhcpMessageType]: DHCP53Code.DHCPACK });
+        const pre = { [OptionId.dhcpMessageType]: DHCP53Code.DHCPACK };
         const requireds = [OptionId.server];
         const options = this.getOptions(request, pre, {}, requireds);
         const ans = toResponse(request, options);
@@ -344,7 +344,7 @@ export class Server extends EventEmitter {
      * Formulate the response object
      */
     public sendNak(request: IDHCPMessage): Promise<number> {
-        const pre = new DHCPOptions({ [OptionId.dhcpMessageType]: DHCP53Code.DHCPNAK });
+        const pre = { [OptionId.dhcpMessageType]: DHCP53Code.DHCPNAK };
         const requireds = [OptionId.server];
         const options = this.getOptions(request, pre, {}, requireds);
         const ans = toResponse(request, options);

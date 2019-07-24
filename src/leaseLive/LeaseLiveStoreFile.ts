@@ -1,13 +1,15 @@
+/**
+ * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
+ */
 import debounce from "debounce";
 import * as fse from "fs-extra";
-import { ILeaseLive } from "../Lease";
 import { genericGetFreeIP } from "../tools";
+import { ILeaseLive } from "./ILeaseLiveStore";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
 
 export class LeaseLiveStoreFile implements ILeaseLiveStore {
     public cache: { [key: string]: ILeaseLive } = {};
     public address: Set<string> = new Set();
-    public oldest: ILeaseLive | null = null;
     public save: () => void;
 
     private file: string;
@@ -48,6 +50,10 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
         return old;
     }
 
+    public async updateLease(lease: ILeaseLive): Promise<void> {
+        this.save();
+    }
+
     public async getLeases(): Promise<ILeaseLive[]> {
         return Object.values(this.cache);
     }
@@ -81,10 +87,8 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
     }
 
     private reIndex(leases: ILeaseLive[]) {
-        const index: { [key: string]: ILeaseLive } = {};
         this.cache = {};
         this.address = new Set();
-        this.oldest = null;
 
         for (const entry of leases) {
             this._add(entry);

@@ -1,5 +1,8 @@
-import { ILeaseEx } from "../Lease";
+/**
+ * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
+ */
 import { IDHCPMessage } from "../model";
+import { ILeaseEx } from "./ILeaseStaticStore";
 import { ILeaseStaticStore } from "./ILeaseStaticStore";
 /**
  * basic static Lease conmfiguration module

@@ -1,4 +1,4 @@
-import { ILeaseLive } from "../Lease";
+import { ILeaseLive } from "./ILeaseLiveStore";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
 export declare class LeaseLiveStoreFile implements ILeaseLiveStore {
     cache: {

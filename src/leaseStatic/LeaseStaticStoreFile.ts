@@ -1,8 +1,11 @@
+/**
+ * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
+ */
 import { debounce } from "debounce";
 import * as fse from "fs-extra";
-import { ILeaseEx } from "../Lease";
 import { IDHCPMessage, IOptionsId, IOptionsTxt } from "../model";
 import { getDHCPId } from "../options";
+import { ILeaseEx } from "./ILeaseStaticStore";
 import { ILeaseStaticStore } from "./ILeaseStaticStore";
 
 interface IStaticLeaseModel {

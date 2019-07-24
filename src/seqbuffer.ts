@@ -10,7 +10,7 @@
 
 /* tslint:disable no-console */
 
-import { DHCPOptions } from "./DHCPOptions";
+import { IOptionsId } from "./model";
 import { IOptionMeta, optsMeta } from "./options";
 
 function trimZero(str: string): string {
@@ -192,7 +192,7 @@ export default class SeqBuffer {
     }
     this.r += 10; // + 10 since field is 16 byte and only 6 are used for htype=1
     const matches = mac.toUpperCase().match(/../g);
-    if (! matches)
+    if (!matches)
       throw new Error("internal mac pasing error");
     return matches.join("-");
   }
@@ -276,8 +276,8 @@ export default class SeqBuffer {
     return this;
   }
 
-  public getOptions() {
-    const options = new DHCPOptions();
+  public getOptions(): IOptionsId {
+    const options: IOptionsId = {};
     const buf = this.buffer;
     while (this.r < buf.length) {
       const opt = this.getUInt8();

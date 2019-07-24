@@ -1,5 +1,5 @@
-import { ILeaseEx } from "../Lease";
 import { IDHCPMessage, IOptionsTxt } from "../model";
+import { ILeaseEx } from "./ILeaseStaticStore";
 import { ILeaseStaticStore } from "./ILeaseStaticStore";
 export interface ILeaseExStr {
     mac: string;
