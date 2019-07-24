@@ -9,13 +9,16 @@ import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, IOptionsId, OptionId 
 import { getDHCPId, getOptsMeta, IOptionMetaMap } from "./options";
 import { random } from "./prime";
 import { format, parse } from "./protocol";
-import { ServerConfig } from "./ServerConfig";
+import { IServerConfigValid } from "./ServerConfig";
 import { formatIp, parseIp } from "./tools";
 
 const INADDR_ANY = "0.0.0.0";
 const SERVER_PORT = 67;
 const CLIENT_PORT = 68;
 
+/**
+ * helper to build DHCPresponse
+ */
 function toResponse(request: IDHCPMessage, options: IOptionsId): IDHCPMessage {
     return {
         op: BootCode.BOOTREPLY,
@@ -36,19 +39,20 @@ function toResponse(request: IDHCPMessage, options: IOptionsId): IDHCPMessage {
     } as IDHCPMessage;
 }
 
-const extraOption = new Set(["range", "forceOptions", "randomIP"]);
-
+/**
+ * Mains DHCP server class
+ */
 export class Server extends EventEmitter {
     private socket: Socket | null;
     // Config (cache) object
-    private config: ServerConfig;
+    private config: IServerConfigValid;
     // actif Lease
     private leaseStatic: ILeaseStaticStore;
     private leaseLive: ILeaseLiveStore;
     private leaseOffer: ILeaseOfferStore;
     private optsMeta: IOptionMetaMap;
 
-    constructor(config: ServerConfig, listenOnly?: boolean) {
+    constructor(config: IServerConfigValid, listenOnly?: boolean) {
         super();
         const self = this;
         const socket = createSocket({ type: "udp4", reuseAddr: true });

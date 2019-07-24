@@ -1,22 +1,21 @@
-import { DHCPOptions } from "./DHCPOptions";
 import { ILeaseLiveStore } from "./leaseLive";
 import { ILeaseOfferStore } from "./leaseOffer";
 import { ILeaseStaticStore } from "./leaseStatic";
-import { ASCIIs, Bool, DHCPOptionsFnc, IPs } from "./model";
-export interface IServerConfig extends DHCPOptionsFnc {
+import { ASCIIs, Bool, IDHCPOptionsFncId, IPs } from "./model";
+export interface IServerConfig extends IDHCPOptionsFncId {
     randomIP?: Bool;
-    range: IPs;
     leaseStatic?: ILeaseStaticStore;
     leaseLive?: ILeaseLiveStore;
     leaseOffer?: ILeaseOfferStore;
+    range: IPs;
     forceOptions?: ASCIIs;
 }
-export declare class ServerConfig extends DHCPOptions {
+export interface IServerConfigValid extends IServerConfig {
     randomIP: Bool;
     leaseStatic: ILeaseStaticStore;
     leaseLive: ILeaseLiveStore;
     leaseOffer: ILeaseOfferStore;
     range: IPs;
     forceOptions: ASCIIs;
-    constructor(options: IServerConfig);
 }
+export declare function newServerConfig(options: IServerConfig): IServerConfigValid;

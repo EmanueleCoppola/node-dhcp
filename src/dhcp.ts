@@ -10,7 +10,7 @@
 import { Client } from "./Client";
 import { ClientConfig, IClientConfig } from "./ClientConfig";
 import { Server } from "./Server";
-import { IServerConfig, ServerConfig } from "./ServerConfig";
+import { IServerConfig, newServerConfig } from "./ServerConfig";
 export { OptionId } from "./model";
 export { IClientConfig } from "./ClientConfig";
 export { IServerConfig } from "./ServerConfig";
@@ -20,11 +20,11 @@ export { Server } from "./Server";
 export { ILeaseLiveStore, LeaseLiveStoreFile, LeaseLiveStoreMemory, ILeaseLive } from "./leaseLive";
 export { ILeaseStaticStore, LeaseStaticStoreFile, LeaseStaticStoreMemory, ILeaseEx } from "./leaseStatic";
 export { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
-export { IOptionsTxtOrId, IOptionsTxt, IOptionsId, DHCPOptionsFnc } from "./model";
+export { IOptionsTxtOrId, IOptionsTxt, IOptionsId, IDHCPOptionsFncId } from "./model";
 
-export const createBroadcastHandler = (): Server => new Server(new ServerConfig({ range: ["0.0.0.0", "0.0.0.1"] }), true);
+export const createBroadcastHandler = (): Server => new Server(newServerConfig({ range: ["0.0.0.0", "0.0.0.1"] }), true);
 export const createClient = (opt: IClientConfig): Client => new Client(new ClientConfig(opt));
-export const createServer = (opt: IServerConfig): Server => new Server(new ServerConfig(opt));
+export const createServer = (opt: IServerConfig): Server => new Server(newServerConfig(opt));
 
 export default {
   createBroadcastHandler,

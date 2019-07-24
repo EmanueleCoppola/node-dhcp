@@ -1,10 +1,10 @@
 import { NetworkInterfaceInfo, networkInterfaces } from "os";
-import { DHCPOptionsFnc, IDHCPMessage, OptionId } from "./model";
+import { IDHCPOptionsFncId, OptionId } from "./model";
 import { getDHCPId } from "./options";
 
 const extraOption = new Set(["mac", "features"]);
 
-export interface IClientConfig extends DHCPOptionsFnc {
+export interface IClientConfig extends IDHCPOptionsFncId {
   mac?: string;
   features?: string[];
 }

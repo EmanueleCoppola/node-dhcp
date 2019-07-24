@@ -1,7 +1,10 @@
 /// <reference types="node" />
 import { EventEmitter } from "events";
 import { IDHCPMessage, IOptionsId, OptionId } from "./model";
-import { ServerConfig } from "./ServerConfig";
+import { IServerConfigValid } from "./ServerConfig";
+/**
+ * Mains DHCP server class
+ */
 export declare class Server extends EventEmitter {
     private socket;
     private config;
@@ -9,7 +12,7 @@ export declare class Server extends EventEmitter {
     private leaseLive;
     private leaseOffer;
     private optsMeta;
-    constructor(config: ServerConfig, listenOnly?: boolean);
+    constructor(config: IServerConfigValid, listenOnly?: boolean);
     getServer(request: IDHCPMessage): string;
     getConfigBroadcast(request: IDHCPMessage): string;
     validOption(optionId: number | string): boolean;

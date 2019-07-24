@@ -19,7 +19,7 @@ export { Server } from "./Server";
 export { ILeaseLiveStore, LeaseLiveStoreFile, LeaseLiveStoreMemory, ILeaseLive } from "./leaseLive";
 export { ILeaseStaticStore, LeaseStaticStoreFile, LeaseStaticStoreMemory, ILeaseEx } from "./leaseStatic";
 export { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
-export { IOptionsTxtOrId, IOptionsTxt, IOptionsId, DHCPOptionsFnc } from "./model";
+export { IOptionsTxtOrId, IOptionsTxt, IOptionsId, IDHCPOptionsFncId } from "./model";
 export declare const createBroadcastHandler: () => Server;
 export declare const createClient: (opt: IClientConfig) => Client;
 export declare const createServer: (opt: IServerConfig) => Server;

@@ -1,5 +1,5 @@
-import { DHCPOptionsFnc } from "./model";
-export interface IClientConfig extends DHCPOptionsFnc {
+import { IDHCPOptionsFncId } from "./model";
+export interface IClientConfig extends IDHCPOptionsFncId {
     mac?: string;
     features?: string[];
 }

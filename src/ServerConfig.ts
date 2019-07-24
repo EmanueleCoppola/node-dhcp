@@ -1,36 +1,43 @@
-import { DHCPOptions } from "./DHCPOptions";
+
 import { ILeaseLiveStore, LeaseLiveStoreMemory } from "./leaseLive";
 import { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
 import { ILeaseStaticStore, LeaseStaticStoreMemory } from "./leaseStatic";
-import { ASCIIs, Bool, DHCPOptionsFnc, IDHCPMessage, IPs, OptionId } from "./model";
+import { ASCIIs, Bool, IDHCPOptionsFncId, IPs, OptionId } from "./model";
+import { getDHCPId } from "./options";
 
-export interface IServerConfig extends DHCPOptionsFnc {
+export interface IServerConfig extends IDHCPOptionsFncId {
     randomIP?: Bool; // Get random new IP from pool instead of keeping one ip
-    range: IPs;
     leaseStatic?: ILeaseStaticStore;
     leaseLive?: ILeaseLiveStore;
     leaseOffer?: ILeaseOfferStore;
+    range: IPs;
     forceOptions?: ASCIIs; // Options that need to be sent, even if they were not requested
 }
-// export type ServerConfigKey = "range" | "forceOptions" | "randomIP" | "static" | "leaseState";
 
-export class ServerConfig extends DHCPOptions {
-    public randomIP: Bool; // Get random new IP from pool instead of keeping one ip
-    public leaseStatic: ILeaseStaticStore;
-    public leaseLive: ILeaseLiveStore;
-    public leaseOffer: ILeaseOfferStore;
-    public range: IPs;
-    public forceOptions: ASCIIs; // Options that need to be sent, even if they were not requested
+export interface IServerConfigValid extends IServerConfig {
+    randomIP: Bool; // Get random new IP from pool instead of keeping one ip
+    leaseStatic: ILeaseStaticStore;
+    leaseLive: ILeaseLiveStore;
+    leaseOffer: ILeaseOfferStore;
+    range: IPs;
+    forceOptions: ASCIIs; // Options that need to be sent, even if they were not requested
+}
 
-    constructor(options: IServerConfig) {
-        super(options);
-        this.randomIP = options.randomIP || false;
-        this.leaseStatic = options.leaseStatic || new LeaseStaticStoreMemory({});
-        this.range = options.range;
-        this.leaseLive = options.leaseLive || new LeaseLiveStoreMemory();
-        this.leaseOffer = options.leaseOffer || new LeaseOfferStoreMemory();
-        this.forceOptions = options.forceOptions || ["hostname"];
-        if (!this[OptionId.server])
-            throw Error("server option is mandatoy");
+export function newServerConfig(options: IServerConfig): IServerConfigValid {
+    const config = {
+        randomIP: options.randomIP || false,
+        leaseStatic: options.leaseStatic || new LeaseStaticStoreMemory({}),
+        range: options.range,
+        leaseLive: options.leaseLive || new LeaseLiveStoreMemory(),
+        leaseOffer: options.leaseOffer || new LeaseOfferStoreMemory(),
+        forceOptions: options.forceOptions || ["hostname"],
+    } as IServerConfigValid;
+    for (const k in options) {
+        const id = getDHCPId(k);
+        if (id && !config[id])
+            config[id] = options[k];
     }
+    if (!config[OptionId.server])
+        throw Error("server option is mandatoy");
+    return config;
 }
