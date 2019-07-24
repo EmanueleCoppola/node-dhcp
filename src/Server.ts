@@ -287,6 +287,9 @@ export class Server extends EventEmitter {
         let nextLease: boolean = false;
 
         let lease = this.leaseOffer.pop(chaddr);
+        if (lease) {
+            nextLease = true;
+        }
         if (!lease) {
             lease = await this.leaseLive.getLeaseFromMac(chaddr);
             nextLease = true;
@@ -391,7 +394,7 @@ export class Server extends EventEmitter {
      */
     public getC(key: OptionId, requested?: IDHCPMessage): any {
         const n = getDHCPId(key);
-        let val = this[n];
+        let val = this.config[n];
         if (val === undefined) {
             const meta = this.optsMeta[n];
             if (meta.default)
