@@ -124,10 +124,10 @@ export class Server extends EventEmitter {
         return value;
     }
 
-    public validOption(optionId: number | string) {
+    public validOption(optionId: number) {
         if (this.optsMeta[optionId])
             return true;
-        this.emit("error", `Unknown option ${optionId}`);
+        this.emit("error", `Unknown Type for option ${optionId}, add this type in options.ts`);
         return false;
     }
 
@@ -162,6 +162,8 @@ export class Server extends EventEmitter {
                 // Add value only, if it's meaningful
                 if (val)
                     pre[optionId] = val;
+                else
+                    this.emit("warning", `No value for option ${optionId} in config for ${request.chaddr}`);
             }
         }
 
@@ -296,14 +298,15 @@ export class Server extends EventEmitter {
         }
         if (!lease) {
             lease = await this.leaseLive.getLeaseFromMac(chaddr);
-            nextLease = true;
+            // nextLease = true;
         } else if (!lease) {
             this.emit("error", "Get request for an non existing lease, you may extend offer timeout");
             return 0;
             // error;
             // lease = this.newLease(request);
             // nextLease = true;
-        } else { // extand lease time
+        }
+        if (lease) { // extand lease time
             lease.expiration = this.getExpiration(request);
             await this.leaseLive.updateLease(lease);
         }

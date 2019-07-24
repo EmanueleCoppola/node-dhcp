@@ -478,6 +478,16 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
       type: "Bool",
       // config: 'rapidCommit', // may need removal
     },
+    100: {// RFC 4039: http://www.networksorcery.com/enp/rfc/rfc4039.txt
+      config: "PCode",
+      name: "IEEE 1003.1 TZ String",
+      type: "ASCII",
+    },
+    101: {// RFC 4039: http://www.networksorcery.com/enp/rfc/rfc4039.txt
+      config: "TCode",
+      name: "Reference to the TZ Database",
+      type: "ASCII",
+    },
     // 81: {
     //  attr: 'fqdn',
     //  name: 'fqdn option space',

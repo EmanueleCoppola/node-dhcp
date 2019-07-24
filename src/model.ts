@@ -162,8 +162,8 @@ export enum OptionId {
   streetTalkDAServer = 76,
   rapidCommit = 80, // RFC 4039: http://www.networksorcery.com/enp/rfc/rfc4039.txt
 
-  PCode = 100, // TODO
-  TCode = 101, // TODO
+  PCode = 100,
+  TCode = 101,
   SIPServersDHCPOption = 120, // TODO
   PXERemoteStat = 132, // TODO
   PXEVLanID = 133, // TODO
@@ -275,6 +275,9 @@ export interface IOptionsTxt {
   pxePathPrefix?: _ASCII;
   pxeRebootTime?: _UInt32;
   wpad?: _ASCII;
+  PCode?: _ASCII;
+  TCode?: _ASCII;
+
 }
 
 /**
@@ -356,6 +359,8 @@ export interface IOptionsId {
   75?: _IPs;
   76?: _IPs;
   80?: _Bool;
+  100?: _ASCII;
+  101?: _ASCII;
   112?: _ASCII;
   113?: _ASCII;
   116?: _UInt8;

@@ -15,7 +15,7 @@ export declare class Server extends EventEmitter {
     constructor(config: IServerConfigValid, listenOnly?: boolean);
     getServer(request: IDHCPMessage): string;
     getConfigBroadcast(request: IDHCPMessage): string;
-    validOption(optionId: number | string): boolean;
+    validOption(optionId: number): boolean;
     getOptions(request: IDHCPMessage, pre: IOptionsId, customOpts: IOptionsId, requireds: number[], requested?: number[]): IOptionsId;
     selectAddress(clientMAC: string, request: IDHCPMessage): Promise<string>;
     handle_Discover(request: IDHCPMessage): Promise<number>;
