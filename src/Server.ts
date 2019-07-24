@@ -317,9 +317,6 @@ export class Server extends EventEmitter {
         } else {
             lease.address = await this.selectAddress(chaddr, request);
         }
-        // lease.server = this.getServer(request);
-        // lease.state = "BOUND";
-        // lease.bindTime = new Date();
         if (nextLease) {
             this.leaseLive.add(lease);
         }

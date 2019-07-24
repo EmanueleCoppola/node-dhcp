@@ -17,20 +17,4 @@ export class DHCPOptions extends DHCPOptionsFnc {
           this[n] = data[key];
       }
   }
-/*
-  public get(key: OptionId | string, requested?: IDHCPMessage): any {
-    const n = getDHCPId(key);
-    let val = this[n];
-    if (val === undefined) {
-      const meta = optsMeta[n];
-      if (meta.default)
-        val = meta.default;
-      else
-        return null;
-    }
-    if (typeof val === "function") {
-      val = val(requested);
-    }
-    return val;
-  }*/
 }

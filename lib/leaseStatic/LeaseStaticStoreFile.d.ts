@@ -1,11 +1,11 @@
-import { IDHCPMessage, IOptionsTxt } from "../model";
+import { IDHCPMessage, IOptionsTxtOrId } from "../model";
 import { ILeaseEx } from "./ILeaseStaticStore";
 import { ILeaseStaticStore } from "./ILeaseStaticStore";
 export interface ILeaseExStr {
     mac: string;
     address: string;
     tag?: string[];
-    options?: IOptionsTxt;
+    options?: IOptionsTxtOrId;
 }
 /**
  * basic static Lease conmfiguration module

@@ -3,13 +3,13 @@
  */
 import { debounce } from "debounce";
 import * as fse from "fs-extra";
-import { IDHCPMessage, IOptionsId, IOptionsTxt } from "../model";
+import { IDHCPMessage, IOptionsId, IOptionsTxtOrId } from "../model";
 import { getDHCPId } from "../options";
 import { ILeaseEx } from "./ILeaseStaticStore";
 import { ILeaseStaticStore } from "./ILeaseStaticStore";
 
 interface IStaticLeaseModel {
-    tags: { [key: string]: IOptionsTxt };
+    tags: { [key: string]: IOptionsTxtOrId };
     leases: ILeaseExStr[];
 }
 
@@ -17,10 +17,10 @@ export interface ILeaseExStr {
     mac: string;
     address: string;
     tag?: string[];
-    options?: IOptionsTxt;
+    options?: IOptionsTxtOrId;
 }
 
-const assign = (target: IOptionsId, source?: IOptionsTxt) => {
+const assign = (target: IOptionsId, source?: IOptionsTxtOrId) => {
     if (source)
         for (const k in source) {
             const id = getDHCPId(k);
@@ -36,7 +36,7 @@ export class LeaseStaticStoreFile implements ILeaseStaticStore {
     public save: () => void;
 
     private file: string;
-    private tags: { [key: string]: IOptionsTxt };
+    private tags: { [key: string]: IOptionsTxtOrId };
     private data: { [key: string]: ILeaseExStr };
     private set: Set<string>;
 
