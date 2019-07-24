@@ -7,6 +7,18 @@ const header = `/**
 let code = "";
 
 code += header;
+code += "export enum OptionId {\n";
+for (const k of Object.keys(optsMetaDefault)) {
+    const value = optsMetaDefault[k];
+    let name = value.config || value.attr;
+    // tslint:disable-next-line: no-bitwise
+    if (~name.indexOf("+"))
+        name = `"${name}"`
+    code += `  ${name} = ${k},\n`;
+}
+code += "}\n\n";
+
+code += header;
 code += "export interface IOptionsTxt {\n";
 for (const k of Object.keys(optsMetaDefault)) {
     const value = optsMetaDefault[k];
