@@ -9,6 +9,7 @@ export declare type UInt8s = number[] | ((option: IDHCPMessage) => number[]);
 export declare type ASCII = string | ((option: IDHCPMessage) => string);
 export declare type ASCIIs = string[] | ((option: IDHCPMessage) => string[]);
 export declare type Bool = boolean | ((option: IDHCPMessage) => boolean);
+export declare type IPv4orDNS = string[] | string | ((option: IDHCPMessage) => string[] | string);
 declare type _Bool = boolean;
 declare type _IP = string;
 declare type _IPs = string[];
@@ -19,6 +20,7 @@ declare type _UInt16s = number[];
 declare type _UInt32 = number;
 declare type _UInt8 = number;
 declare type _ASCII = string;
+declare type _IPv4orDNS = string[] | string;
 export interface IDHCPMessage {
     op: BootCode;
     htype: number;
@@ -347,6 +349,7 @@ export interface IOptionsId {
     116?: _UInt8;
     118?: _IP;
     119?: _ASCII;
+    120?: _IPv4orDNS;
     121?: _IPs;
     125?: _ASCII;
     145?: _UInt8s;
@@ -440,6 +443,7 @@ export interface IDHCPOptionsFncId {
     116?: UInt8;
     118?: IP;
     119?: ASCII;
+    120?: IPv4orDNS;
     121?: IPs;
     125?: ASCII;
     145?: UInt8s;

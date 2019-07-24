@@ -13,11 +13,14 @@ import { Server } from "./Server";
 import * as Tools from "./tools";
 
 // RFC 1533: https://tools.ietf.org/html/rfc1533
-// RFC 2132: https://www.ietf.org/rfc/rfc2132.txt
+// RFC 2132: https://tools.ietf.org/html/rfc2132
 // RFC 3011: https://tools.ietf.org/html/rfc3011
+// Added on 24/07/2019 by uriel
+// RFC 3361: https://tools.ietf.org/html/rfc3361
+
 export interface IOptionMeta {
   name: string;
-  type: "IP" | "Int32" | "UInt32" | "UInt16" | "UInt8" | "IPs" | "IP" | "ASCII" | "Bool" | "UInt16s" | "UInt8s" | "any";
+  type: "IP" | "Int32" | "UInt32" | "UInt16" | "UInt8" | "IPs" | "IP" | "ASCII" | "Bool" | "UInt16s" | "UInt8s" | "IPv4orDNS";
   attr?: string;
   enum?: { [key: number]: string };
   config?: string;
@@ -526,6 +529,11 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
       config: "domainSearchList",
       name: "Domain Search List",
       type: "ASCII",
+    },
+    120: { // rfc3361
+      config: "SIPServerDHCPOption",
+      name: "SIP Server DHCP Option",
+      type: "IPv4orDNS",
     },
     121: {// rfc 3442
       config: "classlessRoute",

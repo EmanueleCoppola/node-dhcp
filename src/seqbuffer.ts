@@ -29,7 +29,175 @@ export default class SeqBuffer {
     this.w = 0;
   }
 
+  public writeUInt8(value: number): SeqBuffer {
+    // len is 1
+    this.addUInt8(1);
+    // Write length
+    this.addUInt8(value);
+    return this;
+  }
+
+  public writeUInt16(value: number): SeqBuffer {
+    // len is 1
+    this.addUInt8(2);
+    // Write length
+    this.addUInt16(value);
+    return this;
+  }
+
+  public writeUInt32(value: number): SeqBuffer {
+    // len is 1
+    this.addUInt8(4);
+    // Write length
+    this.addUInt32(value);
+    return this;
+  }
+
+  public writeInt32(value: number): SeqBuffer {
+    // len is 1
+    this.addUInt8(4);
+    // Write length
+    this.addInt32(value);
+    return this;
+  }
+
+  public writeIP(value: string): SeqBuffer {
+    // len is 1
+    this.addUInt8(4);
+    // Write length
+    this.addIP(value);
+    return this;
+  }
+
+  public writeASCII(val: string): SeqBuffer {
+    let len = val.length;
+    if (len === 0)
+      throw Error("can not send an empty string in a DHCP messgae");
+    if (len > 255) {
+      // console.error(val + " too long, truncating...");
+      val = val.slice(0, 255);
+      len = 255;
+    }
+    // len is 1
+    this.addUInt8(len);
+    // Write length
+    this.addASCII(val);
+    return this;
+  }
+
+  public isIPV4(ip: string) {
+    const octs = ip.split(".");
+    if (octs.length !== 4) {
+      return false;
+    }
+    for (const txt of octs) {
+      const val = parseInt(txt, 10);
+      if (val < 0 || val > 256)
+        return false;
+      return true;
+    }
+  }
+  /**
+   * If the encoding byte has the value 0, it is followed by a list of domain names, as described below (Section 3.1).
+   * If the encoding byte has the value 1, it is followed by one or more IPv4 addresses (Section 3.2).
+   */
+  public writeIPv4orDNS(val: string[] | string): SeqBuffer {
+    if (typeof val === "string") {
+      if (this.isIPV4(val)) {
+        return this.addUInt8(5).addUInt8(1).addIP(val);
+      } else {
+        const len = val.length;
+        if (len > 254)
+          throw Error("Data tuncation for domain name " + val);
+        return this.addUInt8(len + 1).addUInt8(0).addASCII(val);
+      }
+    }
+
+    if (val instanceof Array) {
+      let isIP = true;
+      val.forEach((ip) => { if (!this.isIPV4(ip)) isIP = false; });
+      if (isIP) {
+        const len = val.length * 4 + 1;
+        if (len > 255)
+          throw Error("Data tuncation for IP list name " + val);
+        this.addUInt8(len).addUInt8(1);
+        for (const ip of val)
+          this.addIP(ip);
+        return this;
+      } else {
+        const len = val.reduce((acc, str) => acc + str.length + 1, 1);
+        if (len > 255)
+          throw Error("Data tuncation for dns list name " + val);
+        this.addUInt8(len).addUInt8(0);
+        val.forEach((str) => this.addASCII(str).addUInt8(0));
+      }
+    }
+    return this;
+  }
+
+  public writeUTF8(val: string): SeqBuffer {
+    let len = Buffer.from(val, "utf8").length;
+    if (len === 0)
+      throw Error("can not send an empty string in a DHCP messgae");
+    for (let n = 0; len > 255; n++) {
+      val = val.slice(0, 255 - n); // Truncate as long as character length is > 255
+      len = Buffer.from(val, "utf8").length;
+    }
+    // len is 1
+    this.addUInt8(len);
+    // Write length
+    this.addUTF8(val);
+    return this;
+  }
+
+  public writeBool(val: any): SeqBuffer {
+    this.addUInt8(1);
+    if (val === true || val === 1 || val === "1" || val === "true" || val === "TRUE" || val === "True")
+      this.addUInt8(1);
+    else
+      this.addUInt8(0);
+    return this;
+  }
+
+  public writeIPs(val: string | string[]): SeqBuffer {
+    if (val instanceof Array) {
+      this.addUInt8(4 * val.length);
+      for (const ip of val)
+        this.addIP(ip);
+    } else {
+      this.addUInt8(4);
+      this.addIP(val);
+    }
+    return this;
+  }
+
+  public writeUInt8s(arr: number[]): SeqBuffer {
+    if (arr instanceof Array) {
+      this.addUInt8(arr.length);
+      for (const i of arr)
+        this.addUInt8(i);
+    } else {
+      this.addUInt8(1);
+      this.addUInt8(arr);
+    }
+    return this;
+  }
+
+  public writeUInt16s(arr: number[]): SeqBuffer {
+    if (arr instanceof Array) {
+      this.addUInt8(arr.length * 2);
+      for (const i of arr)
+        this.addUInt16(i);
+    } else {
+      this.addUInt8(2);
+      this.addUInt16(arr);
+    }
+    return this;
+  }
+
   public addUInt8(val: number): SeqBuffer {
+    if (val > 255 || val < 0)
+      throw Error("Data tuncation for uint8 " + val);
     this.w = this.buffer.writeUInt8(val, this.w/*, true*/);
     return this;
   }
@@ -122,7 +290,6 @@ export default class SeqBuffer {
   }
 
   public addIP(ip: string): SeqBuffer {
-    const self = this;
     const octs = ip.split(".");
     if (octs.length !== 4) {
       throw new Error("Invalid IP address " + ip);
@@ -130,7 +297,7 @@ export default class SeqBuffer {
     for (const txt of octs) {
       const val = parseInt(txt, 10);
       if (0 <= val && val < 256) {
-        self.addUInt8(val);
+        this.addUInt8(val);
       } else {
         throw new Error("Invalid IP address " + ip);
       }
@@ -143,16 +310,6 @@ export default class SeqBuffer {
       "." + this.getUInt8() +
       "." + this.getUInt8() +
       "." + this.getUInt8();
-  }
-
-  public addIPs(ips: string | string[]): SeqBuffer {
-    if (ips instanceof Array) {
-      for (const ip of ips)
-        this.addIP(ip);
-    } else {
-      this.addIP(ips);
-    }
-    return this;
   }
 
   public getIPs(len: number): string[] {
@@ -206,72 +363,54 @@ export default class SeqBuffer {
   }
 
   public addOptions(opts: { [key: number]: any }): SeqBuffer {
-    for (const k in opts) {
+    Wloop: for (const k in opts) {
       if (!opts.hasOwnProperty(k))
         continue;
-      const i = Number(k);
-      const opt = optsMetaDefault[i];
-      let len = 0;
-      let val = opts[i];
+      const optionId = Number(k);
+      const optionMeta = optsMetaDefault[optionId];
+      const val = opts[optionId];
       if (val === null) {
         continue;
       }
-      switch (opt.type) {
-        case "UInt8":
-          // case 'Int8':
-          len = 1;
-          break;
-        case "UInt16":
-          // case 'Int16':
-          len = 2;
-          break;
-        case "UInt32":
-        case "Int32":
-        case "IP":
-          len = 4;
-          break;
-        case "IPs":
-          len = val instanceof Array ? 4 * val.length : 4;
-          break;
-        case "ASCII":
-          len = val.length;
-          if (len === 0)
-            continue; // Min length has to be 1
-          if (len > 255) {
-            console.error(val + " too long, truncating...");
-            val = val.slice(0, 255);
-            len = 255;
-          }
-          break;
-        // case 'UTF8':
-        //  len = Buffer.from(val, 'utf8').length;
-        //  if (len === 0)
-        //    continue; // Min length has to be 1
-        //  for (let n = 0; len > 255; n++) {
-        //    val = val.slice(0, 255 - n); // Truncate as long as character length is > 255
-        //    len = Buffer.from(val, 'utf8').length;
-        //  }
-        //  break;
-        case "Bool":
-          if (!(val === true || val === 1 || val === "1" || val === "true" || val === "TRUE" || val === "True"))
-            continue;
-          // Length must be zero, so nothing to do here
-          break;
-        case "UInt8s":
-          len = val instanceof Array ? val.length : 1;
-          break;
-        case "UInt16s":
-          len = val instanceof Array ? 2 * val.length : 2;
-          break;
-        default:
-          throw new Error("No such type " + opt.type);
-      }
       // Write code
-      this.addUInt8(i);
-      // Write length
-      this.addUInt8(len);
-      // Write actual data
-      this["add" + opt.type](val);
+      this.addUInt8(optionId);
+      switch (optionMeta.type) {
+        case "UInt8":
+          this.writeUInt8(val);
+          continue Wloop;
+        case "UInt16":
+          this.writeUInt16(val);
+          continue Wloop;
+        case "UInt32":
+          this.writeUInt32(val);
+          continue Wloop;
+        case "Int32":
+          this.writeInt32(val);
+          continue Wloop;
+        case "IP":
+          this.writeIP(val);
+          continue Wloop;
+        case "IPs":
+          this.writeIPs(val);
+          continue Wloop;
+        case "UInt8s":
+          this.writeUInt8s(val);
+          continue Wloop;
+        case "UInt16s":
+          this.writeUInt16s(val);
+          continue Wloop;
+        case "Bool":
+          this.writeBool(val);
+          continue Wloop;
+        case "ASCII":
+          this.writeASCII(val);
+          continue Wloop;
+        case "IPv4orDNS":
+          this.writeIPv4orDNS(val);
+          continue Wloop;
+        default:
+          throw new Error("No such type " + optionMeta.type);
+      }
     }
     return this;
   }
@@ -298,16 +437,6 @@ export default class SeqBuffer {
       }
     }
     return options;
-  }
-
-  public addUInt8s(arr: number[]): SeqBuffer {
-    if (arr instanceof Array) {
-      for (const i of arr)
-        this.addUInt8(i);
-    } else {
-      this.addUInt8(arr);
-    }
-    return this;
   }
 
   public getUInt8s(len: number): number[] {

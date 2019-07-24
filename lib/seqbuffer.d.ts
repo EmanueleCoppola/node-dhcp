@@ -13,6 +13,23 @@ export default class SeqBuffer {
     r: number;
     w: number;
     constructor(buf?: Buffer, len?: number);
+    writeUInt8(value: number): SeqBuffer;
+    writeUInt16(value: number): SeqBuffer;
+    writeUInt32(value: number): SeqBuffer;
+    writeInt32(value: number): SeqBuffer;
+    writeIP(value: string): SeqBuffer;
+    writeASCII(val: string): SeqBuffer;
+    isIPV4(ip: string): boolean | undefined;
+    /**
+     * If the encoding byte has the value 0, it is followed by a list of domain names, as described below (Section 3.1).
+     * If the encoding byte has the value 1, it is followed by one or more IPv4 addresses (Section 3.2).
+     */
+    writeIPv4orDNS(val: string[] | string): SeqBuffer;
+    writeUTF8(val: string): SeqBuffer;
+    writeBool(val: any): SeqBuffer;
+    writeIPs(val: string | string[]): SeqBuffer;
+    writeUInt8s(arr: number[]): SeqBuffer;
+    writeUInt16s(arr: number[]): SeqBuffer;
     addUInt8(val: number): SeqBuffer;
     getUInt8(): number;
     addInt8(val: number): SeqBuffer;
@@ -33,7 +50,6 @@ export default class SeqBuffer {
     getASCII(len: number): string;
     addIP(ip: string): SeqBuffer;
     getIP(): string;
-    addIPs(ips: string | string[]): SeqBuffer;
     getIPs(len: number): string[];
     addMac(mac: string): SeqBuffer;
     getMAC(htype: number, hlen: number): string;
@@ -43,7 +59,6 @@ export default class SeqBuffer {
         [key: number]: any;
     }): SeqBuffer;
     getOptions(): IOptionsId;
-    addUInt8s(arr: number[]): SeqBuffer;
     getUInt8s(len: number): number[];
     addUInt16s(arr: number[]): SeqBuffer;
     getUInt16s(len: number): number[];
