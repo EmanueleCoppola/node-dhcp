@@ -40,10 +40,6 @@ export class LeaseStaticStoreMemory implements ILeaseStaticStore {
         return null;
     }
 
-    public getIP(mac: string, request: IDHCPMessage): string {
-        return;
-    }
-
     public getReservedIP(): Set<string> {
         return this.set;
     }

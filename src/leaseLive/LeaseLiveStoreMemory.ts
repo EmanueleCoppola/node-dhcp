@@ -60,7 +60,7 @@ export class LeaseLiveStoreMemory implements ILeaseLiveStore {
         return Object.keys(this.cache);
     }
 
-    public async getFreeIP(IP1: string, IP2: string, reserverd?: Array<Set<string>>, randomIP?: boolean): Promise<string> {
+    public async getFreeIP(IP1: string, IP2: string, reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string> {
         return genericGetFreeIP(IP1, IP2, [...reserverd, this.address], randomIP);
     }
 

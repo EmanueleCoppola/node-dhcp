@@ -18,6 +18,7 @@ export class LeaseOfferStoreMemory implements ILeaseOfferStore {
 
     constructor(timeout?: number) {
         this.timeOut = timeout || 10;
+        this.cache = {};
         this.ips = new Set();
     }
 

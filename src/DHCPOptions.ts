@@ -1,14 +1,14 @@
 /* tslint:disable max-classes-per-file */
-import { DHCPOptionsBase, IDHCPMessage, OptionId } from "./model";
-import { getDHCPId, optsMeta } from "./options";
+import { DHCPOptionsFnc, IDHCPMessage, OptionId } from "./model";
+import { getDHCPId } from "./options";
 
 /**
  * hold a DHCPOtioms map that support funtion value
- * 
+ *
  * Only used in DHCP server configuragion
  */
-export class DHCPOptions extends DHCPOptionsBase {
-  constructor(data?: any | DHCPOptionsBase) {
+export class DHCPOptions extends DHCPOptionsFnc {
+  constructor(data?: any | DHCPOptionsFnc) {
     super();
     if (data)
       for (const key in data) {
@@ -17,8 +17,8 @@ export class DHCPOptions extends DHCPOptionsBase {
           this[n] = data[key];
       }
   }
-
-  public get(key: OptionId | string, requested: IDHCPMessage): any {
+/*
+  public get(key: OptionId | string, requested?: IDHCPMessage): any {
     const n = getDHCPId(key);
     let val = this[n];
     if (val === undefined) {
@@ -29,8 +29,8 @@ export class DHCPOptions extends DHCPOptionsBase {
         return null;
     }
     if (typeof val === "function") {
-      val = val(requested || this);
+      val = val(requested);
     }
     return val;
-  }
+  }*/
 }

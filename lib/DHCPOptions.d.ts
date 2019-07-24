@@ -1,5 +1,9 @@
-import { DHCPOptionsBase, IDHCPMessage, OptionId } from "./model";
-export declare class DHCPOptions extends DHCPOptionsBase {
-    constructor(data?: any | DHCPOptionsBase);
-    get(key: OptionId | string, requested: IDHCPMessage): any;
+import { DHCPOptionsFnc } from "./model";
+/**
+ * hold a DHCPOtioms map that support funtion value
+ *
+ * Only used in DHCP server configuragion
+ */
+export declare class DHCPOptions extends DHCPOptionsFnc {
+    constructor(data?: any | DHCPOptionsFnc);
 }

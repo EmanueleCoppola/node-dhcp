@@ -120,4 +120,5 @@ export async function genericGetFreeIP(IP1: string, IP2: string, reservedSet: Ar
       return strIP;
     }
   }
+  throw Error("DHCP lease is full");
 }

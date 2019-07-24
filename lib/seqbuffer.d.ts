@@ -7,7 +7,7 @@
  * Dual licensed under the MIT or GPL Version 2 licenses.
  */
 /// <reference types="node" />
-import { DHCPOptions } from "./DHCPOptions";
+import { IOptionsId } from "./model";
 export default class SeqBuffer {
     buffer: Buffer;
     r: number;
@@ -42,7 +42,7 @@ export default class SeqBuffer {
     addOptions(opts: {
         [key: number]: any;
     }): SeqBuffer;
-    getOptions(): DHCPOptions;
+    getOptions(): IOptionsId;
     addUInt8s(arr: number[]): SeqBuffer;
     getUInt8s(len: number): number[];
     addUInt16s(arr: number[]): SeqBuffer;

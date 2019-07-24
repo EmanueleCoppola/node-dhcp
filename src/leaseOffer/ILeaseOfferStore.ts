@@ -5,6 +5,6 @@ import { ILeaseLive } from "../leaseLive/ILeaseLiveStore";
 
 export interface ILeaseOfferStore {
     add(lease: ILeaseLive): void;
-    pop(mac: string): ILeaseLive;
+    pop(mac: string): ILeaseLive | null;
     getReservedIP(): Set<string>;
 }

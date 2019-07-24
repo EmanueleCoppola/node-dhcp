@@ -2,21 +2,21 @@ import { DHCPOptions } from "./DHCPOptions";
 import { ILeaseLiveStore } from "./leaseLive";
 import { ILeaseOfferStore } from "./leaseOffer";
 import { ILeaseStaticStore } from "./leaseStatic";
-import { ASCIIs, DHCPOptionsBase, IDHCPMessage, IPs, OptionId } from "./model";
-export interface IServerConfig extends DHCPOptionsBase {
-    randomIP?: boolean;
-    static: ILeaseStaticStore;
+import { ASCIIs, Bool, DHCPOptionsFnc, IPs } from "./model";
+export interface IServerConfig extends DHCPOptionsFnc {
+    randomIP?: Bool;
     range: IPs;
+    leaseStatic?: ILeaseStaticStore;
     leaseState?: ILeaseLiveStore;
+    leaseOffer?: ILeaseOfferStore;
     forceOptions?: ASCIIs;
 }
 export declare class ServerConfig extends DHCPOptions {
-    randomIP: boolean;
+    randomIP: Bool;
     leaseStatic: ILeaseStaticStore;
     leaseLive: ILeaseLiveStore;
-    LeaseOffer: ILeaseOfferStore;
-    private range;
-    private forceOptions;
+    leaseOffer: ILeaseOfferStore;
+    range: IPs;
+    forceOptions: ASCIIs;
     constructor(options: IServerConfig);
-    get(key: OptionId | string, requested?: IDHCPMessage): any;
 }

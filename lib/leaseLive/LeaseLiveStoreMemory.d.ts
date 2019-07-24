@@ -9,11 +9,12 @@ export declare class LeaseLiveStoreMemory implements ILeaseLiveStore {
     hasAddress(address: string): Promise<boolean>;
     release(mac: string): Promise<ILeaseLive | null>;
     add(lease: ILeaseLive): Promise<boolean>;
+    updateLease(lease: ILeaseLive): Promise<void>;
     getLeases(): Promise<ILeaseLive[]>;
     getAddresses(): Promise<string[]>;
     getMacs(): Promise<string[]>;
     getLeases2(): ILeaseLive[];
     getAddresses2(): string[];
     getMacs2(): string[];
-    getFreeIP(IP1: string, IP2: string, reserverd?: Array<Set<string>>, randomIP?: boolean): Promise<string>;
+    getFreeIP(IP1: string, IP2: string, reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string>;
 }

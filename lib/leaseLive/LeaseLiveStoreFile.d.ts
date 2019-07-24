@@ -5,7 +5,6 @@ export declare class LeaseLiveStoreFile implements ILeaseLiveStore {
         [key: string]: ILeaseLive;
     };
     address: Set<string>;
-    oldest: ILeaseLive | null;
     save: () => void;
     private file;
     constructor(file: string);
@@ -13,6 +12,7 @@ export declare class LeaseLiveStoreFile implements ILeaseLiveStore {
     hasAddress(address: string): Promise<boolean>;
     add(lease: ILeaseLive): Promise<boolean>;
     release(mac: string): Promise<ILeaseLive | null>;
+    updateLease(lease: ILeaseLive): Promise<void>;
     getLeases(): Promise<ILeaseLive[]>;
     getAddresses(): Promise<string[]>;
     getMacs(): Promise<string[]>;

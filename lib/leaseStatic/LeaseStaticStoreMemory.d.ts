@@ -16,6 +16,5 @@ export declare class LeaseStaticStoreMemory implements ILeaseStaticStore {
     addStatic(mac: string, ip: string): void;
     delStatic(mac: string): void;
     getLease(mac: string, request: IDHCPMessage): ILeaseEx | null;
-    getIP(mac: string, request: IDHCPMessage): string;
     getReservedIP(): Set<string>;
 }

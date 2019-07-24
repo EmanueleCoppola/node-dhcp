@@ -20,12 +20,12 @@ export interface ILeaseExStr {
     options?: IOptionsTxt;
 }
 
-const apply = (src: IOptionsTxt, dest: IOptionsId) => {
-    if (src)
-        for (const k in src) {
+const assign = (target: IOptionsId, source?: IOptionsTxt) => {
+    if (source)
+        for (const k in source) {
             const id = getDHCPId(k);
-            if (id && !dest[id])
-                dest[id] = src[k];
+            if (id && !target[id])
+                target[id] = source[k];
         }
 };
 
@@ -88,12 +88,12 @@ export class LeaseStaticStoreFile implements ILeaseStaticStore {
     public getLease(mac: string, request: IDHCPMessage): ILeaseEx | null {
         const lease = this.data[mac];
         if (!lease)
-            return;
-        const out: ILeaseEx = { address: lease.address, mac: lease.mac, options: {} };
-        apply(lease.options, out.options);
+            return null;
+        const options: IOptionsId = {};
+        assign(options, lease.options);
         if (lease.tag)
-            lease.tag.forEach((tag) => apply(this.tags[tag], out.options));
-        return out;
+            lease.tag.forEach((tag) => assign(options, this.tags[tag]));
+        return { address: lease.address, mac: lease.mac, options};
     }
 
     public getReservedIP(): Set<string> {

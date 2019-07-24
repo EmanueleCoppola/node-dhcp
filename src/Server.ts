@@ -1,13 +1,12 @@
 /* tslint:disable no-console */
 import { createSocket, Socket } from "dgram";
 import { EventEmitter } from "events";
-import { DHCPOptions } from "./DHCPOptions";
 import { ILeaseLive } from "./leaseLive";
 import { ILeaseLiveStore, LeaseLiveStoreMemory } from "./leaseLive";
 import { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
 import { ILeaseStaticStore, LeaseStaticStoreMemory } from "./leaseStatic";
 import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, IOptionsId, OptionId } from "./model";
-import { getDHCPId, optsMeta } from "./options";
+import { getDHCPId, getOptsMeta, IOptionMetaMap } from "./options";
 import { random } from "./prime";
 import { format, parse } from "./protocol";
 import { ServerConfig } from "./ServerConfig";
@@ -36,6 +35,9 @@ function toResponse(request: IDHCPMessage, options: IOptionsId): IDHCPMessage {
         options,
     } as IDHCPMessage;
 }
+
+const extraOption = new Set(["range", "forceOptions", "randomIP"]);
+
 export class Server extends EventEmitter {
     private socket: Socket | null;
     // Config (cache) object
@@ -44,6 +46,7 @@ export class Server extends EventEmitter {
     private leaseStatic: ILeaseStaticStore;
     private leaseLive: ILeaseLiveStore;
     private leaseOffer: ILeaseOfferStore;
+    private optsMeta: IOptionMetaMap;
 
     constructor(config: ServerConfig, listenOnly?: boolean) {
         super();
@@ -51,9 +54,10 @@ export class Server extends EventEmitter {
         const socket = createSocket({ type: "udp4", reuseAddr: true });
         this.config = config;
         this.leaseLive = config.leaseLive || new LeaseLiveStoreMemory();
-        this.leaseOffer = config.LeaseOffer || new LeaseOfferStoreMemory();
+        this.leaseOffer = config.leaseOffer || new LeaseOfferStoreMemory();
         this.leaseStatic = config.leaseStatic || new LeaseStaticStoreMemory({});
         this.socket = socket;
+        this.optsMeta = getOptsMeta(this);
 
         socket.on("message", async (buf: Buffer) => {
             let request: IDHCPMessage;
@@ -103,21 +107,21 @@ export class Server extends EventEmitter {
     }
 
     public getServer(request: IDHCPMessage): string {
-        const value = this.config.get(OptionId.server, request) as string;
+        const value = this.getC(OptionId.server, request) as string;
         if (!value)
             throw Error("server is mandatory in server configuration");
         return value;
     }
 
     public getConfigBroadcast(request: IDHCPMessage): string {
-        const value = this.config.get(OptionId.broadcast, request) as string;
+        const value = this.getC(OptionId.broadcast, request) as string;
         if (!value)
             throw Error("broadcast is mandatory in server configuration");
         return value;
     }
 
     public validOption(optionId: number | string) {
-        if (optsMeta[optionId])
+        if (this.optsMeta[optionId])
             return true;
         this.emit("error", `Unknown option ${optionId}`);
         return false;
@@ -136,10 +140,10 @@ export class Server extends EventEmitter {
                 pre[optionId] = customOpts[optionId];
             }
             if (!pre[optionId]) {
-                pre[optionId] = this.config.get(optionId, request);
+                pre[optionId] = this.getC(optionId, request);
             }
             if (!pre[optionId])
-                throw new Error(`Required option ${optsMeta[optionId].config} does not have a value set`);
+                throw new Error(`Required option ${this.optsMeta[optionId].config} does not have a value set`);
         }
 
         // Add all values, the user wants, which are not already provided:
@@ -150,7 +154,7 @@ export class Server extends EventEmitter {
                 pre[optionId] = val;
             }
             if (pre[optionId]) {
-                val = this.config.get(optionId, request);
+                val = this.getC(optionId, request);
                 // Add value only, if it's meaningful
                 if (val)
                     pre[optionId] = val;
@@ -158,14 +162,14 @@ export class Server extends EventEmitter {
         }
 
         // Finally Add all missing and forced options
-        const forceOptions = this.config.get("forceOptions", request);
+        const forceOptions = this.getForceOptions(request);
         if (forceOptions instanceof Array) {
             for (const option of forceOptions as Array<string | number>) {
                 // Add numeric options right away and look up alias names
                 const id = getDHCPId(option);
                 // Add option if it is valid and not present yet
                 if (id && !pre[id]) {
-                    pre[id] = this.config.get(option, request);
+                    pre[id] = this.getC(id, request);
                 }
             }
         }
@@ -196,8 +200,8 @@ export class Server extends EventEmitter {
         /**
          * find a free IP
          */
-        const randIP = this.config.get("randomIP", request);
-        const [firstIPstr, lastIPStr] = this.config.get("range", request) as string[];
+        const randIP = this.getRandomIP(request);
+        const [firstIPstr, lastIPStr] = this.getRange(request) as string[];
         const myIPStr = this.getServer(request);
 
         const staticSerserve = this.leaseStatic.getReservedIP();
@@ -257,7 +261,7 @@ export class Server extends EventEmitter {
         let customOpts: IOptionsId = {};
         if (staticLease) {
             lease.address = staticLease.address;
-            customOpts = staticLease.options;
+            customOpts = staticLease.options || {};
         } else {
             lease.address = await this.selectAddress(request.chaddr, request);
         }
@@ -287,7 +291,7 @@ export class Server extends EventEmitter {
             lease = await this.leaseLive.getLeaseFromMac(chaddr);
             nextLease = true;
         } else if (!lease) {
-            this.emit("error", "Get request for an non existing lease, you may extant offer timeout");
+            this.emit("error", "Get request for an non existing lease, you may extend offer timeout");
             return 0;
             // error;
             // lease = this.newLease(request);
@@ -296,11 +300,17 @@ export class Server extends EventEmitter {
             lease.expiration = this.getExpiration(request);
             await this.leaseLive.updateLease(lease);
         }
+
+        if (!lease) {
+            this.emit("error", "Get request for an non existing lease, you may extend offer timeout");
+            return 0;
+        }
+
         const staticLease = this.leaseStatic.getLease(request.chaddr, request);
         let customOpts: IOptionsId = {};
         if (staticLease) {
             lease.address = staticLease.address;
-            customOpts = staticLease.options;
+            customOpts = staticLease.options || {};
         } else {
             lease.address = await this.selectAddress(chaddr, request);
         }
@@ -318,7 +328,7 @@ export class Server extends EventEmitter {
         ans.ciaddr = request.ciaddr;
         ans.yiaddr = lease.address;
         ans.siaddr = this.getServer(request); // server ip, that's us
-        // this.emit('bound', this.leaseState);
+        this.emit("bound", lease);
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         return this._send(this.getConfigBroadcast(request), ans);
@@ -357,6 +367,8 @@ export class Server extends EventEmitter {
 
     public listen(port?: number, host?: string): Promise<void> {
         const { socket } = this;
+        if (!socket)
+            throw Error("Socket had been destry!");
         return new Promise((resolve) => {
             socket.bind({ port: port || SERVER_PORT, address: host || INADDR_ANY }, () => {
                 socket.setBroadcast(true);
@@ -373,6 +385,47 @@ export class Server extends EventEmitter {
         return new Promise((resolve) => socket.close(resolve));
     }
 
+    /**
+     * @param key the request Key or optionId
+     * @param requested the remote Options
+     */
+    public getC(key: OptionId, requested?: IDHCPMessage): any {
+        const n = getDHCPId(key);
+        let val = this[n];
+        if (val === undefined) {
+            const meta = this.optsMeta[n];
+            if (meta.default)
+                val = meta.default;
+            else
+                return null;
+        }
+        if (typeof val === "function") {
+            val = val(requested);
+        }
+        return val;
+    }
+
+    public getRange(requested: IDHCPMessage): string[] {
+        const val = this.config.range;
+        if (typeof val === "function")
+            return val(requested);
+        return val;
+    }
+
+    public getForceOptions(requested: IDHCPMessage): string[] {
+        const val = this.config.forceOptions;
+        if (typeof val === "function")
+            return val(requested);
+        return val;
+    }
+
+    public getRandomIP(requested: IDHCPMessage): boolean {
+        const val = this.config.randomIP;
+        if (typeof val === "function")
+            return val(requested);
+        return val;
+    }
+
     private newLease(request: IDHCPMessage): ILeaseLive {
         const { chaddr } = request;
         const name = request.options[OptionId.hostname] || "";
@@ -381,15 +434,7 @@ export class Server extends EventEmitter {
     }
 
     private getExpiration(request: IDHCPMessage): number {
-        return this.config.get(OptionId.leaseTime, request) + Math.round(new Date().getTime() / 1000);
-    }
-
-    private handleRelease() {
-        /** TODO */
-    }
-
-    private handleRenew() {
-        // Send ack
+        return this.getC(OptionId.leaseTime, request) + Math.round(new Date().getTime() / 1000);
     }
 
     private _send(host: string, data: IDHCPMessage): Promise<number> {

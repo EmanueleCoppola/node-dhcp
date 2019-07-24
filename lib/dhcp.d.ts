@@ -8,10 +8,8 @@
  */
 import { Client } from "./Client";
 import { IClientConfig } from "./ClientConfig";
-import * as OptionsModel from "./options";
 import { Server } from "./Server";
 import { IServerConfig } from "./ServerConfig";
-export { DHCPOptions } from "./DHCPOptions";
 export { OptionId } from "./model";
 export { IClientConfig } from "./ClientConfig";
 export { IServerConfig } from "./ServerConfig";
@@ -25,7 +23,6 @@ export declare const createBroadcastHandler: () => Server;
 export declare const createClient: (opt: IClientConfig) => Client;
 export declare const createServer: (opt: IServerConfig) => Server;
 declare const _default: {
-    addOption: typeof OptionsModel.addOption;
     createBroadcastHandler: () => Server;
     createClient: (opt: IClientConfig) => Client;
     createServer: (opt: IServerConfig) => Server;

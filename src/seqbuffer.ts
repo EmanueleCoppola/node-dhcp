@@ -11,7 +11,7 @@
 /* tslint:disable no-console */
 
 import { IOptionsId } from "./model";
-import { IOptionMeta, optsMeta } from "./options";
+import { IOptionMeta, optsMetaDefault } from "./options";
 
 function trimZero(str: string): string {
   const pos = str.indexOf("\x00");
@@ -210,7 +210,7 @@ export default class SeqBuffer {
       if (!opts.hasOwnProperty(k))
         continue;
       const i = Number(k);
-      const opt = optsMeta[i];
+      const opt = optsMetaDefault[i];
       let len = 0;
       let val = opts[i];
       if (val === null) {
@@ -287,9 +287,9 @@ export default class SeqBuffer {
         this.r++; // NOP
       } else {
         const len = this.getUInt8();
-        const fullType: IOptionMeta = optsMeta[opt];
+        const fullType: IOptionMeta = optsMetaDefault[opt];
         if (fullType) {
-          const { type } = optsMeta[opt];
+          const { type } = optsMetaDefault[opt];
           options[opt] = this[`get${type}`](len);
         } else {
           this.r += len;

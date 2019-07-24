@@ -1,8 +1,7 @@
 /// <reference types="node" />
 import { EventEmitter } from "events";
 import { ClientConfig } from "./ClientConfig";
-import { DHCPOptions } from "./DHCPOptions";
-import { IDHCPMessage } from "./model";
+import { IDHCPMessage, IOptionsId } from "./model";
 export declare type LeaseState = "RENEWING" | "RELEASED" | "REBINDING" | "SELECTING" | "REQUESTING" | "BOUND" | "REBOOTING" | "INIT" | "OFFERED";
 export interface ILease {
     mac: string;
@@ -14,7 +13,7 @@ export interface ILease {
     state?: LeaseState;
     server: string;
     address: string;
-    options: DHCPOptions;
+    options: IOptionsId;
     tries: number;
     xid: number;
     router: string;
