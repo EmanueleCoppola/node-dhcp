@@ -20,6 +20,7 @@ export declare class LeaseStaticStoreFile implements ILeaseStaticStore {
     addStatic(leases: ILeaseExStr): void;
     delStatic(mac: string): void;
     getLease(mac: string, request?: IDHCPMessage): ILeaseEx | null;
+    hasAddress(address: string): boolean;
     getReservedIP(): Set<string>;
     private _save;
 }

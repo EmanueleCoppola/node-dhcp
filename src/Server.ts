@@ -253,11 +253,12 @@ export class Server extends EventEmitter {
 
     public async handle_Discover(request: IDHCPMessage): Promise<number> {
         const { chaddr } = request;
+        const myIPStr = this.getServer(request);
         let nextLease: boolean = false;
         let lease = await this.leaseLive.getLeaseFromMac(chaddr);
         if (lease) {
             // extand lease time
-            lease.expiration = this.getExpiration(request);
+            lease.expiration = this.genExpiration(request);
             await this.leaseLive.updateLease(lease);
         } else {
             lease = this.newLease(request);
@@ -269,7 +270,18 @@ export class Server extends EventEmitter {
             lease.address = staticLease.address;
             customOpts = staticLease.options || {};
         } else {
-            lease.address = await this.selectAddress(request.chaddr, request);
+            let requestedIpAddress = request.options[OptionId.requestedIpAddress];
+            if (requestedIpAddress) {
+                const usedLive = await this.leaseLive.hasAddress(requestedIpAddress);
+                const usedStatic = this.leaseStatic.hasAddress(requestedIpAddress);
+                const usedMe = myIPStr === requestedIpAddress;
+                if (usedMe || usedStatic || usedLive)
+                    requestedIpAddress = undefined;
+            }
+            if (requestedIpAddress)
+                lease.address = requestedIpAddress;
+            else
+                lease.address = await this.selectAddress(request.chaddr, request);
         }
         if (nextLease) {
             this.leaseOffer.add(lease);
@@ -307,7 +319,7 @@ export class Server extends EventEmitter {
             // nextLease = true;
         }
         if (lease) { // extand lease time
-            lease.expiration = this.getExpiration(request);
+            lease.expiration = this.genExpiration(request);
             await this.leaseLive.updateLease(lease);
         }
 
@@ -329,7 +341,7 @@ export class Server extends EventEmitter {
         }
         const pre = { [OptionId.dhcpMessageType]: DHCP53Code.DHCPACK };
         const requireds = [OptionId.netmask, OptionId.router, OptionId.leaseTime, OptionId.server, OptionId.dns];
-        const requested = request.options[OptionId.dhcpParameterRequestList] as number[];
+        const requested = request.options[OptionId.dhcpParameterRequestList];
         const options = this.getOptions(request, pre, customOpts, requireds, requested);
         const ans = toResponse(request, options);
         ans.ciaddr = request.ciaddr;
@@ -354,7 +366,6 @@ export class Server extends EventEmitter {
         ans.siaddr = INADDR_ANY; // not shure
         // Send the actual data
         return this._send(this.getConfigBroadcast(request), ans);
-
     }
 
     /**
@@ -436,11 +447,11 @@ export class Server extends EventEmitter {
     private newLease(request: IDHCPMessage): ILeaseLive {
         const { chaddr } = request;
         const name = request.options[OptionId.hostname] || "";
-        const expiration = this.getExpiration(request);
+        const expiration = this.genExpiration(request);
         return { address: "", mac: chaddr, name: name as string, expiration };
     }
 
-    private getExpiration(request: IDHCPMessage): number {
+    private genExpiration(request: IDHCPMessage): number {
         return this.getC(OptionId.leaseTime, request) + Math.round(new Date().getTime() / 1000);
     }
 

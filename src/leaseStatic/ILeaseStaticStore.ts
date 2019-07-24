@@ -22,6 +22,7 @@ export interface ILeaseExTxt {
 
 export interface ILeaseStaticStore {
     getLease(mac: string, request?: IDHCPMessage): ILeaseEx | null;
+    hasAddress(address: string): boolean;
     getReservedIP(): Set<string>;
 }
 

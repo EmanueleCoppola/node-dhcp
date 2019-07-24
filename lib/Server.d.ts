@@ -36,6 +36,6 @@ export declare class Server extends EventEmitter {
     getForceOptions(requested: IDHCPMessage): string[];
     getRandomIP(requested: IDHCPMessage): boolean;
     private newLease;
-    private getExpiration;
+    private genExpiration;
     private _send;
 }

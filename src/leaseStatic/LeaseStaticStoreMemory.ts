@@ -40,6 +40,10 @@ export class LeaseStaticStoreMemory implements ILeaseStaticStore {
         return null;
     }
 
+    public hasAddress(address: string): boolean {
+        return this.set.has(address);
+    }
+
     public getReservedIP(): Set<string> {
         return this.set;
     }

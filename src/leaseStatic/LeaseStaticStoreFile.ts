@@ -96,6 +96,10 @@ export class LeaseStaticStoreFile implements ILeaseStaticStore {
         return { address: lease.address, mac: lease.mac, options};
     }
 
+    public hasAddress(address: string): boolean {
+        return this.set.has(address);
+    }
+
     public getReservedIP(): Set<string> {
         return this.set;
     }
