@@ -33,7 +33,7 @@ export class LeaseStaticStoreMemory implements ILeaseStaticStore {
         delete this.data[mac];
     }
 
-    public getLease(mac: string, request: IDHCPMessage): ILeaseEx | null {
+    public getLease(mac: string, request?: IDHCPMessage): ILeaseEx | null {
         const address = this.data[mac];
         if (address)
             return { mac, address };

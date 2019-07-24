@@ -85,7 +85,7 @@ export class LeaseStaticStoreFile implements ILeaseStaticStore {
         }
     }
 
-    public getLease(mac: string, request: IDHCPMessage): ILeaseEx | null {
+    public getLease(mac: string, request?: IDHCPMessage): ILeaseEx | null {
         const lease = this.data[mac];
         if (!lease)
             return null;

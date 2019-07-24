@@ -8,22 +8,26 @@
  * enum: Represents a map of possible enum for this option
  */
 
-import { IDHCPMessage, OptionId } from "./model";
+import { IDHCPMessage, IOptionsTxt, OptionId } from "./model";
 import { Server } from "./Server";
 import * as Tools from "./tools";
 
 // RFC 1533: https://tools.ietf.org/html/rfc1533
 // RFC 2132: https://tools.ietf.org/html/rfc2132
 // RFC 3011: https://tools.ietf.org/html/rfc3011
+
 // Added on 24/07/2019 by uriel
 // RFC 3361: https://tools.ietf.org/html/rfc3361
+// RFC 4833: https://tools.ietf.org/html/rfc4833
+// RFC 3004: https://tools.ietf.org/html/rfc3004
+// RFC 2610: https://tools.ietf.org/html/rfc2610
 
 export interface IOptionMeta {
   name: string;
   type: "IP" | "Int32" | "UInt32" | "UInt16" | "UInt8" | "IPs" | "IP" | "ASCII" | "Bool" | "UInt16s" | "UInt8s" | "IPv4orDNS";
   attr?: string;
   enum?: { [key: number]: string };
-  config?: string;
+  config?: keyof IOptionsTxt ;
   default?: any; // Function | string | boolean | number | string[];
 }
 
@@ -31,7 +35,7 @@ export interface IOptionMetaMap { [key: number]: IOptionMeta; }
 
 export const getOptsMeta = (server?: Server): IOptionMetaMap => {
   return { // id -> config
-    1: {// RFC 2132
+    1: {// RFC 2132 Sec 3.3
       config: "netmask",
       default(requested?: IDHCPMessage) {
         // Default is the minimal CIDR for the given range
@@ -44,12 +48,12 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
       name: "Subnet Mask",
       type: "IP",
     },
-    2: {// RFC 2132
+    2: { // RFC 2132 Sec 3.4
       config: "timeOffset",
       name: "Time Offset",
       type: "Int32",
     },
-    3: {// RFC 2132
+    3: { // RFC 2132 Sec 3.5
       config: "router",
       default(requested?: IDHCPMessage) {
         if (!server || !requested)
@@ -62,136 +66,128 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
       name: "Router",
       type: "IPs",
     },
-    4: {// RFC 2132
+    4: { // RFC 2132 Sec 3.6
       config: "timeServer",
       name: "Time Server",
       type: "IPs",
     },
-    5: {
+    5: { // RFC 2132 Sec 3.7
       config: "nameServer",
       name: "Name Server",
       type: "IPs",
     },
-    6: {// RFC 2132
+    6: { // RFC 2132 Sec 3.8
       config: "dns",
       default: ["8.8.8.8", "8.8.4.4"], // Use Google DNS server as default
       name: "Domain Name Server",
       type: "IPs",
     },
-    7: {// RFC 2132
+    7: { // RFC 2132 Sec 3.9
       config: "logServer",
       name: "Log Server",
       type: "IPs",
     },
-    8: {
+    8: { // RFC 2132 Sec 3.10
       config: "cookieServer",
       name: "Cookie Server",
       type: "IPs",
     },
-    9: {
+    9: { // RFC 2132 Sec 3.11
       config: "lprServer",
       name: "LPR Server",
       type: "IPs",
     },
-    10: {
+    10: { // RFC 2132 Sec 3.12
       config: "impressServer",
       name: "Impress Server",
       type: "IPs",
     },
-    11: {
+    11: { // RFC 2132 Sec 3.13
       config: "rscServer",
       name: "Resource Location Server",
       type: "IPs",
     },
-    12: {// RFC 2132
+    12: { // RFC 2132 Sec 3.14
       config: "hostname",
       name: "Host Name",
       type: "ASCII",
     },
-    13: {
+    13: { // RFC 2132 Sec 3.15
       config: "bootFileSize",
       name: "Boot File Size",
       type: "UInt16",
     },
-    14: {
+    14: { // RFC 2132 Sec 3.16
       config: "dumpFile",
       name: "Merit Dump File",
       type: "ASCII",
     },
-    15: {// RFC 2132
+    15: { // RFC 2132 Sec 3.17
       config: "domainName",
       name: "Domain Name",
       type: "ASCII",
     },
-    16: {
+    16: { // RFC 2132 Sec 3.18
       config: "swapServer",
       name: "Swap Server",
       type: "IP",
     },
-    17: {
+    17: { // RFC 2132 Sec 3.19
       config: "rootPath",
       name: "Root Path",
       type: "ASCII",
     },
-    18: {
+    18: { // RFC 2132 Sec 3.20
       config: "extensionPath",
       name: "Extension Path",
       type: "ASCII",
     },
-    19: {
+    19: { // RFC 2132 Sec 4.1
       config: "ipForwarding",
-      enum: {
-        0: "Disabled",
-        1: "Enabled",
-      },
       name: "IP Forwarding", // Force client to enable ip forwarding
-      type: "UInt8",
+      type: "Bool",
     },
-    20: {
+    20: { // RFC 2132 Sec 4.2
       config: "nonLocalSourceRouting",
       name: "Non-Local Source Routing",
       type: "Bool",
     },
-    21: {
+    21: { // RFC 2132 Sec 4.3
       config: "policyFilter",
       name: "Policy Filter",
-      type: "IPs",
+      type: "IPs", // list of IP/MASK
     },
-    22: {
+    22: { // RFC 2132 Sec 4.4
       config: "maxDatagramSize",
       name: "Maximum Datagram Reassembly Size",
       type: "UInt16",
     },
-    23: {
+    23: { // RFC 2132 Sec 4.5
       config: "datagramTTL",
       name: "Default IP Time-to-live",
       type: "UInt8",
     },
-    24: {
+    24: { // RFC 2132 Sec 4.6
       config: "mtuTimeout",
       name: "Path MTU Aging Timeout",
       type: "UInt32",
     },
-    25: {
+    25: { // RFC 2132 Sec 4.7
       config: "mtuSizes",
       name: "Path MTU Plateau Table",
       type: "UInt16s",
     },
-    26: {
+    26: { // RFC 2132 Sec 5.1
       config: "mtuInterface",
       name: "Interface MTU",
       type: "UInt16",
     },
-    27: {
+    27: { // RFC 2132 Sec 5.2
       config: "subnetsAreLocal",
-      enum: {
-        0: "Disabled",
-        1: "Enabled",
-      },
       name: "All Subnets are Local",
-      type: "UInt8",
+      type: "Bool",
     },
-    28: {
+    28: { // RFC 2132 Sec 5.3
       config: "broadcast",
       default(requested?: IDHCPMessage) {
         if (!server || !requested)
@@ -205,104 +201,92 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
       name: "Broadcast Address",
       type: "IP",
     },
-    29: {
+    29: { // RFC 2132 Sec 5.4
       config: "maskDiscovery",
-      enum: {
-        0: "Disabled",
-        1: "Enabled",
-      },
       name: "Perform Mask Discovery",
-      type: "UInt8",
+      type: "Bool",
     },
-    30: {
+    30: { // RFC 2132 Sec 5.5
       config: "maskSupplier",
-      enum: {
-        0: "Disabled",
-        1: "Enabled",
-      },
       name: "Mask Supplier",
-      type: "UInt8",
+      type: "Bool",
     },
-    31: {
+    31: { // RFC 2132 Sec 5.6
       config: "routerDiscovery",
-      enum: {
-        0: "Disabled",
-        1: "Enabled",
-      },
       name: "Perform Router Discovery",
-      type: "UInt8",
+      type: "Bool",
     },
-    32: {
+    32: { // RFC 2132 Sec 5.7
       config: "routerSolicitation",
       name: "Router Solicitation Address",
       type: "IP",
     },
-    33: {
+    33: { // RFC 2132 Sec 5.8
       config: "staticRoutes",
       name: "Static Route",
       type: "IPs", // Always pairs of two must be provided, [destination1, route1, destination2, route2, ...]
     },
-    34: {
+    34: { // RFC 2132 Sec 6.1
       config: "trailerEncapsulation",
       name: "Trailer Encapsulation",
       type: "Bool",
     },
-    35: {
+    35: { // RFC 2132 Sec 6.2
       config: "arpCacheTimeout",
       name: "ARP Cache Timeout",
       type: "UInt32",
     },
-    36: {
+    36: { // RFC 2132 Sec 6.3
       config: "ethernetEncapsulation",
       name: "Ethernet Encapsulation",
       type: "Bool",
     },
-    37: {
+    37: { // RFC 2132 Sec 7.1
       config: "tcpTTL",
       name: "TCP Default TTL",
       type: "UInt8",
     },
-    38: {
+    38: { // RFC 2132 Sec 7.2
       config: "tcpKeepalive",
       name: "TCP Keepalive Interval",
       type: "UInt32",
     },
-    39: {
+    39: { // RFC 2132 Sec 7.3
       config: "tcpKeepaliveGarbage",
       name: "TCP Keepalive Garbage",
       type: "Bool",
     },
-    40: {
+    40: { // RFC 2132 Sec 8.1
       config: "nisDomain",
       name: "Network Information Service Domain",
       type: "ASCII",
     },
-    41: {
+    41: { // RFC 2132 Sec 8.2
       config: "nisServer",
       name: "Network Information Servers",
       type: "IPs",
     },
-    42: {
+    42: { // RFC 2132 Sec 8.3
       config: "ntpServer",
       name: "Network Time Protocol Servers",
       type: "IPs",
     },
-    43: {// RFC 2132
+    43: { // RFC 2132 Sec 8.4
       config: "vendor",
       name: "Vendor Specific Information",
       type: "UInt8s",
     },
-    44: {
+    44: { // RFC 2132 Sec 8.5
       config: "nbnsServer",
       name: "NetBIOS over TCP/IP Name Server",
       type: "IPs",
     },
-    45: {
+    45: { // RFC 2132 Sec 8.6
       config: "nbddServer",
       name: "NetBIOS over TCP/IP Datagram Distribution Server",
       type: "IP",
     },
-    46: {
+    46: { // RFC 2132 Sec 8.7
       config: "nbNodeType",
       enum: {
         0x1: "B-node",
@@ -313,33 +297,34 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
       name: "NetBIOS over TCP/IP Node Type",
       type: "UInt8",
     },
-    47: {
+    47: { // RFC 2132 Sec 8.8
       config: "nbScope",
       name: "NetBIOS over TCP/IP Scope",
       type: "ASCII",
     },
-    48: {
+    48: { // RFC 2132 Sec 8.9
       config: "xFontServer",
       name: "X Window System Font Server",
       type: "IPs",
     },
-    49: {
+    49: { // RFC 2132 Sec 8.10
       config: "xDisplayManager",
       name: "X Window System Display Manager",
       type: "IPs",
     },
-    50: {// IP wish of client in DHCPDISCOVER
+    50: {  // RFC 2132 Sec 9.1
+      // IP wish of client in DHCPDISCOVER
       attr: "requestedIpAddress",
       name: "Requested IP Address",
       type: "IP",
     },
-    51: {// RFC 2132
+    51: { // RFC 2132 Sec 9.2
       config: "leaseTime",
       default: 86400,
       name: "IP Address Lease Time",
       type: "UInt32",
     },
-    52: {
+    52: { // RFC 2132 Sec 9.3
       config: "dhcpOptionOverload",
       enum: {
         1: "file",
@@ -349,7 +334,7 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
       name: "Option Overload",
       type: "UInt8",
     },
-    53: {
+    53: { // RFC 2132 Sec 9.6
       config: "dhcpMessageType",
       enum: {
         1: "DHCPDISCOVER",
@@ -364,132 +349,150 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
       name: "DHCP Message Type",
       type: "UInt8",
     },
-    54: {
+    54: { // RFC 2132 Sec 9.7
       config: "server",
       name: "Server Identifier",
       type: "IP",
     },
-    55: {// Sent by client to show all things the client wants
+    55: { // RFC 2132 Sec 9.8
+      // Sent by client to show all things the client wants
       attr: "requestParameter",
       config: "dhcpParameterRequestList",
       name: "Parameter Request List",
       type: "UInt8s",
     },
-    56: {// Error message sent in DHCPNAK on failure
+    56: { // RFC 2132 Sec 9.9
+      // Error message sent in DHCPNAK on failure
       config: "dhcpMessage",
       name: "Message",
       type: "ASCII",
     },
-    57: {
+    57: { // RFC 2132 Sec 9.10
       config: "maxMessageSize",
       default: 1500,
       name: "Maximum DHCP Message Size",
       type: "UInt16",
     },
-    58: {
+    58: { // RFC 2132 Sec 9.11
       config: "renewalTime",
       default: 3600,
       name: "Renewal (T1) Time Value",
       type: "UInt32",
     },
-    59: {
+    59: { // RFC 2132 Sec 9.12
       config: "rebindingTime",
       default: 14400,
       name: "Rebinding (T2) Time Value",
       type: "UInt32",
     },
-    60: {// RFC 2132: Sent by client to identify type of a client
-      attr: "vendorClassId", // 'MSFT' (win98, Me, 2000), 'MSFT 98' (win 98, me), 'MSFT 5.0' (win 2000 and up), 'alcatel.noe.0' (alcatel IP touch phone), ...
+    60: { // RFC 2132 Sec 9.13
+      // RFC 2132: Sent by client to identify type of a client
+      // attr: "vendorClassId", // 'MSFT' (win98, Me, 2000), 'MSFT 98' (win 98, me), 'MSFT 5.0' (win 2000 and up), 'alcatel.noe.0' (alcatel IP touch phone), ...
       config: "vendorClassIdentifier",
       name: "Vendor Class-Identifier",
-      type: "ASCII",
+      type: "UInt8s",
     },
-    61: {// Sent by client to specify their unique identifier, to be used to disambiguate the lease on the server
-      attr: "clientId",
-      config: "smtpServer",
+    61: { // RFC 2132 Sec 9.14
+      // Sent by client to specify their unique identifier, to be used to disambiguate the lease on the server
+      config: "dhcpClientIdentifier",
       name: "Client-Identifier",
-      type: "ASCII",
+      type: "UInt8s",
     },
-    64: {
-      config: "smtpServer",
+    62: { // RFC 2242 Sec 2
+      config: "netwareIPDomainName",
+      name: "The NetWare/IP Domain Name",
+      type: "ASCII", // TODO LEN == 11
+    },
+    63: { // RFC 2242 Sec 2
+      config: "netwareIPDomainInfp",
+      name: "The NetWare/IP Information ",
+      type: "UInt8s", // TODO LEN == 11
+    },
+    64: { // RFC 2132 Sec 8.11
+      config: "NIS+Domain",
       name: "Network Information Service+ Domain",
       type: "ASCII",
     },
-    65: {
-      config: "smtpServer",
+    65: { // RFC 2132 Sec 8.12
+      config: "NIS+Server",
       name: "Network Information Service+ Servers",
       type: "IPs",
     },
-    66: {// RFC 2132: PXE option
-      config: "smtpServer",
+    66: { // RFC 2132 Sec 9.4
+      config: "tftpServer",
       name: "TFTP server name",
       type: "ASCII",
     },
-    67: {// RFC 2132: PXE option
-      config: "smtpServer",
+    67: { // RFC 2132 Sec 9.5
+      config: "bootfileName",
       name: "Bootfile name",
       type: "ASCII",
     },
-    68: {
-      config: "smtpServer",
+    68: { // RFC 2132 Sec 8.13
+      config: "mobileIPHomeAgent",
       name: "Mobile IP Home Agent",
-      type: "ASCII",
+      type: "IPs",
     },
-    69: {
+    69: { // RFC 2132 Sec 8.14
       config: "smtpServer",
       name: "Simple Mail Transport Protocol (SMTP) Server",
       type: "IPs",
     },
-    70: {
+    70: { // RFC 2132 Sec 8.15
       config: "pop3Server",
       name: "Post Office Protocol (POP3) Server",
       type: "IPs",
     },
-    71: {
+    71: { // RFC 2132 Sec 8.16
       config: "nntpServer",
       name: "Network News Transport Protocol (NNTP) Server",
       type: "IPs",
     },
-    72: {
+    72: { // RFC 2132 Sec 8.17
       config: "wwwServer",
       name: "Default World Wide Web (WWW) Server",
       type: "IPs",
     },
-    73: {
+    73: { // RFC 2132 Sec 8.18
       config: "fingerServer",
       name: "Default Finger Server",
       type: "IPs",
     },
-    74: {
+    74: { // RFC 2132 Sec 8.19
       config: "ircServer",
       name: "Default Internet Relay Chat (IRC) Server",
       type: "IPs",
     },
-    75: {
+    75: { // RFC 2132 Sec 8.20
       config: "streetTalkServer",
       name: "StreetTalk Server",
       type: "IPs",
     },
-    76: {
+    76: { // RFC 2132 Sec 8.21
       config: "streetTalkDAServer",
       name: "StreetTalk Directory Assistance (STDA) Server",
       type: "IPs",
     },
-    80: {// RFC 4039: http://www.networksorcery.com/enp/rfc/rfc4039.txt
+    77: { // RFC 3004 Sec 4
+      config: "userClass",
+      name: "User Class",
+      type: "UInt8s",
+    },
+    78: { // RFC 2610 Sec 3
+      config: "SLPDirectoryAgent",
+      name: "SLP Directory Agent",
+      type: "UInt8s",
+    },
+    79: { // RFC 2610 Sec 4
+      config: "SLPServiceScope",
+      name: "SLP Service Scope",
+      type: "UInt8s",
+    },
+    80: { // RFC 4039 Sec 4
       attr: "rapidCommit",
       name: "Rapid Commit",
       type: "Bool",
       // config: 'rapidCommit', // may need removal
-    },
-    100: {// RFC 4039: http://www.networksorcery.com/enp/rfc/rfc4039.txt
-      config: "PCode",
-      name: "IEEE 1003.1 TZ String",
-      type: "ASCII",
-    },
-    101: {// RFC 4039: http://www.networksorcery.com/enp/rfc/rfc4039.txt
-      config: "TCode",
-      name: "Reference to the TZ Database",
-      type: "ASCII",
     },
     // 81: {
     //  attr: 'fqdn',
@@ -498,8 +501,20 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
     // },
     /*
      82: { // RFC 3046, relayAgentInformation
-
      },*/
+     // 93: { // RFC 4578 Sec 2.1},
+     // 94: { // RFC 4578 Sec 2.2},
+     // 97: { // RFC 4578 Sec 2.3},
+     100: { // RFC 4833 Sec 2
+      config: "PCode",
+      name: "IEEE 1003.1 TZ String",
+      type: "ASCII",
+    },
+    101: { // RFC 4833 Sec 2
+      config: "TCode",
+      name: "Reference to the TZ Database",
+      type: "ASCII",
+    },
     112: {
       config: "netinfoServerAddress",
       name: "Netinfo Address",
@@ -544,7 +559,6 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
       config: "vivso",
       name: "Vendor Identified Vendor-Specific Information",
       type: "ASCII",
-
     },
     145: {// RFC 6704: https://tools.ietf.org/html/rfc6704
       attr: "renewNonce",
@@ -590,6 +604,14 @@ export function getDHCPId(key: string | number): number {
   if (isNaN(AsId))
     return confMapping[key];
   return AsId;
+}
+
+export function getDHCPName(key: string | number): keyof IOptionsTxt | null {
+  const id = getDHCPId(key);
+  const meta = optsMetaDefault[id];
+  if (meta)
+    return meta.config || null;
+  return null;
 }
 
 // Create inverse config/attr lookup map

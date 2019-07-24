@@ -11,16 +11,17 @@ import { Client } from "./Client";
 import { ClientConfig, IClientConfig } from "./ClientConfig";
 import { Server } from "./Server";
 import { IServerConfig, newServerConfig } from "./ServerConfig";
-export { OptionId } from "./model";
+
 export { IClientConfig } from "./ClientConfig";
 export { IServerConfig } from "./ServerConfig";
-export { IDHCPMessage } from "./model";
 export { Client } from "./Client";
 export { Server } from "./Server";
 export { ILeaseLiveStore, LeaseLiveStoreFile, LeaseLiveStoreMemory, ILeaseLive } from "./leaseLive";
-export { ILeaseStaticStore, LeaseStaticStoreFile, LeaseStaticStoreMemory, ILeaseEx } from "./leaseStatic";
+export { ILeaseStaticStore, LeaseStaticStoreFile, LeaseStaticStoreMemory, ILeaseEx, toLeaseExTxt, ILeaseExTxt } from "./leaseStatic";
 export { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
-export { IOptionsTxtOrId, IOptionsTxt, IOptionsId, IDHCPOptionsFncId } from "./model";
+export { OptionId, IDHCPMessage, IDHCPOptionsFncId } from "./model";
+export { IOptionsTxtOrId, IOptionsTxt, IOptionsId } from "./model";
+export { getDHCPName, getDHCPId } from "./options";
 
 export const createBroadcastHandler = (): Server => new Server(newServerConfig({ range: ["0.0.0.0", "0.0.0.1"] }), true);
 export const createClient = (opt: IClientConfig): Client => new Client(new ClientConfig(opt));

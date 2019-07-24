@@ -7,6 +7,7 @@
  * default: Gets passed if no configuration is supplied for the option (can be a value or a function)
  * enum: Represents a map of possible enum for this option
  */
+import { IOptionsTxt } from "./model";
 import { Server } from "./Server";
 export interface IOptionMeta {
     name: string;
@@ -15,7 +16,7 @@ export interface IOptionMeta {
     enum?: {
         [key: number]: string;
     };
-    config?: string;
+    config?: keyof IOptionsTxt;
     default?: any;
 }
 export interface IOptionMetaMap {
@@ -24,3 +25,4 @@ export interface IOptionMetaMap {
 export declare const getOptsMeta: (server?: Server | undefined) => IOptionMetaMap;
 export declare const optsMetaDefault: IOptionMetaMap;
 export declare function getDHCPId(key: string | number): number;
+export declare function getDHCPName(key: string | number): keyof IOptionsTxt | null;

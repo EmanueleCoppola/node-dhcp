@@ -147,8 +147,8 @@ export enum OptionId {
   maxMessageSize = 57,
   renewalTime = 58,
   rebindingTime = 59,
-  vendorClassIdentifier = 60, // RFC 2132: Sent by client to identify type of a client
-  dhcpClientIdentifier = 61, // Sent by client to specify their unique identifier, to be used to disambiguate the lease on the server
+  vendorClassId = 60, // RFC 2132: Sent by client to identify type of a client
+  clientId = 61, // Sent by client to specify their unique identifier, to be used to disambiguate the lease on the server
   nisPlusDomain = 64,
   nisPlusServer = 65,
   tftpServer = 66,
@@ -236,12 +236,23 @@ export interface IOptionsTxt {
   tcpKeepalive?: _UInt32;
   tcpKeepaliveGarbage?: _Bool;
   nisDomain?: _ASCII;
+  "NIS+Domain"?: _ASCII;
+  "NIS+Server"?: _IPs;
+  netwareIPDomainName?: _ASCII;
+  netwareIPDomainInfp?: _ASCII;
+  SLPDirectoryAgent?: _ASCII;
+  userClass?: _ASCII;
+  SLPServiceScope?: _ASCII;
+  tftpServer?: string;
+  bootfileName?: string;
+  mobileIPHomeAgent?: _IPs;
   nisServer?: _IPs;
   ntpServer?: _IPs;
   vendor?: _UInt8s;
   nbnsServer?: _IPs;
   nbddServer?: _IP;
   nbNodeType?: _UInt8;
+  dhcpClientIdentifier?: _UInt8;
   nbScope?: _ASCII;
   xFontServer?: _IPs;
   xDisplayManager?: _IPs;
@@ -279,7 +290,8 @@ export interface IOptionsTxt {
   wpad?: _ASCII;
   PCode?: _ASCII;
   TCode?: _ASCII;
-
+  SIPServerDHCPOption?: _IPv4orDNS;
+  smtpServer?: _ASCII;
 }
 
 /**
@@ -346,7 +358,7 @@ export interface IOptionsId {
   58?: _UInt32;
   59?: _UInt32;
   60?: _ASCII;
-  61?: _ASCII;
+  61?: _UInt8s;
   64?: _ASCII;
   65?: _IPs;
   66?: _ASCII;
