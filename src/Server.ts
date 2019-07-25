@@ -139,45 +139,42 @@ export class Server extends EventEmitter {
         requested = requested.filter((o) => this.validOption(o));
 
         for (const optionId of requireds) {
-            // Take the first config value always
-            if (!pre[optionId]) {
-                pre[optionId] = customOpts[optionId];
-            }
-            if (!pre[optionId]) {
-                pre[optionId] = this.getC(optionId, request);
-            }
-            if (!pre[optionId])
+            if (pre[optionId] !== undefined)
+                continue;
+            let val = customOpts[optionId];
+            if (!val)
+                val = this.getC(optionId, request);
+            if (val)
+                pre[optionId] = val;
+            else
                 throw new Error(`Required option ${this.optsMeta[optionId].config} does not have a value set`);
         }
 
         // Add all values, the user wants, which are not already provided:
         for (const optionId of requested) {
-            // Take the first config value always
-            let val: any = customOpts[optionId];
-            if (val) {
-                pre[optionId] = val;
-            }
-            if (pre[optionId]) {
+            if (pre[optionId] !== undefined)
+                continue;
+            let val = customOpts[optionId];
+            if (!val)
                 val = this.getC(optionId, request);
-                // Add value only, if it's meaningful
-                if (val)
-                    pre[optionId] = val;
-                else
-                    this.emit("warning", `No value for option ${optionId} in config for ${request.chaddr}`);
-            }
+            if (val)
+                pre[optionId] = val;
+            else
+                this.emit("warning", `No value for option ${optionId} in config for ${request.chaddr}`);
         }
 
         // Finally Add all missing and forced options
         const forceOptions = this.getForceOptions(request);
-        if (forceOptions instanceof Array) {
-            for (const option of forceOptions as Array<string | number>) {
-                // Add numeric options right away and look up alias names
-                const id = getDHCPId(option);
-                // Add option if it is valid and not present yet
-                if (id && !pre[id]) {
-                    pre[id] = this.getC(id, request);
-                }
-            }
+        for (const optionId of forceOptions) {
+            if (pre[optionId] !== undefined)
+                continue;
+            let val = customOpts[optionId];
+            if (!val)
+                val = this.getC(optionId, request);
+            if (val)
+                (pre as any)[optionId] = val;
+            // if (!pre[optionId])
+            //    pre[optionId] = this.getC(optionId, request);
         }
         return pre;
     }
@@ -430,11 +427,8 @@ export class Server extends EventEmitter {
         return val;
     }
 
-    public getForceOptions(requested: IDHCPMessage): string[] {
-        const val = this.config.forceOptions;
-        if (typeof val === "function")
-            return val(requested);
-        return val;
+    public getForceOptions(requested: IDHCPMessage): OptionId[] {
+        return this.config.forceOptions || [];
     }
 
     public getRandomIP(requested: IDHCPMessage): boolean {

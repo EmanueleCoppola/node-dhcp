@@ -11,7 +11,7 @@ export interface IServerConfig extends IDHCPOptionsFncId {
     leaseLive?: ILeaseLiveStore;
     leaseOffer?: ILeaseOfferStore;
     range: IPs;
-    forceOptions?: ASCIIs; // Options that need to be sent, even if they were not requested
+    forceOptions?: OptionId[]; // Options that need to be sent, even if they were not requested
 }
 
 export interface IServerConfigValid extends IServerConfig {
@@ -20,7 +20,7 @@ export interface IServerConfigValid extends IServerConfig {
     leaseLive: ILeaseLiveStore;
     leaseOffer: ILeaseOfferStore;
     range: IPs;
-    forceOptions: ASCIIs; // Options that need to be sent, even if they were not requested
+    forceOptions: OptionId[]; // Options that need to be sent, even if they were not requested
 }
 
 export function newServerConfig(options: IServerConfig): IServerConfigValid {
@@ -30,7 +30,7 @@ export function newServerConfig(options: IServerConfig): IServerConfigValid {
         range: options.range,
         leaseLive: options.leaseLive || new LeaseLiveStoreMemory(),
         leaseOffer: options.leaseOffer || new LeaseOfferStoreMemory(),
-        forceOptions: options.forceOptions || ["hostname"],
+        forceOptions: options.forceOptions || [OptionId.hostname],
     } as IServerConfigValid;
     for (const k in options) {
         const id = getDHCPId(k);
