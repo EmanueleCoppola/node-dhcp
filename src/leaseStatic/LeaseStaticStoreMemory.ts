@@ -2,17 +2,18 @@
  * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
  */
 import { IDHCPMessage } from "../model";
-import { ILeaseEx } from "./ILeaseStaticStore";
+import { ILeaseEx, LeaseStaticStoreHelper } from "./ILeaseStaticStore";
 import { ILeaseStaticStore } from "./ILeaseStaticStore";
 
 /**
  * basic static Lease conmfiguration module
  */
-export class LeaseStaticStoreMemory implements ILeaseStaticStore {
+export class LeaseStaticStoreMemory extends LeaseStaticStoreHelper implements ILeaseStaticStore {
     private data: { [key: string]: string } = {};
     private set: Set<string>;
 
     constructor(leases: { [key: string]: string }) {
+        super();
         this.data = { ...leases };
         this.set = new Set(Object.values(this.data));
     }
@@ -33,7 +34,7 @@ export class LeaseStaticStoreMemory implements ILeaseStaticStore {
         delete this.data[mac];
     }
 
-    public getLease(mac: string, request?: IDHCPMessage): ILeaseEx | null {
+    public getLeaseFromMac(mac: string, request?: IDHCPMessage): ILeaseEx | null {
         const address = this.data[mac];
         if (address)
             return { mac, address };

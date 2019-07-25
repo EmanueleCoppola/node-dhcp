@@ -18,8 +18,28 @@ export interface ILeaseExTxt {
     options: IOptionsTxt;
 }
 export interface ILeaseStaticStore {
-    getLease(mac: string, request?: IDHCPMessage): ILeaseEx | null;
+    /**
+     * get the reserved lease for a mac
+     */
+    getLeaseFromMac(mac: string, request?: IDHCPMessage): ILeaseEx | null;
+    /**
+     * same as getLeaseFromMac but returnoOptions as txt
+     */
+    getLeaseTxtFromMac(mac: string, request?: IDHCPMessage): ILeaseExTxt | null;
+    /**
+     * check if the adresse is used by a static lease
+     * if a mac is neaded fork the default storage
+     */
     hasAddress(address: string): boolean;
+    /**
+     * get a set of used IP for quick colision check
+     */
     getReservedIP(): Set<string>;
 }
-export declare function toLeaseExTxt(lease?: ILeaseEx | null): ILeaseExTxt | null;
+export declare abstract class LeaseStaticStoreHelper implements ILeaseStaticStore {
+    abstract hasAddress(address: string): boolean;
+    abstract getReservedIP(): Set<string>;
+    abstract getLeaseFromMac(mac: string, request?: IDHCPMessage): ILeaseEx | null;
+    getLeaseTxtFromMac(mac: string, request?: IDHCPMessage): ILeaseExTxt | null;
+    toLeaseExTxt(lease?: ILeaseEx | null): ILeaseExTxt | null;
+}

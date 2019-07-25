@@ -17,7 +17,7 @@ export { IServerConfig } from "./ServerConfig";
 export { Client } from "./Client";
 export { Server } from "./Server";
 export { ILeaseLiveStore, LeaseLiveStoreFile, LeaseLiveStoreMemory, ILeaseLive } from "./leaseLive";
-export { ILeaseStaticStore, LeaseStaticStoreFile, LeaseStaticStoreMemory, ILeaseEx, toLeaseExTxt, ILeaseExTxt } from "./leaseStatic";
+export { ILeaseStaticStore, LeaseStaticStoreFile, LeaseStaticStoreMemory, ILeaseEx, LeaseStaticStoreHelper, ILeaseExTxt } from "./leaseStatic";
 export { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
 export { OptionId, IDHCPMessage, IDHCPOptionsFncId } from "./model";
 export { IOptionsTxtOrId, IOptionsTxt, IOptionsId } from "./model";

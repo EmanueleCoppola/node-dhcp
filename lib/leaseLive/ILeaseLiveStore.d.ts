@@ -23,16 +23,29 @@ export interface ILeaseLive {
     name: string;
 }
 export interface ILeaseLiveStore {
+    /**
+     * find a free IP address
+     */
     getFreeIP?: (firstIPstr: string, lastIPStr: string, reserverd: Array<Set<string>>, randomIP?: boolean) => Promise<string>;
+    /**
+     * get the existing lease for a mac
+     */
     getLeaseFromMac(mac: string): Promise<ILeaseLive | null>;
     /**
-     * call to extant a lease valididity
+     * call to extand a lease expiration
      */
     updateLease(lease: ILeaseLive): Promise<void>;
+    /**
+     * check if the adresse is used by a static lease
+     * if a mac is neaded fork the default storage
+     */
     hasAddress(address: string): Promise<boolean>;
+    /**
+     * add a new Lease
+     */
     add(lease: ILeaseLive): Promise<boolean>;
-    getLeases(): Promise<ILeaseLive[]>;
-    getAddresses(): Promise<string[]>;
-    getMacs(): Promise<string[]>;
+    /**
+     * release a lease
+     */
     release(mac: string): Promise<ILeaseLive | null>;
 }

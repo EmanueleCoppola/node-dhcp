@@ -127,7 +127,7 @@ export class Server extends EventEmitter {
     public validOption(optionId: number) {
         if (this.optsMeta[optionId])
             return true;
-        this.emit("error", `Unknown Type for option ${optionId}, add this type in options.ts`);
+        this.emit("warning", `Unknown Type for option ${optionId}, add this type in options.ts`);
         return false;
     }
 
@@ -264,7 +264,7 @@ export class Server extends EventEmitter {
             lease = this.newLease(request);
             nextLease = true;
         }
-        const staticLease = this.leaseStatic.getLease(request.chaddr, request);
+        const staticLease = this.leaseStatic.getLeaseFromMac(request.chaddr, request);
         let customOpts: IOptionsId = {};
         if (staticLease) {
             lease.address = staticLease.address;
@@ -328,7 +328,7 @@ export class Server extends EventEmitter {
             return 0;
         }
 
-        const staticLease = this.leaseStatic.getLease(request.chaddr, request);
+        const staticLease = this.leaseStatic.getLeaseFromMac(request.chaddr, request);
         let customOpts: IOptionsId = {};
         if (staticLease) {
             lease.address = staticLease.address;

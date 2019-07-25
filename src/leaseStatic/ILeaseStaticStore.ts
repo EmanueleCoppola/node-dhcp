@@ -21,25 +21,49 @@ export interface ILeaseExTxt {
 }
 
 export interface ILeaseStaticStore {
-    getLease(mac: string, request?: IDHCPMessage): ILeaseEx | null;
+    /**
+     * get the reserved lease for a mac
+     */
+    getLeaseFromMac(mac: string, request?: IDHCPMessage): ILeaseEx | null;
+    /**
+     * same as getLeaseFromMac but returnoOptions as txt
+     */
+    getLeaseTxtFromMac(mac: string, request?: IDHCPMessage): ILeaseExTxt | null;
+    /**
+     * check if the adresse is used by a static lease
+     * if a mac is neaded fork the default storage
+     */
     hasAddress(address: string): boolean;
+    /**
+     * get a set of used IP for quick colision check
+     */
     getReservedIP(): Set<string>;
 }
 
-export function toLeaseExTxt(lease?: ILeaseEx | null): ILeaseExTxt | null {
-    if (!lease)
-        return null;
-    const out: ILeaseExTxt = {
-        mac: lease.mac,
-        address: lease.address,
-        options: {},
-    };
-    if (lease.options) {
-        for (const k of Object.keys(lease.options)) {
-            const name = getDHCPName(k);
-            if (name)
-                out.options[name] = lease.options[k];
-        }
+export abstract class LeaseStaticStoreHelper implements ILeaseStaticStore {
+    public abstract hasAddress(address: string): boolean;
+    public abstract getReservedIP(): Set<string>;
+    public abstract getLeaseFromMac(mac: string, request?: IDHCPMessage): ILeaseEx | null;
+
+    public getLeaseTxtFromMac(mac: string, request?: IDHCPMessage): ILeaseExTxt | null {
+        return this.toLeaseExTxt(this.getLeaseFromMac(mac, request));
     }
-    return out;
+
+    public toLeaseExTxt(lease?: ILeaseEx | null): ILeaseExTxt | null {
+        if (!lease)
+            return null;
+        const out: ILeaseExTxt = {
+            mac: lease.mac,
+            address: lease.address,
+            options: {},
+        };
+        if (lease.options) {
+            for (const k of Object.keys(lease.options)) {
+                const name = getDHCPName(k);
+                if (name)
+                    out.options[name] = lease.options[k];
+            }
+        }
+        return out;
+    }
 }
