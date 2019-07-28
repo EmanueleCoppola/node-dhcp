@@ -6,7 +6,7 @@ import { ILeaseLiveStore, LeaseLiveStoreMemory } from "./leaseLive";
 import { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
 import { ILeaseStaticStore, LeaseStaticStoreMemory } from "./leaseStatic";
 import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, IOptionsId, OptionId } from "./model";
-import { getDHCPId, getOptsMeta, IOptionMetaMap } from "./options";
+import { getDHCPId, getOptsMeta, IOptionMetaMap, getDHCPName } from "./options";
 import { random } from "./prime";
 import { format, parse } from "./protocol";
 import { IServerConfigValid } from "./ServerConfig";
@@ -39,10 +39,26 @@ function toResponse(request: IDHCPMessage, options: IOptionsId): IDHCPMessage {
     } as IDHCPMessage;
 }
 
+export interface IServerEvents {
+    on(event: "bound", listener: (bound: ILeaseLive) => void): this;
+    on(event: "error", listener: (error: Error) => void): this;
+    on(event: "warning", listener: (error: string) => void): this;
+    on(event: "listening", listener: (socket: Socket) => void): this;
+    on(event: "message", listener: (message: IDHCPMessage) => void): this;
+    on(event: "close", listener: () => void): this;
+
+    once(event: "bound", listener: (bound: ILeaseLive) => void): this;
+    once(event: "error", listener: (error: Error) => void): this;
+    once(event: "warning", listener: (error: string) => void): this;
+    once(event: "listening", listener: (socket: Socket) => void): this;
+    once(event: "message", listener: (message: IDHCPMessage) => void): this;
+    once(event: "close", listener: () => void): this;
+}
+
 /**
  * Mains DHCP server class
  */
-export class Server extends EventEmitter {
+export class Server extends EventEmitter implements IServerEvents {
     private socket: Socket | null;
     // Config (cache) object
     private config: IServerConfigValid;
@@ -159,8 +175,15 @@ export class Server extends EventEmitter {
                 val = this.getC(optionId, request);
             if (val)
                 pre[optionId] = val;
-            else
-                this.emit("warning", `No value for option ${optionId} in config for ${request.chaddr}`);
+            else {
+                if (this.listenerCount("warning")) {
+                    const name = getDHCPName(optionId);
+                    if (name)
+                        this.emit("warning", `No value for option ${name} (${optionId}) in config for ${request.chaddr}`);
+                    else
+                        this.emit("warning", `No value for option ${optionId} in config for ${request.chaddr}`);
+                }
+            }
         }
 
         // Finally Add all missing and forced options
@@ -309,7 +332,7 @@ export class Server extends EventEmitter {
             lease = await this.leaseLive.getLeaseFromMac(chaddr);
             // nextLease = true;
         } else if (!lease) {
-            this.emit("error", "Get request for an non existing lease, you may extend offer timeout");
+            this.emit("error", Error("Get request for an non existing lease, you may extend offer timeout"));
             return 0;
             // error;
             // lease = this.newLease(request);
@@ -321,7 +344,7 @@ export class Server extends EventEmitter {
         }
 
         if (!lease) {
-            this.emit("error", "Get request for an non existing lease, you may extend offer timeout");
+            this.emit("error", Error("Get request for an non existing lease, you may extend offer timeout"));
             return 0;
         }
 

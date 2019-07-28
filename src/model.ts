@@ -42,6 +42,25 @@ export interface IDHCPMessage {
   options: IOptionsId; // staticly populate options
 }
 
+export interface IDHCPMessageTxt {
+  op: BootCode;
+  htype: number; // UInt8 hardware addr type: 1 for 10mb ethernet
+  hlen: number; // UInt8hardware addr length: 6 for 10mb ethernet
+  hops: number; // UInt8relay hop count
+  xid: number; // UInt32 session id, initialized by client
+  secs: number; // UInt16 seconds since client began address acquistion
+  flags: number; // UInt16
+  ciaddr: string; // IP client IP when BOUND, RENEW, REBINDING state
+  yiaddr: string; // IP 'your' client IP
+  siaddr: string; // IP next server to use in boostrap, returned in OFFER & ACK
+  giaddr: string; // IP gateway/relay agent IP
+  chaddr: string; // MAC: client hardware address
+  sname: string; // server host name
+  file: string; // boot file name
+  magicCookie?: number; // UInt32 contains 99, 130, 83, 99
+  options: IOptionsTxtOrId; // staticly populate options
+}
+
 // RFC1700, hardware
 export enum HardwareType {
   Ethernet = 1,

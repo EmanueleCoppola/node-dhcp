@@ -3,6 +3,7 @@
  */
 import { IDHCPMessage, IOptionsId, IOptionsTxt, OptionId } from "../model";
 import { getDHCPName } from "../options";
+import { Helper } from "../Helper";
 
 /**
  * Lease format for static lease
@@ -46,24 +47,6 @@ export abstract class LeaseStaticStoreHelper implements ILeaseStaticStore {
     public abstract getLeaseFromMac(mac: string, request?: IDHCPMessage): ILeaseEx | null;
 
     public getLeaseTxtFromMac(mac: string, request?: IDHCPMessage): ILeaseExTxt | null {
-        return this.toLeaseExTxt(this.getLeaseFromMac(mac, request));
-    }
-
-    public toLeaseExTxt(lease?: ILeaseEx | null): ILeaseExTxt | null {
-        if (!lease)
-            return null;
-        const out: ILeaseExTxt = {
-            mac: lease.mac,
-            address: lease.address,
-            options: {},
-        };
-        if (lease.options) {
-            for (const k of Object.keys(lease.options)) {
-                const name = getDHCPName(k);
-                if (name)
-                    out.options[name] = lease.options[k];
-            }
-        }
-        return out;
+        return Helper.toLeaseExTxt(this.getLeaseFromMac(mac, request));
     }
 }
