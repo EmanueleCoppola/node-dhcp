@@ -22,7 +22,7 @@ export class Helper {
         return out;
     }
 
-    public static toIOptionsTxt(options: IOptionsId | null, depth: boolean): IOptionsTxtOrId | null {
+    public static toIOptionsTxt(options: IOptionsId | null, depth?: boolean): IOptionsTxtOrId | null {
         if (!options)
             return null;
         const optionsTxt: IOptionsTxtOrId = {};
@@ -45,7 +45,7 @@ export class Helper {
         return optionsTxt;
     }
 
-    public static toIDHCPMessageTxt(msg: IDHCPMessage | null, depth: boolean): IDHCPMessageTxt | null {
+    public static toIDHCPMessageTxt(msg: IDHCPMessage | null, depth?: boolean): IDHCPMessageTxt | null {
         if (!msg)
             return null;
         return {
