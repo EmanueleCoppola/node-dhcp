@@ -107,7 +107,7 @@ export class Server extends EventEmitter {
         });
         socket.on("listening", () => self.emit("listening", socket));
         socket.on("close", () => self.emit("close"));
-        process.on("SIGINT", () => self.close());
+        // process.on("SIGINT", () => self.close());
     }
 
     public getServer(request: IDHCPMessage): string {
