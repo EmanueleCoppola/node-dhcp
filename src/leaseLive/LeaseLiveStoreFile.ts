@@ -7,7 +7,12 @@ import { genericGetFreeIP } from "../tools";
 import { ILeaseLive, LeaseLiveStoreHelper } from "./ILeaseLiveStore";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
 
-export class LeaseLiveStoreFile extends LeaseLiveStoreHelper implements ILeaseLiveStore {
+export interface IFlushEvent {
+    on(event: "save", listener: (file: string) => void): this;
+    once(event: "save", listener: (file: string) => void): this;
+}
+
+export class LeaseLiveStoreFile extends LeaseLiveStoreHelper implements ILeaseLiveStore, IFlushEvent {
     public save: () => void;
 
     private file: string;
@@ -93,6 +98,7 @@ export class LeaseLiveStoreFile extends LeaseLiveStoreHelper implements ILeaseLi
     }
 
     private _save() {
+        this.emit("save", this.file);
         return fse.writeJSON(`${this.file}`, Object.values(this.cache), { spaces: 2 });
     }
 
