@@ -1,9 +1,9 @@
 /**
  * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
  */
+import { Helper } from "../Helper";
 import { IDHCPMessage, IOptionsId, IOptionsTxt, OptionId } from "../model";
 import { getDHCPName } from "../options";
-import { Helper } from "../Helper";
 
 /**
  * Lease format for static lease

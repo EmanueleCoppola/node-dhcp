@@ -4,17 +4,16 @@
 import debounce from "debounce";
 import * as fse from "fs-extra";
 import { genericGetFreeIP } from "../tools";
-import { ILeaseLive } from "./ILeaseLiveStore";
+import { ILeaseLive, LeaseLiveStoreHelper } from "./ILeaseLiveStore";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
 
-export class LeaseLiveStoreFile implements ILeaseLiveStore {
-    public cache: { [key: string]: ILeaseLive } = {};
-    public address: Set<string> = new Set();
+export class LeaseLiveStoreFile extends LeaseLiveStoreHelper implements ILeaseLiveStore {
     public save: () => void;
 
     private file: string;
 
     constructor(file: string) {
+        super();
         this.file = file;
         this.save = debounce(() => this._save(), 300);
         let data: ILeaseLive[];
@@ -24,6 +23,7 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
             data = [];
         }
         this.reIndex(data);
+        this.on("expire", () => this.save());
     }
 
     public async getLeaseFromMac(mac: string): Promise<ILeaseLive | null> {
@@ -46,6 +46,7 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
         const out = this._add(lease);
         if (out)
             this.save();
+        this.checkAge(lease);
         return out;
     }
 
@@ -59,6 +60,7 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
     }
 
     public async updateLease(lease: ILeaseLive): Promise<void> {
+        this.checkAge(lease);
         this.save();
     }
 
@@ -86,7 +88,7 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
         return Object.keys(this.cache);
     }
 
-    public async getFreeIP(IP1: string, IP2: string, reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string> {
+    public getFreeIP = (IP1: string, IP2: string, reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string> => {
         return genericGetFreeIP(IP1, IP2, [...reserverd, this.address], randomIP);
     }
 
@@ -124,5 +126,4 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
         }
         return true;
     }
-
 }
