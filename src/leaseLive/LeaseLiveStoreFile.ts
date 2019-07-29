@@ -30,7 +30,15 @@ export class LeaseLiveStoreFile implements ILeaseLiveStore {
         return this.cache[mac] || null;
     }
 
+    public getLeaseFromMac2(mac: string): ILeaseLive | null {
+        return this.cache[mac] || null;
+    }
+
     public async hasAddress(address: string): Promise<boolean> {
+        return this.address.has(address);
+    }
+
+    public hasAddress2(address: string): boolean {
         return this.address.has(address);
     }
 
