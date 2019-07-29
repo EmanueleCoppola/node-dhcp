@@ -8,8 +8,8 @@ import { ILeaseLive, LeaseLiveStoreHelper } from "./ILeaseLiveStore";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
 
 export interface IFlushEvent {
-    on(event: "save", listener: (file: string) => void): this;
-    once(event: "save", listener: (file: string) => void): this;
+    on(event: "save", listener: (file: string, nbLease: number) => void): this;
+    once(event: "save", listener: (file: string, nbLease: number) => void): this;
 }
 
 export class LeaseLiveStoreFile extends LeaseLiveStoreHelper implements ILeaseLiveStore, IFlushEvent {
@@ -98,8 +98,9 @@ export class LeaseLiveStoreFile extends LeaseLiveStoreHelper implements ILeaseLi
     }
 
     private _save() {
-        this.emit("save", this.file);
-        return fse.writeJSON(`${this.file}`, Object.values(this.cache), { spaces: 2 });
+        const data = Object.values(this.cache);
+        this.emit("save", this.file, data.length);
+        return fse.writeJSON(`${this.file}`, data, { spaces: 2 });
     }
 
     private reIndex(leases: ILeaseLive[]) {
