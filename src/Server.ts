@@ -44,14 +44,14 @@ export interface IServerEvents {
     on(event: "error", listener: (error: Error) => void): this;
     on(event: "warning", listener: (error: string) => void): this;
     on(event: "listening", listener: (socket: Socket) => void): this;
-    on(event: "message", listener: (message: IDHCPMessage) => void): this;
+    on(event: "message" | "notImplemented", listener: (message: IDHCPMessage) => void): this;
     on(event: "close", listener: () => void): this;
 
     once(event: "bound", listener: (bound: ILeaseLive) => void): this;
     once(event: "error", listener: (error: Error) => void): this;
     once(event: "warning", listener: (error: string) => void): this;
     once(event: "listening", listener: (socket: Socket) => void): this;
-    once(event: "message", listener: (message: IDHCPMessage) => void): this;
+    once(event: "message" | "notImplemented", listener: (message: IDHCPMessage) => void): this;
     once(event: "close", listener: () => void): this;
 }
 
@@ -113,9 +113,8 @@ export class Server extends EventEmitter implements IServerEvents {
                     case DHCP53Code.DHCPRELEASE: // 7
                         return await self.handle_Release(request);
                     case DHCP53Code.DHCPINFORM: // 8
-                        return console.error("Not implemented DHCPINFORM");
                     default:
-                        console.error("Not implemented DHCP 53 Type", request.options[53]);
+                        this.emit("notImplemented", request);
                 }
             } catch (e) {
                 console.error(e);
