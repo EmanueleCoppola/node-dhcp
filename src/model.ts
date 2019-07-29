@@ -189,6 +189,8 @@ export enum OptionId {
   SLPDirectoryAgent = 78,
   SLPServiceScope = 79,
   rapidCommit = 80,
+  fqdn = 81,
+  relayAgentInformation = 82,
   PCode = 100,
   TCode = 101,
   netinfoServerAddress = 112,
@@ -291,6 +293,8 @@ export interface IOptionsTxt {
   SLPDirectoryAgent?: _UInt8s;
   SLPServiceScope?: _UInt8s;
   rapidCommit?: _Bool;
+  fqdn?: _UInt8s;
+  relayAgentInformation?: _UInt8s;
   PCode?: _ASCII;
   TCode?: _ASCII;
   netinfoServerAddress?: _ASCII;
@@ -393,6 +397,8 @@ export interface IOptionsId {
   78?: _UInt8s;
   79?: _UInt8s;
   80?: _Bool;
+  81?: _UInt8s;
+  82?: _UInt8s;
   100?: _ASCII;
   101?: _ASCII;
   112?: _ASCII;
@@ -495,6 +501,8 @@ export interface IDHCPOptionsFncId {
   78?: UInt8s;
   79?: UInt8s;
   80?: Bool;
+  81?: _UInt8s;
+  82?: _UInt8s;
   100?: ASCII;
   101?: ASCII;
   112?: ASCII;

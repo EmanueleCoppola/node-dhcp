@@ -27,7 +27,7 @@ export interface IOptionMeta {
   type: "IP" | "Int32" | "UInt32" | "UInt16" | "UInt8" | "IPs" | "IP" | "ASCII" | "Bool" | "UInt16s" | "UInt8s" | "IPv4orDNS";
   attr?: string;
   enum?: { [key: number]: string };
-  config?: keyof IOptionsTxt ;
+  config?: keyof IOptionsTxt;
   default?: any; // Function | string | boolean | number | string[];
 }
 
@@ -494,18 +494,20 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
       type: "Bool",
       // config: 'rapidCommit', // may need removal
     },
-    // 81: {
-    //  attr: 'fqdn',
-    //  name: 'fqdn option space',
-    //  type: 'ASCII',
-    // },
-    /*
-     82: { // RFC 3046, relayAgentInformation
-     },*/
-     // 93: { // RFC 4578 Sec 2.1},
-     // 94: { // RFC 4578 Sec 2.2},
-     // 97: { // RFC 4578 Sec 2.3},
-     100: { // RFC 4833 Sec 2
+    81: { // RFC 4702 Sec 2 TODO
+      attr: "fqdn", // TODO
+      name: "fqdn option space",
+      type: "UInt8s",
+    },
+    82: { // RFC 3046 Sec 2 TODO
+      attr: "relayAgentInformation", // TODO
+      name: "Agent Information",
+      type: "UInt8s",
+    },
+    // 93: { // RFC 4578 Sec 2.1},
+    // 94: { // RFC 4578 Sec 2.2},
+    // 97: { // RFC 4578 Sec 2.3},
+    100: { // RFC 4833 Sec 2
       config: "PCode",
       name: "IEEE 1003.1 TZ String",
       type: "ASCII",

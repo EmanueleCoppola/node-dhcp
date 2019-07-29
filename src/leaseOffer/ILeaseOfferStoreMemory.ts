@@ -35,6 +35,10 @@ export class LeaseOfferStoreMemory implements ILeaseOfferStore {
         return old;
     }
 
+    public getTimeOut(): number {
+        return this.timeOut;
+    }
+
     public getReservedIP(): Set<string> {
         return this.ips;
     }

@@ -6,7 +6,7 @@ import { ILeaseLiveStore, LeaseLiveStoreMemory } from "./leaseLive";
 import { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
 import { ILeaseStaticStore, LeaseStaticStoreMemory } from "./leaseStatic";
 import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, IOptionsId, OptionId } from "./model";
-import { getDHCPId, getOptsMeta, IOptionMetaMap, getDHCPName } from "./options";
+import { getDHCPId, getDHCPName, getOptsMeta, IOptionMetaMap } from "./options";
 import { random } from "./prime";
 import { format, parse } from "./protocol";
 import { IServerConfigValid } from "./ServerConfig";
@@ -332,7 +332,7 @@ export class Server extends EventEmitter implements IServerEvents {
             lease = await this.leaseLive.getLeaseFromMac(chaddr);
             // nextLease = true;
         } else if (!lease) {
-            this.emit("error", Error("Get request for an non existing lease, you may extend offer timeout"));
+            this.emit("error", Error(`Get request for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
             return 0;
             // error;
             // lease = this.newLease(request);
@@ -344,7 +344,7 @@ export class Server extends EventEmitter implements IServerEvents {
         }
 
         if (!lease) {
-            this.emit("error", Error("Get request for an non existing lease, you may extend offer timeout"));
+            this.emit("error", Error(`Get request for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
             return 0;
         }
 
