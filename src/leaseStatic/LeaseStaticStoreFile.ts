@@ -50,8 +50,8 @@ export class LeaseStaticStoreFile extends LeaseStaticStoreHelper implements ILea
         option = option || {};
         const debounceMs = option.debounceMs || 200;
         this.file = file;
-        this.save = debounce(() => this.saveConf(), debounceMs);
-        this.reload = debounce(() => this.reloadConf(), debounceMs);
+        this.save = debounce(() => this.saveConf(), debounceMs, false);
+        this.reload = debounce(() => this.reloadConf(), debounceMs, false);
         this.watch = option.watch || false;
         this.prettyPrint = option.prettyPrint || false;
         this.watcher = null;

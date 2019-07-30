@@ -20,7 +20,7 @@ export class LeaseLiveStoreFile extends LeaseLiveStoreHelper implements ILeaseLi
     constructor(file: string) {
         super();
         this.file = file;
-        this.save = debounce(() => this._save(), 300);
+        this.save = debounce(() => this._save(), 300, true);
         let data: ILeaseLive[];
         try {
             data = fse.readJSONSync(this.file);
