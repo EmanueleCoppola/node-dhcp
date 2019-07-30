@@ -2,6 +2,17 @@ import { ILeaseEx, ILeaseExTxt } from "./leaseStatic";
 import { IDHCPMessage, IDHCPMessageTxt, IOptionsId, IOptionsTxtOrId, OptionId } from "./model";
 import { getDHCPName } from "./options";
 
+const DHCP53Mapping = {
+    1: "DHCPDISCOVER",
+    2: "DHCPOFFER",
+    3: "DHCPREQUEST",
+    4: "DHCPDECLINE",
+    5: "DHCPACK",
+    6: "DHCPNAK",
+    7: "DHCPRELEASE",
+    8: "DHCPINFORM",
+};
+
 export class Helper {
 
     public static toLeaseExTxt(lease?: ILeaseEx | null): ILeaseExTxt | null {
@@ -29,12 +40,18 @@ export class Helper {
         for (const optionId of Object.keys(options)) {
             const name = getDHCPName(optionId);
             let value = options[optionId];
-            if (depth && (optionId === "55" || optionId === "60")) {
-                if (value instanceof Array) {
-                    value = value.map((id) => {
-                        const txt = getDHCPName(id);
-                        return txt || id;
-                    });
+            if (depth) {
+                if (optionId === "55" || optionId === "60") {
+                    if (value instanceof Array) {
+                        value = value.map((id) => {
+                            const txt = getDHCPName(id);
+                            return txt || id;
+                        });
+                    }
+                }
+                if (optionId === "53") {
+                    if (DHCP53Mapping[value])
+                        options[optionId] = DHCP53Mapping[value];
                 }
             }
             if (name)

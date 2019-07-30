@@ -314,6 +314,7 @@ export const getOptsMeta = (server?: Server): IOptionMetaMap => {
     },
     50: {  // RFC 2132 Sec 9.1
       // IP wish of client in DHCPDISCOVER
+      config: "requestedIpAddress",
       attr: "requestedIpAddress",
       name: "Requested IP Address",
       type: "IP",
