@@ -104,8 +104,6 @@ export class Server extends EventEmitter implements IServerEvents {
                         return; // nothink to do with incomming offer
                     case DHCP53Code.DHCPREQUEST: // 3
                         return await self.handle_Request(request);
-                    case DHCP53Code.DHCPDECLINE: // 4
-                        return console.error("Not implemented DHCPDECLINE");
                     case DHCP53Code.DHCPACK: // 5,
                         return; // nothink to do with incomming ACK
                     case DHCP53Code.DHCPNAK: // 6,
@@ -113,6 +111,7 @@ export class Server extends EventEmitter implements IServerEvents {
                     case DHCP53Code.DHCPRELEASE: // 7
                         return await self.handle_Release(request);
                     case DHCP53Code.DHCPINFORM: // 8
+                    case DHCP53Code.DHCPDECLINE: // 4
                     default:
                         this.emit("notImplemented", request);
                 }
