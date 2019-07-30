@@ -331,7 +331,7 @@ export class Server extends EventEmitter implements IServerEvents {
             lease = await this.leaseLive.getLeaseFromMac(chaddr);
             // nextLease = true;
         } else if (!lease) {
-            this.emit("error", Error(`Get request for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
+            this.emit("error", Error(`Get request from ${chaddr} for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
             return 0;
             // error;
             // lease = this.newLease(request);
@@ -343,7 +343,7 @@ export class Server extends EventEmitter implements IServerEvents {
         }
 
         if (!lease) {
-            this.emit("error", Error(`Get request for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
+            this.emit("error", Error(`Get request from ${chaddr} for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
             return 0;
         }
 
