@@ -315,13 +315,14 @@ export class Server extends EventEmitter implements IServerEvents {
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         const broadcast = this.getConfigBroadcast(request);
+        console.log(`offering ${lease.address} to ${chaddr}`); // debug
         return this._send(broadcast, ans);
     }
 
     public async handle_Request(request: IDHCPMessage): Promise<number> {
         const { chaddr } = request;
         let nextLease: boolean = false;
-
+        // from currently offered lease
         let lease = this.leaseOffer.pop(chaddr);
         if (lease) {
             nextLease = true;
