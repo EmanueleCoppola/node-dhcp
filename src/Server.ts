@@ -270,15 +270,18 @@ export class Server extends EventEmitter implements IServerEvents {
     }
 
     public async handle_Discover(request: IDHCPMessage): Promise<number> {
+        let debug = "??";
         const { chaddr } = request;
         const myIPStr = this.getServer(request);
         let nextLease: boolean = false;
         let lease = await this.leaseLive.getLeaseFromMac(chaddr);
         if (lease) {
+            debug = "from live";
             // extand lease time
             lease.expiration = this.genExpiration(request);
             await this.leaseLive.updateLease(lease);
         } else {
+            debug = "from new lease";
             lease = this.newLease(request);
             nextLease = true;
         }
@@ -287,6 +290,7 @@ export class Server extends EventEmitter implements IServerEvents {
         if (staticLease) {
             lease.address = staticLease.address;
             customOpts = staticLease.options || {};
+            debug += " Static";
         } else {
             let requestedIpAddress = request.options[OptionId.requestedIpAddress];
             if (requestedIpAddress) {
@@ -296,10 +300,12 @@ export class Server extends EventEmitter implements IServerEvents {
                 if (usedMe || usedStatic || usedLive)
                     requestedIpAddress = undefined;
             }
-            if (requestedIpAddress)
+            if (requestedIpAddress) {
                 lease.address = requestedIpAddress;
-            else
+                debug += " requestedIpAddress";
+            } else {
                 lease.address = await this.selectAddress(request.chaddr, request);
+            }
         }
         if (nextLease) {
             this.leaseOffer.add(lease);
@@ -315,7 +321,7 @@ export class Server extends EventEmitter implements IServerEvents {
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         const broadcast = this.getConfigBroadcast(request);
-        console.log(`offering ${lease.address} to ${chaddr}`); // debug
+        console.log(`offering ${lease.address} to ${chaddr} ${debug}`); // debug
         return this._send(broadcast, ans);
     }
 
