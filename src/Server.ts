@@ -322,6 +322,7 @@ export class Server extends EventEmitter implements IServerEvents {
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         const broadcast = this.getConfigBroadcast(request);
         console.log(`offering ${lease.address} to ${chaddr} ${debug}`); // debug
+        console.log(ans); // debug
         return this._send(broadcast, ans);
     }
 
