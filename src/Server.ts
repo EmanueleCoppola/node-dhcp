@@ -321,8 +321,8 @@ export class Server extends EventEmitter implements IServerEvents {
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         const broadcast = this.getConfigBroadcast(request);
-        console.log(`offering ${lease.address} to ${chaddr} ${debug}`); // debug
-        console.log(ans); // debug
+        console.log(`offering ${lease.address} to ${chaddr} ${debug} GW: ${ans.options[54]}`); // debug
+        // console.log(ans); // debug
         return this._send(broadcast, ans);
     }
 
@@ -330,6 +330,8 @@ export class Server extends EventEmitter implements IServerEvents {
         const { chaddr } = request;
         let nextLease: boolean = false;
         // from currently offered lease
+
+
         let lease = this.leaseOffer.pop(chaddr);
         if (lease) {
             nextLease = true;
@@ -376,6 +378,8 @@ export class Server extends EventEmitter implements IServerEvents {
         this.emit("bound", lease);
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
+        console.log(`Request ${ans.yiaddr} to ${chaddr} GW: ${ans.options[54]}`); // debug
+
         return this._send(this.getConfigBroadcast(request), ans);
     }
 
