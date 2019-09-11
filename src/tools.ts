@@ -97,7 +97,6 @@ export async function genericGetFreeIP(IP1: string, IP2: string, reservedSet: Ar
   const firstIP = parseIp(IP1);
   const lastIP = parseIp(IP2);
   const total = lastIP - firstIP;
-  let tested = 0;
   // Select a random IP, using prime number iterator
   if (rnd) {
     const prime = random(1000, 10000);
@@ -106,21 +105,23 @@ export async function genericGetFreeIP(IP1: string, IP2: string, reservedSet: Ar
       offset = (offset + prime) % total;
       const ip = firstIP + offset;
       const strIP = formatIp(ip);
-      tested++;
       for (const set of reservedSet)
         if (set.has(strIP))
           continue loop;
+      return strIP;
     }
   } else {
     // Choose first free IP in subnet
     loop: for (let ip = firstIP; ip <= lastIP; ip++) {
       const strIP = formatIp(ip);
-      tested++;
       for (const set of reservedSet)
         if (set.has(strIP))
           continue loop;
       return strIP;
     }
   }
-  throw Error(`${total} DHCP lease are full (${tested} IP tested)`);
+  let inUsed = 0;
+  for (const set of reservedSet)
+    inUsed += set.size;
+  throw Error(`${total} DHCP lease are full (${inUsed} reserved)`);
 }
