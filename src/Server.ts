@@ -18,6 +18,7 @@ const CLIENT_PORT = 68;
 
 /**
  * helper to build DHCPresponse
+ * prefill responce with common data
  */
 function toResponse(request: IDHCPMessage, options: IOptionsId): IDHCPMessage {
     return {
@@ -40,6 +41,7 @@ function toResponse(request: IDHCPMessage, options: IOptionsId): IDHCPMessage {
 }
 
 export interface IServerEvents {
+    on(event: "offer", listener: (message: IDHCPMessage) => void): this;
     on(event: "bound", listener: (bound: ILeaseLive) => void): this;
     on(event: "error", listener: (error: Error) => void): this;
     on(event: "warning", listener: (error: string) => void): this;
@@ -47,6 +49,7 @@ export interface IServerEvents {
     on(event: "message" | "notImplemented", listener: (message: IDHCPMessage) => void): this;
     on(event: "close", listener: () => void): this;
 
+    once(event: "offer", listener: (message: IDHCPMessage) => void): this;
     once(event: "bound", listener: (bound: ILeaseLive) => void): this;
     once(event: "error", listener: (error: Error) => void): this;
     once(event: "warning", listener: (error: string) => void): this;
@@ -270,18 +273,15 @@ export class Server extends EventEmitter implements IServerEvents {
     }
 
     public async handle_Discover(request: IDHCPMessage): Promise<number> {
-        let debug = "??";
         const { chaddr } = request;
         const myIPStr = this.getServer(request);
         let nextLease: boolean = false;
         let lease = await this.leaseLive.getLeaseFromMac(chaddr);
         if (lease) {
-            debug = "from live";
             // extand lease time
             lease.expiration = this.genExpiration(request);
             await this.leaseLive.updateLease(lease);
         } else {
-            debug = "from new lease";
             lease = this.newLease(request);
             nextLease = true;
         }
@@ -290,7 +290,6 @@ export class Server extends EventEmitter implements IServerEvents {
         if (staticLease) {
             lease.address = staticLease.address;
             customOpts = staticLease.options || {};
-            debug += " Static";
         } else {
             let requestedIpAddress = request.options[OptionId.requestedIpAddress];
             if (requestedIpAddress) {
@@ -302,7 +301,6 @@ export class Server extends EventEmitter implements IServerEvents {
             }
             if (requestedIpAddress) {
                 lease.address = requestedIpAddress;
-                debug += " requestedIpAddress";
             } else {
                 lease.address = await this.selectAddress(request.chaddr, request);
             }
@@ -321,8 +319,8 @@ export class Server extends EventEmitter implements IServerEvents {
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         const broadcast = this.getConfigBroadcast(request);
-        console.log(`offering ${lease.address} to ${chaddr} ${debug} GW: ${ans.options[54]}`); // debug
-        // console.log(ans); // debug
+        this.emit('offer', ans);
+        // console.log(`${chaddr} offering ${lease.address} ${debug} GW: ${ans.options[54]} for ${ans.options[OptionId.leaseTime]} sec`); // debug
         return this._send(broadcast, ans);
     }
 
@@ -330,7 +328,6 @@ export class Server extends EventEmitter implements IServerEvents {
         const { chaddr } = request;
         let nextLease: boolean = false;
         // from currently offered lease
-
 
         let lease = this.leaseOffer.pop(chaddr);
         if (lease) {
