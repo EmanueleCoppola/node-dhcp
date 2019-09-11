@@ -41,16 +41,16 @@ function toResponse(request: IDHCPMessage, options: IOptionsId): IDHCPMessage {
 }
 
 export interface IServerEvents {
-    on(event: "offer", listener: (message: IDHCPMessage) => void): this;
-    on(event: "bound", listener: (bound: ILeaseLive) => void): this;
+    on(event: "offer", listener: (request: IDHCPMessage, response: IDHCPMessage) => void): this;
+    on(event: "bound", listener: (request: IDHCPMessage, bound: ILeaseLive) => void): this;
     on(event: "error", listener: (error: Error) => void): this;
     on(event: "warning", listener: (error: string) => void): this;
     on(event: "listening", listener: (socket: Socket) => void): this;
     on(event: "message" | "notImplemented", listener: (message: IDHCPMessage) => void): this;
     on(event: "close", listener: () => void): this;
 
-    once(event: "offer", listener: (message: IDHCPMessage) => void): this;
-    once(event: "bound", listener: (bound: ILeaseLive) => void): this;
+    once(event: "offer", listener: (request: IDHCPMessage, response: IDHCPMessage) => void): this;
+    once(event: "bound", listener: (request: IDHCPMessage, bound: ILeaseLive) => void): this;
     once(event: "error", listener: (error: Error) => void): this;
     once(event: "warning", listener: (error: string) => void): this;
     once(event: "listening", listener: (socket: Socket) => void): this;
@@ -119,7 +119,7 @@ export class Server extends EventEmitter implements IServerEvents {
                         this.emit("notImplemented", request);
                 }
             } catch (e) {
-                console.error(e);
+                this.emit('error', e)
             }
         });
         socket.on("listening", () => self.emit("listening", socket));
@@ -154,7 +154,6 @@ export class Server extends EventEmitter implements IServerEvents {
         requested = requested || [];
         requireds = requireds.filter((o) => this.validOption(o));
         requested = requested.filter((o) => this.validOption(o));
-
         for (const optionId of requireds) {
             if (pre[optionId] !== undefined)
                 continue;
@@ -319,7 +318,7 @@ export class Server extends EventEmitter implements IServerEvents {
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         const broadcast = this.getConfigBroadcast(request);
-        this.emit('offer', ans);
+        this.emit('offer', request, ans);
         // console.log(`${chaddr} offering ${lease.address} ${debug} GW: ${ans.options[54]} for ${ans.options[OptionId.leaseTime]} sec`); // debug
         return this._send(broadcast, ans);
     }
@@ -337,7 +336,7 @@ export class Server extends EventEmitter implements IServerEvents {
             lease = await this.leaseLive.getLeaseFromMac(chaddr);
             // nextLease = true;
         } else if (!lease) {
-            this.emit("error", Error(`Get request from ${chaddr} for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
+            this.emit("error", Error(`Get request from ${chaddr} (${request.options[OptionId.hostname]}) for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
             return 0;
             // error;
             // lease = this.newLease(request);
@@ -349,7 +348,7 @@ export class Server extends EventEmitter implements IServerEvents {
         }
 
         if (!lease) {
-            this.emit("error", Error(`Get request from ${chaddr} for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
+            this.emit("error", Error(`Get request from ${chaddr} (${request.options[OptionId.hostname]}) for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
             return 0;
         }
 
@@ -372,7 +371,7 @@ export class Server extends EventEmitter implements IServerEvents {
         ans.ciaddr = request.ciaddr;
         ans.yiaddr = lease.address;
         ans.siaddr = this.getServer(request); // server ip, that's us
-        this.emit("bound", lease);
+        this.emit("bound", request, lease);
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         console.log(`Request ${ans.yiaddr} to ${chaddr} GW: ${ans.options[54]}`); // debug
