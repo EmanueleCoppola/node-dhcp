@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
  */
-import { genericGetFreeIP } from "../tools";
+import Tools from "../tools";
 import { ILeaseLive, LeaseLiveStoreHelper } from "./ILeaseLiveStore";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
 
@@ -63,6 +63,6 @@ export class LeaseLiveStoreMemory extends LeaseLiveStoreHelper implements ILease
     }
 
     public getFreeIP = (IP1: string, IP2: string, reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string> => {
-        return genericGetFreeIP(IP1, IP2, [...reserverd, this.address], randomIP);
+        return Tools.genericGetFreeIP(IP1, IP2, [...reserverd, this.address], randomIP);
     }
 }

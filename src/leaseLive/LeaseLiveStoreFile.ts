@@ -3,7 +3,7 @@
  */
 import debounce from "debounce";
 import * as fse from "fs-extra";
-import { genericGetFreeIP } from "../tools";
+import Tools from "../tools";
 import { ILeaseLive, LeaseLiveStoreHelper } from "./ILeaseLiveStore";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
 
@@ -94,7 +94,7 @@ export class LeaseLiveStoreFile extends LeaseLiveStoreHelper implements ILeaseLi
     }
 
     public getFreeIP = (IP1: string, IP2: string, reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string> => {
-        return genericGetFreeIP(IP1, IP2, [...reserverd, this.address], randomIP);
+        return Tools.genericGetFreeIP(IP1, IP2, [...reserverd, this.address], randomIP);
     }
 
     private _save() {
