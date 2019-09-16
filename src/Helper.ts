@@ -51,7 +51,7 @@ export class Helper {
                 }
                 if (optionId === "53") {
                     if (DHCP53Mapping[value])
-                        options[optionId] = DHCP53Mapping[value];
+                        optionsTxt[optionId] = DHCP53Mapping[value];
                 }
             }
             if (name)

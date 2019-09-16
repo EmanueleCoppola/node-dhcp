@@ -74,15 +74,15 @@ export class Server extends EventEmitter implements IServerEvents {
     constructor(config: IServerConfigValid, listenOnly?: boolean) {
         super();
         const self = this;
-        const socket = createSocket({ type: "udp4", reuseAddr: true });
+        // const socket = createSocket({ type: "udp4", reuseAddr: true });
         this.config = config;
         this.leaseLive = config.leaseLive || new LeaseLiveStoreMemory();
         this.leaseOffer = config.leaseOffer || new LeaseOfferStoreMemory();
         this.leaseStatic = config.leaseStatic || new LeaseStaticStoreMemory({});
-        this.socket = socket;
+        this.socket = createSocket({ type: "udp4", reuseAddr: true });
         this.optsMeta = getOptsMeta(this);
 
-        socket.on("message", async (buf: Buffer) => {
+        this.socket.on("message", async (buf: Buffer) => {
             let request: IDHCPMessage;
             try {
                 request = parse(buf);
@@ -93,7 +93,6 @@ export class Server extends EventEmitter implements IServerEvents {
                 return self.emit("error", new Error("Malformed packet"), request);
             if (!request.options[OptionId.dhcpMessageType])
                 return self.emit("error", new Error("Got message, without valid message type"), request);
-
             self.emit("message", request);
             if (listenOnly)
                 return;
@@ -122,8 +121,8 @@ export class Server extends EventEmitter implements IServerEvents {
                 this.emit('error', e)
             }
         });
-        socket.on("listening", () => self.emit("listening", socket));
-        socket.on("close", () => self.emit("close"));
+        this.socket.on("listening", () => self.emit("listening", this.socket));
+        this.socket.on("close", () => self.emit("close"));
         // process.on("SIGINT", () => self.close());
     }
 
