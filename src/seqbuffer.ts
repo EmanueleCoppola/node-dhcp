@@ -23,7 +23,7 @@ export default class SeqBuffer {
   public r: number;
   public w: number;
 
-  constructor(buf?: Buffer, len?: number) {
+  constructor(buf?: Buffer | null, len?: number) {
     this.buffer = buf || Buffer.alloc(len || 1500); // alloc() fills the buffer with '0'
     this.r = 0;
     this.w = 0;
@@ -287,6 +287,13 @@ export default class SeqBuffer {
 
   public getASCII(len: number): string {
     return trimZero(this.buffer.toString("ascii", this.r, this.r += len));
+  }
+
+
+  public addIPs(ips: string[]): SeqBuffer {
+    for (const ip of ips)
+      this.addIP(ip);
+    return this;
   }
 
   public addIP(ip: string): SeqBuffer {

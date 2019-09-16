@@ -29,7 +29,16 @@
             "outFiles": [
                 "${workspaceFolder}/lib/**/*.js"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Mocha current",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "args": ["-r", "ts-node/register", "${relativeFile}"],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "protocol": "inspector"
         }
-
     ]
 }

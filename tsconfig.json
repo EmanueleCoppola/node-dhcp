@@ -9,7 +9,7 @@
         "esModuleInterop": true,
         "sourceMap": true,
         "outDir": "lib",
-        "allowJs": false,
+        "allowJs": false
     },
     "include": [
         "./src/**/*"

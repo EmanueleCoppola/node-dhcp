@@ -113,9 +113,13 @@ export class Server extends EventEmitter implements IServerEvents {
                     case DHCP53Code.DHCPRELEASE: // 7
                         return await self.handle_Release(request);
                     case DHCP53Code.DHCPINFORM: // 8
+                        this.emit("notImplemented", "DHCPINFORM");
+                        return;
                     case DHCP53Code.DHCPDECLINE: // 4
+                        this.emit("notImplemented", "DHCPDECLINE");
+                        return;
                     default:
-                        this.emit("notImplemented", request);
+                        this.emit("error", request);
                 }
             } catch (e) {
                 this.emit("error", e);
