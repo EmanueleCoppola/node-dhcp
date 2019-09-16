@@ -11,7 +11,6 @@ import { Client } from "./Client";
 import { ClientConfig, IClientConfig } from "./ClientConfig";
 import { Server } from "./Server";
 import { IServerConfig, newServerConfig } from "./ServerConfig";
-
 export { IClientConfig } from "./ClientConfig";
 export { IServerConfig } from "./ServerConfig";
 export { Client } from "./Client";
@@ -23,6 +22,7 @@ export { OptionId, IDHCPMessage, IDHCPMessageTxt, IDHCPOptionsFncId } from "./mo
 export { IOptionsTxtOrId, IOptionsTxt, IOptionsId } from "./model";
 export { getDHCPName, getDHCPId } from "./options";
 export { Helper } from "./Helper";
+export { Tools } from "./tools";
 
 export const createBroadcastHandler = (): Server => new Server(newServerConfig({ range: ["0.0.0.0", "0.0.0.1"] }), true);
 export const createClient = (opt: IClientConfig): Client => new Client(new ClientConfig(opt));

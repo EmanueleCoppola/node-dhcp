@@ -4,7 +4,7 @@ import { ClientConfig } from "./ClientConfig";
 import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, IOptionsId, OptionId } from "./model";
 import { optsMetaDefault } from "./options";
 import * as Protocol from "./protocol";
-import * as Tools from "./tools";
+import Tools from "./tools";
 
 const SERVER_PORT = 67;
 const CLIENT_PORT = 68;

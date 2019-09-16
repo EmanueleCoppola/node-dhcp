@@ -10,7 +10,7 @@ import { getDHCPId, getDHCPName, getOptsMeta, IOptionMetaMap } from "./options";
 import { random } from "./prime";
 import { format, parse } from "./protocol";
 import { IServerConfigValid } from "./ServerConfig";
-import { formatIp, parseIp } from "./tools";
+import Tools from "./tools";
 
 const INADDR_ANY = "0.0.0.0";
 const SERVER_PORT = 67;
@@ -119,7 +119,7 @@ export class Server extends EventEmitter implements IServerEvents {
                         this.emit("notImplemented", request);
                 }
             } catch (e) {
-                this.emit('error', e)
+                this.emit("error", e);
             }
         });
         socket.on("listening", () => self.emit("listening", socket));
@@ -238,11 +238,11 @@ export class Server extends EventEmitter implements IServerEvents {
             throw Error("DHCP is full");
         }
 
-        const firstIP = parseIp(firstIPstr);
-        const lastIP = parseIp(lastIPStr);
+        const firstIP = Tools.parseIp(firstIPstr);
+        const lastIP = Tools.parseIp(lastIPStr);
 
         // Exclude our own server IP from pool
-        const myIP: number = parseIp(myIPStr);
+        const myIP: number = Tools.parseIp(myIPStr);
         // Select a random IP, using prime number iterator
         if (randIP) {
             let total = lastIP - firstIP;
@@ -253,7 +253,7 @@ export class Server extends EventEmitter implements IServerEvents {
                 const ip = firstIP + offset;
                 if (ip === myIP)
                     continue;
-                const strIP = formatIp(ip);
+                const strIP = Tools.formatIp(ip);
                 if (staticSerserve.has(strIP))
                     continue;
                 if (await this.leaseLive.hasAddress(strIP))
@@ -263,7 +263,7 @@ export class Server extends EventEmitter implements IServerEvents {
         } else {
             // Choose first free IP in subnet
             for (let ip = firstIP; ip <= lastIP; ip++) {
-                const strIP = formatIp(ip);
+                const strIP = Tools.formatIp(ip);
                 if (!await this.leaseLive.hasAddress(strIP))
                     return strIP;
             }
@@ -318,7 +318,7 @@ export class Server extends EventEmitter implements IServerEvents {
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
         const broadcast = this.getConfigBroadcast(request);
-        this.emit('offer', request, ans);
+        this.emit("offer", request, ans);
         // console.log(`${chaddr} offering ${lease.address} ${debug} GW: ${ans.options[54]} for ${ans.options[OptionId.leaseTime]} sec`); // debug
         return this._send(broadcast, ans);
     }
@@ -336,7 +336,9 @@ export class Server extends EventEmitter implements IServerEvents {
             lease = await this.leaseLive.getLeaseFromMac(chaddr);
             // nextLease = true;
         } else if (!lease) {
-            this.emit("error", Error(`Get request from ${chaddr} (${request.options[OptionId.hostname]}) for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
+            const hn = request.options[OptionId.hostname];
+            const to = this.leaseOffer.getTimeOut();
+            this.emit("error", Error(`Get request from ${chaddr} (${hn}) for an non existing lease, you may extend offer timeout (${to})`));
             return 0;
             // error;
             // lease = this.newLease(request);
@@ -348,7 +350,9 @@ export class Server extends EventEmitter implements IServerEvents {
         }
 
         if (!lease) {
-            this.emit("error", Error(`Get request from ${chaddr} (${request.options[OptionId.hostname]}) for an non existing lease, you may extend offer timeout (${this.leaseOffer.getTimeOut()})`));
+            const hn = request.options[OptionId.hostname];
+            const to = this.leaseOffer.getTimeOut();
+            this.emit("error", Error(`Get request from ${chaddr} (${hn}) for an non existing lease, you may extend offer timeout (${to})`));
             return 0;
         }
 

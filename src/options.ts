@@ -10,7 +10,7 @@
 
 import { IDHCPMessage, IOptionsTxt, OptionId } from "./model";
 import { Server } from "./Server";
-import * as Tools from "./tools";
+import Tools from "./tools";
 
 // RFC 1533: https://tools.ietf.org/html/rfc1533
 // RFC 2132: https://tools.ietf.org/html/rfc2132
