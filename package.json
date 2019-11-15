@@ -23,7 +23,8 @@
   "contributors": [
     "Robert Eisele <robert@xarg.org> (http://www.xarg.org/)"
   ],
-  "main": "lib/dhcp.js",
+  "main": "./lib/dhcp.js",
+  "types": "./lib/dhcp.d.ts",
   "private": false,
   "readmeFilename": "README.md",
   "directories": {
@@ -45,7 +46,10 @@
     "node": ">=8.0.0"
   },
   "scripts": {
-    "test": "mocha tests/*.js"
+    "test": "mocha tests/*.js",
+    "build": "tsc -p .",
+    "build:watch": "tsc --watch -p .",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@types/chai": "^4.2.2",
