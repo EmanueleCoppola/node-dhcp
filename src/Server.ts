@@ -1,5 +1,5 @@
 /* tslint:disable no-console */
-import { createSocket, Socket } from "dgram";
+import { createSocket, Socket, RemoteInfo } from "dgram";
 import { EventEmitter } from "events";
 import { ILeaseLive } from "./leaseLive";
 import { ILeaseLiveStore, LeaseLiveStoreMemory } from "./leaseLive";
@@ -15,6 +15,15 @@ import Tools from "./tools";
 const INADDR_ANY = "0.0.0.0";
 const SERVER_PORT = 67;
 const CLIENT_PORT = 68;
+
+// npm install --save @saleae/ffi
+// const ffi = require('@saleae/ffi');
+// const current = ffi.Library(null, {
+//    'setsockopt': ['int', ['int', 'int', 'int', 'string', 'int']]
+// });
+// npm install --save raw-socket
+// const raw = require ("raw-socket");
+
 
 /**
  * helper to build DHCPresponse
@@ -62,7 +71,9 @@ export interface IServerEvents {
  * Mains DHCP server class
  */
 export class Server extends EventEmitter implements IServerEvents {
-    private socket: Socket | null;
+    private socketIn: Socket | null;
+    // is null by default, but can be enabled by calling listenOut
+    private socketOut: Socket | null;
     // Config (cache) object
     private config: IServerConfigValid;
     // actif Lease
@@ -79,13 +90,23 @@ export class Server extends EventEmitter implements IServerEvents {
         this.leaseLive = config.leaseLive || new LeaseLiveStoreMemory();
         this.leaseOffer = config.leaseOffer || new LeaseOfferStoreMemory();
         this.leaseStatic = config.leaseStatic || new LeaseStaticStoreMemory({});
-        this.socket = createSocket({
-            type: "udp4",
-            reuseAddr: true // enable SO_REUSEADDR and SO_REUSEPORT
-        });
+        // enable SO_REUSEADDR and SO_REUSEPORT
+        this.socketIn = createSocket({ type: "udp4", reuseAddr: true });
+        this.socketOut = null;
+        //createSocket({ type: "udp4", reuseAddr: true });
+        //this.socketIn = raw.createSocket({
+        //    addressFamily: raw.AddressFamily.IPv4,
+        //    protocol: raw.Protocol.UDP,
+        //    bufferSize: 4096,
+        //    generateChecksums: false,
+        //    checksumOffset: 0});
+        //if (!this.socketIn)
+        //    throw Error('Failed to Create socket');
+        //this.socketOut = raw.createSocket({type: "udp4", reuseAddr: true});
+
         this.optsMeta = getOptsMeta(this);
 
-        this.socket.on("message", async (buf: Buffer) => {
+        this.socketIn.on("message", async (buf: Buffer) => {
             let request: IDHCPMessage;
             try {
                 request = parse(buf);
@@ -128,8 +149,21 @@ export class Server extends EventEmitter implements IServerEvents {
                 this.emit("error", e);
             }
         });
-        this.socket.on("listening", () => self.emit("listening", this.socket));
-        this.socket.on("close", () => self.emit("close"));
+        this.socketIn.on("listening", () => {
+            /*const iface = 'intel3';
+            if (iface) {
+                const SOL_SOCKET = 1;
+                const SO_BINDTODEVICE = 25;
+                console.dir(this.socketIn);
+                let fd = (this.socketIn as any)._handle.fd;
+                var r = current.setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, iface, 4);
+                if (r === -1)
+                    throw new Error("getsockopt(SO_BINDTODEVICE) error " + r);
+            }
+            */
+            self.emit("listening", this.socketIn)
+        });
+        this.socketIn.on("close", () => self.emit("close"));
         // process.on("SIGINT", () => self.close());
     }
 
@@ -419,24 +453,50 @@ export class Server extends EventEmitter implements IServerEvents {
         return this._send(this.getConfigBroadcast(request), ans);
     }
 
-    public listen(port?: number, host?: string): Promise<void> {
-        const { socket } = this;
-        if (!socket)
+    public async listen(port?: number, host?: string, iface?: string): Promise<void> {
+        // await this.listenOut(port, host);
+        await this.listenIn(port, host, iface);
+    }
+    /**
+     * https://github.com/infusion/node-dhcp/issues/37
+     * see void  bindtodevice(char *device, int fd) from dnsmask
+     */
+    public async listenIn(port?: number, host?: string, iface?: string): Promise<void> {
+        const { socketIn } = this;
+        if (!socketIn)
             throw Error("Socket had been destry!");
-        return new Promise((resolve) => {
-            socket.bind({ port: port || SERVER_PORT, address: host || INADDR_ANY }, () => {
-                socket.setBroadcast(true);
+        await new Promise((resolve) => {
+            socketIn.bind({ port: port || SERVER_PORT, address: host || INADDR_ANY }, () => {
+                socketIn.setBroadcast(true);
                 resolve();
             });
         });
     }
 
-    public close(): Promise<any> {
-        const { socket } = this;
-        if (!socket)
-            return Promise.resolve();
-        this.socket = null;
-        return new Promise((resolve) => socket.close(resolve));
+    public async listenOut(port?: number, host?: string): Promise<void> {
+        if (!this.socketOut) {
+            this.socketOut = createSocket({ type: "udp4", reuseAddr: true });
+        }
+        const { socketOut } = this;
+        if (!socketOut)
+            throw Error("Socket had been destry!");
+        await new Promise((resolve) => {
+            socketOut.bind({ port: port || SERVER_PORT, address: host || INADDR_ANY }, () => {
+                socketOut.setBroadcast(true);
+                resolve();
+            });
+        });
+    }
+
+    public async close(): Promise<any> {
+        const { socketIn } = this;
+        this.socketIn = null;
+        if (socketIn)
+            await new Promise((resolve) => socketIn.close(resolve));
+        const { socketOut } = this;
+        this.socketOut = null;
+        if (socketOut)
+            await new Promise((resolve) => socketOut.close(resolve));
     }
 
     /**
@@ -489,7 +549,7 @@ export class Server extends EventEmitter implements IServerEvents {
     }
 
     private _send(host: string, data: IDHCPMessage): Promise<number> {
-        const { socket } = this;
+        const socket = this.socketOut || this.socketIn;
         if (!socket)
             throw Error("Socket had bee closed");
         return new Promise((resolve, reject) => {
