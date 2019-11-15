@@ -37,7 +37,6 @@ export class LeaseStaticStoreFile extends LeaseStaticStoreHelper implements ILea
     public save: () => void;
     public reload: () => void;
 
-    private file: string;
     private tags: { [key: string]: IOptionsTxtOrId };
     private data: { [key: string]: ILeaseExStr };
     private set: Set<string>;
@@ -45,11 +44,10 @@ export class LeaseStaticStoreFile extends LeaseStaticStoreHelper implements ILea
     private prettyPrint: boolean;
     private watcher: fs.FSWatcher | null;
 
-    constructor(file: string, option?: { watch?: boolean, debounceMs?: number, prettyPrint?: boolean }) {
+    constructor(private file: string, option?: { watch?: boolean, debounceMs?: number, prettyPrint?: boolean }) {
         super();
         option = option || {};
         const debounceMs = option.debounceMs || 200;
-        this.file = file;
         this.save = debounce(() => this.saveConf(), debounceMs, false);
         this.reload = debounce(() => this.reloadConf(), debounceMs, false);
         this.watch = option.watch || false;
@@ -136,7 +134,10 @@ export class LeaseStaticStoreFile extends LeaseStaticStoreHelper implements ILea
                 .then(() => this.watchConf());
         }
     }
-
+    /**
+     * add default values to a configuration
+     * @param fileData 
+     */
     private fillConf(fileData?: IStaticLeaseModel | null): IStaticLeaseModel {
         fileData = fileData || {} as IStaticLeaseModel;
         if (!fileData.tags)

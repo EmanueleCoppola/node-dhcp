@@ -79,7 +79,10 @@ export class Server extends EventEmitter implements IServerEvents {
         this.leaseLive = config.leaseLive || new LeaseLiveStoreMemory();
         this.leaseOffer = config.leaseOffer || new LeaseOfferStoreMemory();
         this.leaseStatic = config.leaseStatic || new LeaseStaticStoreMemory({});
-        this.socket = createSocket({ type: "udp4", reuseAddr: true });
+        this.socket = createSocket({
+            type: "udp4",
+            reuseAddr: true // enable SO_REUSEADDR and SO_REUSEPORT
+        });
         this.optsMeta = getOptsMeta(this);
 
         this.socket.on("message", async (buf: Buffer) => {

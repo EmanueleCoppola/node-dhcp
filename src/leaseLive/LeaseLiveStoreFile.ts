@@ -15,11 +15,8 @@ export interface IFlushEvent {
 export class LeaseLiveStoreFile extends LeaseLiveStoreHelper implements ILeaseLiveStore, IFlushEvent {
     public save: () => void;
 
-    private file: string;
-
-    constructor(file: string) {
+    constructor(private file: string) {
         super();
-        this.file = file;
         this.save = debounce(() => this._save(), 300, true);
         let data: ILeaseLive[];
         try {
