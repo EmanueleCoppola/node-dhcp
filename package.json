@@ -21,7 +21,8 @@
   ],
   "author": "Uriel Chemouni <uchemouni@gmail.com>",
   "contributors": [
-    "Robert Eisele <robert@xarg.org> (http://www.xarg.org/)"
+    "Robert Eisele <robert@xarg.org> (http://www.xarg.org/)",
+    "Uriel Chemouni <uchemouni@gmail.com>"
   ],
   "main": "./lib/dhcp.js",
   "types": "./lib/dhcp.d.ts",
@@ -37,6 +38,9 @@
   "repository": {
     "type": "git",
     "url": "git://github.com/urielch/node-dhcp.git"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "bin": {
     "dhcp": "./bin/dhcp-cli.js",
@@ -65,5 +69,6 @@
   "dependencies": {
     "debounce": "^1.2.0",
     "fs-extra": "^8.1.0"
-  }
+  },
+  "files": ["bin", "lib"]
 }
