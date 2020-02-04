@@ -10,6 +10,7 @@ import { ILeaseLiveStore } from "./ILeaseLiveStore";
 export interface IFlushEvent {
     on(event: "save", listener: (file: string, nbLease: number) => void): this;
     once(event: "save", listener: (file: string, nbLease: number) => void): this;
+    emit(event: "save", file: string, nbLease: number): boolean;
 }
 
 export class LeaseLiveStoreFile extends LeaseLiveStoreHelper implements ILeaseLiveStore, IFlushEvent {

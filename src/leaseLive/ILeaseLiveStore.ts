@@ -54,6 +54,7 @@ export interface ILeaseLiveStore {
   release(mac: string): Promise<ILeaseLive | null>;
   on(event: "expire", listener: (bound: ILeaseLive) => void): this;
   once(event: "expire", listener: (bound: ILeaseLive) => void): this;
+  emit(event: "expire", bound: ILeaseLive): boolean;
 }
 
 export abstract class LeaseLiveStoreHelper extends EventEmitter implements ILeaseLiveStore {
