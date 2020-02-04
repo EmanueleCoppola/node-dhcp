@@ -70,5 +70,8 @@
     "debounce": "^1.2.0",
     "fs-extra": "^8.1.0"
   },
-  "files": ["bin", "lib"]
+  "files": [
+    "bin",
+    "lib"
+  ]
 }
