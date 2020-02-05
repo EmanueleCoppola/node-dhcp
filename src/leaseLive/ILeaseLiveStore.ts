@@ -1,4 +1,6 @@
 import { EventEmitter } from "events";
+import { IpRange } from "../IpRange";
+import { IpConfiguration } from "../model";
 
 /**
  * Copyright (c) 2019, Uriel Chemouni (uchemouni@gmail.com)
@@ -30,7 +32,7 @@ export interface ILeaseLiveStore {
   /**
    * find a free IP address
    */
-  getFreeIP?: (firstIPstr: string, lastIPStr: string, reserverd: Array<Set<string>>, randomIP?: boolean) => Promise<string>;
+  getFreeIP?: (ranges: IpRange, reserverd: Array<Set<string>>, randomIP?: boolean) => Promise<IpConfiguration>;
   /**
    * get the existing lease for a mac
    */
@@ -64,7 +66,7 @@ export abstract class LeaseLiveStoreHelper extends EventEmitter implements ILeas
   /**
    * find a free IP address
    */
-  public abstract getFreeIP?: (firstIPstr: string, lastIPStr: string, reserverd: Array<Set<string>>, randomIP?: boolean) => Promise<string>;
+  public abstract getFreeIP?: (ranges: IpRange, reserverd: Array<Set<string>>, randomIP?: boolean) => Promise<IpConfiguration>;
   private oldest: ILeaseLive | null;
   private timer: NodeJS.Timeout | null;
 

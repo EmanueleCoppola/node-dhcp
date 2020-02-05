@@ -5,12 +5,13 @@ import { ILeaseLive } from "./leaseLive";
 import { ILeaseLiveStore, LeaseLiveStoreMemory } from "./leaseLive";
 import { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
 import { ILeaseStaticStore, LeaseStaticStoreMemory } from "./leaseStatic";
-import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, IOptionsId, OptionId } from "./model";
+import { BootCode, DHCP53Code, HardwareType, IDHCPMessage, IOptionsId, OptionId, IpConfiguration } from "./model";
 import { getDHCPId, getDHCPName, getOptsMeta, IOptionMetaMap } from "./options";
 import { random } from "./prime";
 import { format, parse } from "./protocol";
 import { IServerConfigValid } from "./ServerConfig";
 import Tools from "./tools";
+import { IpRange } from "./IpRange";
 
 const INADDR_ANY = "0.0.0.0";
 const SERVER_PORT = 67;
@@ -47,6 +48,13 @@ function toResponse(request: IDHCPMessage, options: IOptionsId): IDHCPMessage {
         file: "",
         options,
     } as IDHCPMessage;
+}
+
+function getParameterRequestList(request: IDHCPMessage): Set<number> | undefined {
+    const requested = request.options[OptionId.dhcpParameterRequestList];
+    if (!requested)
+        return;
+    return new Set(requested);
 }
 
 export interface IServerEvents {
@@ -188,12 +196,11 @@ export class Server extends EventEmitter implements IServerEvents {
         return false;
     }
 
-    public getOptions(request: IDHCPMessage, pre: IOptionsId, customOpts: IOptionsId, requireds: number[], requested?: number[]): IOptionsId {
+    public getOptions(request: IDHCPMessage, pre: IOptionsId, customOpts: IOptionsId, requireds: number[], requested?: Set<number>): IOptionsId {
         // Check if option id actually exists
         customOpts = customOpts || {};
-        requested = requested || [];
-        requireds = requireds.filter((o) => this.validOption(o));
-        requested = requested.filter((o) => this.validOption(o));
+        // requested = requested || [];
+        // drop non exiting options
         for (const optionId of requireds) {
             if (pre[optionId] !== undefined)
                 continue;
@@ -207,7 +214,10 @@ export class Server extends EventEmitter implements IServerEvents {
         }
 
         // Add all values, the user wants, which are not already provided:
+        if (requested)
         for (const optionId of requested) {
+            if (this.validOption(optionId))
+                continue;
             if (pre[optionId] !== undefined)
                 continue;
             let val = customOpts[optionId];
@@ -242,7 +252,7 @@ export class Server extends EventEmitter implements IServerEvents {
         return pre;
     }
 
-    public async selectAddress(clientMAC: string, request: IDHCPMessage): Promise<string> {
+    public async selectAddress(clientMAC: string, request: IDHCPMessage): Promise<IpConfiguration> {
         /**
          * IP Selection algorithm:
          *
@@ -260,37 +270,37 @@ export class Server extends EventEmitter implements IServerEvents {
          */
         const l1 = await this.leaseLive.getLeaseFromMac(clientMAC);
         if (l1 && l1.address) {
-            return l1.address;
+            return this.getRange(request).fill(l1.address);
         }
 
         /**
          * find a free IP
          */
         const randIP = this.getRandomIP(request);
-        const [firstIPstr, lastIPStr] = this.getRange(request) as string[];
+        const ranges = this.getRange(request);
         const myIPStr = this.getServer(request);
 
         const staticSerserve = this.leaseStatic.getReservedIP();
         if (this.leaseLive.getFreeIP) {
-            const strIP = await this.leaseLive.getFreeIP(firstIPstr, lastIPStr, [new Set(myIPStr), staticSerserve], randIP);
+            const strIP = await this.leaseLive.getFreeIP(ranges, [new Set(myIPStr), staticSerserve], randIP);
             if (strIP)
                 return strIP;
             throw Error("DHCP is full");
         }
 
-        const firstIP = Tools.parseIp(firstIPstr);
-        const lastIP = Tools.parseIp(lastIPStr);
+        //const firstIP = Tools.parseIp(firstIPstr);
+        //const lastIP = Tools.parseIp(lastIPStr);
 
         // Exclude our own server IP from pool
         const myIP: number = Tools.parseIp(myIPStr);
         // Select a random IP, using prime number iterator
+        let total = ranges.size();
         if (randIP) {
-            let total = lastIP - firstIP;
             const p = random(1000, 10000);
             let offset = 0;
             while (total--) {
                 offset = (offset + p) % total;
-                const ip = firstIP + offset;
+                const ip = ranges.getIPNum(offset);
                 if (ip === myIP)
                     continue;
                 const strIP = Tools.formatIp(ip);
@@ -298,14 +308,14 @@ export class Server extends EventEmitter implements IServerEvents {
                     continue;
                 if (await this.leaseLive.hasAddress(strIP))
                     continue;
-                return strIP;
+                return this.getRange(request).fill(strIP);
             }
         } else {
             // Choose first free IP in subnet
-            for (let ip = firstIP; ip <= lastIP; ip++) {
-                const strIP = Tools.formatIp(ip);
+            for (let offset = 0; offset < total; offset++) {
+                const strIP = ranges.getIPStr(offset);
                 if (!await this.leaseLive.hasAddress(strIP))
-                    return strIP;
+                    return this.getRange(request).fill(strIP);
             }
         }
         throw Error("DHCP is full");
@@ -326,6 +336,8 @@ export class Server extends EventEmitter implements IServerEvents {
         }
         const staticLease = this.leaseStatic.getLeaseFromMac(request.chaddr, request);
         let customOpts: IOptionsId = {};
+
+        let ipConf: IpConfiguration | undefined;
         if (staticLease) {
             lease.address = staticLease.address;
             customOpts = staticLease.options || {};
@@ -341,15 +353,32 @@ export class Server extends EventEmitter implements IServerEvents {
             if (requestedIpAddress) {
                 lease.address = requestedIpAddress;
             } else {
-                lease.address = await this.selectAddress(request.chaddr, request);
+                ipConf = await this.selectAddress(request.chaddr, request);
+                lease.address = ipConf.ip;
             }
         }
         if (nextLease) {
             this.leaseOffer.add(lease);
         }
-        const pre = { [OptionId.dhcpMessageType]: DHCP53Code.DHCPOFFER };
+
         const requireds = [OptionId.netmask, OptionId.router, OptionId.leaseTime, OptionId.server, OptionId.dns];
-        const requested = request.options[OptionId.dhcpParameterRequestList];
+        const requested = getParameterRequestList(request);
+
+        let broadcast = this.getConfigBroadcast(request);
+
+        const pre = { [OptionId.dhcpMessageType]: DHCP53Code.DHCPOFFER };
+        if (ipConf) {
+            if (ipConf.broadcast) {
+                broadcast = ipConf.broadcast;
+                if (requested?.has(OptionId.broadcast))
+                    pre[OptionId.broadcast] = ipConf.broadcast;
+            }
+            if (ipConf.netmask)
+                pre[OptionId.netmask] = ipConf.netmask;
+            if (ipConf.router)
+                pre[OptionId.router] = ipConf.router;
+        }
+
         const options = this.getOptions(request, pre, customOpts, requireds, requested);
         const ans = toResponse(request, options);
         ans.ciaddr = INADDR_ANY;
@@ -357,7 +386,6 @@ export class Server extends EventEmitter implements IServerEvents {
         ans.siaddr = this.getServer(request); // next server in bootstrap. That's us;
         // Send the actual data
         // INADDR_BROADCAST : 68 <- SERVER_IP : 67
-        const broadcast = this.getConfigBroadcast(request);
         this.emit("offer", request, ans);
         // console.log(`${chaddr} offering ${lease.address} ${debug} GW: ${ans.options[54]} for ${ans.options[OptionId.leaseTime]} sec`); // debug
         return this._send(broadcast, ans);
@@ -396,20 +424,34 @@ export class Server extends EventEmitter implements IServerEvents {
             return 0;
         }
 
+        let ipConf: IpConfiguration | undefined;
         const staticLease = this.leaseStatic.getLeaseFromMac(request.chaddr, request);
         let customOpts: IOptionsId = {};
         if (staticLease) {
             lease.address = staticLease.address;
             customOpts = staticLease.options || {};
         } else {
-            lease.address = await this.selectAddress(chaddr, request);
+            ipConf = await this.selectAddress(chaddr, request);
+            lease.address = ipConf.ip;
         }
         if (nextLease) {
             this.leaseLive.add(lease);
         }
         const pre = { [OptionId.dhcpMessageType]: DHCP53Code.DHCPACK };
         const requireds = [OptionId.netmask, OptionId.router, OptionId.leaseTime, OptionId.server, OptionId.dns];
-        const requested = request.options[OptionId.dhcpParameterRequestList];
+        const requested = getParameterRequestList(request);
+
+        if (ipConf) {
+            if (ipConf.broadcast) {
+                if (requested?.has(OptionId.broadcast))
+                    pre[OptionId.broadcast] = ipConf.broadcast;
+            }
+            if (ipConf.netmask) // mandatory
+                pre[OptionId.netmask] = ipConf.netmask;
+            if (ipConf.router) // mandatory
+                pre[OptionId.router] = ipConf.router;
+        }
+
         const options = this.getOptions(request, pre, customOpts, requireds, requested);
         const ans = toResponse(request, options);
         ans.ciaddr = request.ciaddr;
@@ -519,7 +561,7 @@ export class Server extends EventEmitter implements IServerEvents {
         return val;
     }
 
-    public getRange(requested: IDHCPMessage): string[] {
+    public getRange(requested: IDHCPMessage): IpRange {
         const val = this.config.range;
         if (typeof val === "function")
             return val(requested);

@@ -1,0 +1,10 @@
+{
+    "files.exclude": {
+        "**/.cache": false,
+        "**/*.map": false,
+        "**/*.d.ts": false,
+        "**/*.js": false,
+        "lib": true,
+        "**/node_modules": true
+    }
+}

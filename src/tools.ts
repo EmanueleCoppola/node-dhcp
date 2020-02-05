@@ -1,6 +1,8 @@
 /* tslint:disable no-bitwise */
 
 import { random } from "./prime";
+import { IpRange } from "./IpRange";
+import { IpConfiguration } from "./model";
 
 export class Tools {
   public static parseIp(str: string | number): number {
@@ -105,31 +107,31 @@ export class Tools {
   }
 
   public static async genericGetFreeIP(
-    IP1: string,
-    IP2: string,
+    ranges: IpRange,
     reservedSet: Array<Set<string>>,
     rnd?: boolean,
-  ): Promise<string> {
-    const firstIP = Tools.parseIp(IP1);
-    const lastIP = Tools.parseIp(IP2);
-    const total = lastIP - firstIP;
+  ): Promise<IpConfiguration> {
+    //const firstIP = Tools.parseIp(IP1);
+    //const lastIP = Tools.parseIp(IP2);
+    const total = ranges.size();
     // Select a random IP, using prime number iterator
     if (rnd) {
       const prime = random(1000, 10000);
       let offset = 0;
       loop: for (let i = 0; i < total; i++) {
         offset = (offset + prime) % total;
-        const ip = firstIP + offset;
-        const strIP = Tools.formatIp(ip);
+        //const ip = firstIP + offset;
+        const strIP = ranges.getIPStr(offset);
+        // Tools.formatIp(ip);
         for (const set of reservedSet) if (set.has(strIP)) continue loop;
-        return strIP;
+        return ranges.getIP(offset) as IpConfiguration;
       }
     } else {
       // Choose first free IP in subnet
-      loop: for (let ip = firstIP; ip <= lastIP; ip++) {
-        const strIP = Tools.formatIp(ip);
+      loop: for (let offset = 0; offset < total; offset++) {
+        const strIP = ranges.getIPStr(offset);
         for (const set of reservedSet) if (set.has(strIP)) continue loop;
-        return strIP;
+        return ranges.getIP(offset) as IpConfiguration;
       }
     }
     let inUsed = 0;

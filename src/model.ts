@@ -23,6 +23,14 @@ type _UInt8 = number;
 type _ASCII = string;
 type _IPv4orDNS = string[] | string;
 
+
+export interface IpConfiguration {
+  ip: string;
+  netmask: string;
+  broadcast: string;
+  router: string;
+}
+
 export interface IDHCPMessage {
   op: BootCode;
   htype: number; // UInt8 hardware addr type: 1 for 10mb ethernet

@@ -6,6 +6,8 @@ import * as fse from "fs-extra";
 import Tools from "../tools";
 import { ILeaseLive, LeaseLiveStoreHelper } from "./ILeaseLiveStore";
 import { ILeaseLiveStore } from "./ILeaseLiveStore";
+import { IpRange } from "../IpRange";
+import { IpConfiguration } from "../model";
 
 export interface IFlushEvent {
     on(event: "save", listener: (file: string, nbLease: number) => void): this;
@@ -91,8 +93,8 @@ export class LeaseLiveStoreFile extends LeaseLiveStoreHelper implements ILeaseLi
         return Object.keys(this.cache);
     }
 
-    public getFreeIP = (IP1: string, IP2: string, reserverd: Array<Set<string>>, randomIP?: boolean): Promise<string> => {
-        return Tools.genericGetFreeIP(IP1, IP2, [...reserverd, this.address], randomIP);
+    public getFreeIP = (ranges: IpRange, reserverd: Array<Set<string>>, randomIP?: boolean): Promise<IpConfiguration> => {
+        return Tools.genericGetFreeIP(ranges, [...reserverd, this.address], randomIP);
     }
 
     private _save() {

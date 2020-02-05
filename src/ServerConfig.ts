@@ -2,15 +2,16 @@
 import { ILeaseLiveStore, LeaseLiveStoreMemory } from "./leaseLive";
 import { ILeaseOfferStore, LeaseOfferStoreMemory } from "./leaseOffer";
 import { ILeaseStaticStore, LeaseStaticStoreMemory } from "./leaseStatic";
-import { ASCIIs, Bool, IDHCPOptionsFncId, IPs, OptionId } from "./model";
+import { Bool, IDHCPOptionsFncId, OptionId, IDHCPMessage } from "./model";
 import { getDHCPId } from "./options";
+import { IpRange } from "./IpRange";
 
 export interface IServerConfig extends IDHCPOptionsFncId {
     randomIP?: Bool; // Get random new IP from pool instead of keeping one ip
     leaseStatic?: ILeaseStaticStore;
     leaseLive?: ILeaseLiveStore;
     leaseOffer?: ILeaseOfferStore;
-    range: IPs;
+    range: IpRange | ((option: IDHCPMessage) => IpRange);
     forceOptions?: OptionId[]; // Options that need to be sent, even if they were not requested
 }
 
@@ -19,7 +20,7 @@ export interface IServerConfigValid extends IServerConfig {
     leaseStatic: ILeaseStaticStore;
     leaseLive: ILeaseLiveStore;
     leaseOffer: ILeaseOfferStore;
-    range: IPs;
+    range: IpRange | ((option: IDHCPMessage) => IpRange);
     forceOptions: OptionId[]; // Options that need to be sent, even if they were not requested
 }
 
